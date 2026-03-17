@@ -552,7 +552,7 @@
         </div>
     </div>
 
-    <!-- 输入区域 -->
+    <!-- 输入区域 - 移除了红色勾勾按钮 -->
     <div class="input-card">
         <div class="amount-box">
             <span>RM</span>
@@ -651,6 +651,8 @@
                 item.addEventListener('click', (e) => {
                     elements.categoryInput.value = item.textContent
                     dropdown.classList.remove('show')
+                    // 选择分类后保持键盘打开，方便直接按回车
+                    elements.categoryInput.focus()
                 })
             })
         }
@@ -883,18 +885,22 @@
             })
             saveEntries(entries)
             
+            // 清空输入框
             elements.amountInput.value = ''
-            elements.amountInput.focus()
+            elements.categoryInput.value = ''
             
+            // 关键修改：强制收起键盘 - 通过让输入框失去焦点
             if (document.activeElement) {
-                document.activeElement.blur()
-                document.body.focus()
+                document.activeElement.blur();
             }
+            // 额外确保body获得焦点，进一步保证键盘收起
+            document.body.focus();
             
             showToast('✓ 记账成功')
         }
         
         // ========= 事件绑定 =========
+        // 金额输入框回车
         elements.amountInput.addEventListener('keypress', e => {
             if(e.key === 'Enter') {
                 e.preventDefault()
@@ -902,6 +908,7 @@
             }
         })
         
+        // 分类输入框回车 - 按回车后确认并收起键盘
         elements.categoryInput.addEventListener('keypress', e => {
             if(e.key === 'Enter') {
                 e.preventDefault()
@@ -909,6 +916,7 @@
             }
         })
         
+        // 下拉按钮
         elements.dropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation()
             toggleDropdown()
@@ -1102,65 +1110,56 @@
         }
         
         // ========= 导出Excel =========
-        // ========= 导出Excel =========
-document.getElementById('excelMenuItem').onclick = () => {
-    exportToExcel()
-    elements.menuDropdown.classList.remove('show')
-}
-
-function exportToExcel() {
-    const entries = loadEntries()
-    
-    if (entries.length === 0) {
-        showToast('没有数据可导出', 1500)
-        return
-    }
-    
-    const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
-    
-    // 创建CSV内容 - 添加BOM处理中文，调整格式
-    let csv = '日期,时间,备注,金额(RM)\n'
-    
-    sorted.forEach(e => {
-        // 处理备注中的逗号和换行符
-        let note = e.note.replace(/,/g, '，')  // 把英文逗号换成中文逗号
-                        .replace(/\n/g, ' ')  // 换行符换成空格
-        // 如果备注包含特殊字符，用引号包裹
-        if (note.includes('"') || note.includes(',')) {
-            note = `"${note.replace(/"/g, '""')}"`
+        document.getElementById('excelMenuItem').onclick = () => {
+            exportToExcel()
+            elements.menuDropdown.classList.remove('show')
         }
-        
-        // 金额加上RM符号（但作为文本，防止Excel识别为数字）
-        csv += `${e.date},${e.time},${note},RM${e.amount.toFixed(2)}\n`
-    })
-    
-    // 总计行
-    const total = entries.reduce((s, e) => s + e.amount, 0)
-    csv += `\n总计,,,RM${total.toFixed(2)}\n`
-    
-    // 月份统计
-    const monthStats = {}
-    entries.forEach(e => {
-        const month = e.date.substring(0, 7) // YYYY-MM
-        monthStats[month] = (monthStats[month] || 0) + e.amount
-    })
-    
-    csv += '\n月份统计\n'
-    Object.keys(monthStats).sort().reverse().forEach(month => {
-        csv += `${month},,,RM${monthStats[month].toFixed(2)}\n`
-    })
-    
-    // 创建带BOM的CSV文件（解决中文乱码）
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `记账记录_${new Date().toISOString().slice(0,10)}.csv`
-    a.click()
-    URL.revokeObjectURL(url)
-    
-    showToast('✓ 导出Excel成功')
-}
+
+        function exportToExcel() {
+            const entries = loadEntries()
+            
+            if (entries.length === 0) {
+                showToast('没有数据可导出', 1500)
+                return
+            }
+            
+            const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+            
+            // 创建CSV内容
+            let csv = '日期,时间,备注,金额(RM)\n'
+            
+            sorted.forEach(e => {
+                let note = e.note.replace(/,/g, '，').replace(/\n/g, ' ')
+                if (note.includes('"') || note.includes(',')) {
+                    note = `"${note.replace(/"/g, '""')}"`
+                }
+                csv += `${e.date},${e.time},${note},RM${e.amount.toFixed(2)}\n`
+            })
+            
+            const total = entries.reduce((s, e) => s + e.amount, 0)
+            csv += `\n总计,,,RM${total.toFixed(2)}\n`
+            
+            const monthStats = {}
+            entries.forEach(e => {
+                const month = e.date.substring(0, 7)
+                monthStats[month] = (monthStats[month] || 0) + e.amount
+            })
+            
+            csv += '\n月份统计\n'
+            Object.keys(monthStats).sort().reverse().forEach(month => {
+                csv += `${month},,,RM${monthStats[month].toFixed(2)}\n`
+            })
+            
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `记账记录_${new Date().toISOString().slice(0,10)}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+            
+            showToast('✓ 导出Excel成功')
+        }
         
         // ========= 管理分类 =========
         document.getElementById('manageCategoriesMenuItem').onclick = () => {
