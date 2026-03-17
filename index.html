@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>每日消费记录</title>
+    <title>记账本 · 全能版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -24,7 +24,8 @@
             width: 100%;
             position: relative;
         }
-        /* 菜单区域 - 保持不变 */
+        
+        /* 菜单区域 */
         .menu-container {
             position: absolute;
             top: 5px;
@@ -135,157 +136,134 @@
             font-weight: 700;
         }
         
-        /* ===== 重点：可写可选输入区域 ===== */
-        /* ===== 可写可选输入区域 ===== */
-.input-card {
-    background: white;
-    border-radius: 24px;
-    padding: 12px 14px;
-    margin-bottom: 8px;
-    display: flex;
-    gap: 8px;
-    flex-wrap: nowrap;  /* 防止换行 */
-}
-
-.amount-box {
-    flex: 1;  /* 各占一半 */
-    min-width: 0;  /* 移除最小宽度限制 */
-    display: flex;
-    align-items: center;
-    background: #f2f6fc;
-    border-radius: 40px;
-    padding: 2px 16px;
-}
-
-.amount-box span {
-    color: #c43e4c;
-    margin-right: 6px;
-    flex-shrink: 0;
-}
-
-.amount-box input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 10px 0;
-    outline: none;
-    font-size: 1rem;
-    width: 100%;
-    min-width: 0;  /* 允许输入框缩小 */
-}
-
-.amount-box input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.amount-box input[type="number"]::-webkit-outer-spin-button,
-.amount-box input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-.amount-box input::placeholder {
-    font-size: 1.0rem;  /* 和分类框保持一致 */
-    color: #a0b8d0;
-    opacity: 1;
-}
-
-/* 分类组合框容器 - 和金额框完全一样宽 */
-.category-wrapper {
-    flex: 1;  /* 和amount-box一样的flex:1，各占一半 */
-    min-width: 0;  /* 移除最小宽度限制，让两个框真正相等 */
-    position: relative;
-    background: #f2f6fc;
-    border-radius: 40px;
-    display: flex;
-    align-items: center;
-    padding: 2px 16px;  /* 和amount-box完全一样的内边距 */
-    gap: 4px;
-}
-
-.category-icon {
-    color: #c43e4c;
-    margin-right: 2px;
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-/* 自定义可写可选下拉框 */
-.category-combobox {
-    flex: 1;
-    position: relative;
-    min-width: 0;  /* 允许缩小 */
-}
-
-#categoryInput {
-    width: 100%;
-    border: none;
-    background: transparent;
-    padding: 10px 0;
-    outline: none;
-    font-size: 1rem;
-    min-width: 0;  /* 允许输入框缩小 */
-}
-
-/* 添加这段 - 控制placeholder文字大小 */
-#categoryInput::placeholder {
-    font-size: 0.80rem;  /* 调整这个值改变提示文字大小 */
-    color: #a0b8d0;      /* 也可以调整颜色 */
-    opacity: 1;
-}
-
-.dropdown-btn {
-    background: transparent;
-    border: none;
-    padding: 0 4px;
-    font-size: 1rem;
-    cursor: pointer;
-    color: #94a8bd;
-    flex-shrink: 0;
-}
-
-.category-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    margin-top: 4px;
-    z-index: 1000;
-    display: none;
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.category-dropdown.show {
-    display: block;
-}
-
-.category-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    border-bottom: 1px solid #f0f4fa;
-    transition: background 0.2s;
-}
-
-.category-item:hover {
-    background: #f5f9ff;
-}
-
-.category-item:active {
-    background: #e8f0fe;
-}
-
-.category-item:last-child {
-    border-bottom: none;
-}
-
-.category-item .emoji {
-    margin-right: 8px;
-}
+        /* 输入区域 - 各占50% */
+        .input-card {
+            background: white;
+            border-radius: 24px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+        .amount-box {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            background: #f2f6fc;
+            border-radius: 40px;
+            padding: 2px 16px;
+        }
+        .amount-box span {
+            color: #c43e4c;
+            margin-right: 6px;
+            flex-shrink: 0;
+        }
+        .amount-box input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            padding: 10px 0;
+            outline: none;
+            font-size: 1rem;
+            width: 100%;
+            min-width: 0;
+        }
+        .amount-box input[type="number"] {
+            -moz-appearance: textfield;
+        }
+        .amount-box input[type="number"]::-webkit-outer-spin-button,
+        .amount-box input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .amount-box input::placeholder {
+            font-size: 1.0rem;
+            color: #a0b8d0;
+            opacity: 1;
+        }
         
-        /* 日历表格 - 保持稳定 */
+        /* 分类组合框 - 和金额框一样宽 */
+        .category-wrapper {
+            flex: 1;
+            min-width: 0;
+            position: relative;
+            background: #f2f6fc;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            padding: 2px 16px;
+            gap: 4px;
+        }
+        .category-icon {
+            color: #c43e4c;
+            margin-right: 2px;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .category-combobox {
+            flex: 1;
+            position: relative;
+            min-width: 0;
+        }
+        #categoryInput {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 10px 0;
+            outline: none;
+            font-size: 1rem;
+            min-width: 0;
+        }
+        #categoryInput::placeholder {
+            font-size: 0.85rem;
+            color: #a0b8d0;
+            opacity: 1;
+        }
+        .dropdown-btn {
+            background: transparent;
+            border: none;
+            padding: 0 4px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #94a8bd;
+            flex-shrink: 0;
+        }
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            margin-top: 4px;
+            z-index: 1000;
+            display: none;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .category-dropdown.show {
+            display: block;
+        }
+        .category-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f4fa;
+            transition: background 0.2s;
+        }
+        .category-item:hover {
+            background: #f5f9ff;
+        }
+        .category-item:active {
+            background: #e8f0fe;
+        }
+        .category-item:last-child {
+            border-bottom: none;
+        }
+        
+        /* 日历表格 */
         .calendar-card {
             background: white;
             border-radius: 20px;
@@ -437,21 +415,106 @@
             50% { transform: scale(1.1); color: #ffd700; }
         }
         
-        /* 管理分类的小按钮 */
-        .manage-categories {
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: #f8fafd;
+        /* 搜索面板样式 */
+        .search-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
             border-radius: 30px;
-            display: inline-flex;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            width: 90%;
+            max-width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .search-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
-            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .search-header h3 {
             color: #2b3d4f;
+        }
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #94a8bd;
+        }
+        .search-input-group {
+            margin-bottom: 15px;
+        }
+        .search-input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2b3d4f;
+            font-weight: 500;
+        }
+        .search-input-group input, 
+        .search-input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e9f2;
+            border-radius: 20px;
+            font-size: 1rem;
+            background: #f8fafd;
+        }
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .search-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
             cursor: pointer;
         }
-        .manage-categories:active {
-            background: #eef2f6;
+        .search-btn.primary {
+            background: #c43e4c;
+            color: white;
+        }
+        .search-btn.secondary {
+            background: #f2f6fc;
+            color: #2b3d4f;
+        }
+        .search-result-item {
+            padding: 12px;
+            border-bottom: 1px solid #f0f4fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .search-result-date {
+            font-size: 0.8rem;
+            color: #94a8bd;
+        }
+        .search-result-note {
+            font-weight: 500;
+            color: #2b3d4f;
+        }
+        .search-result-amount {
+            font-weight: 600;
+            color: #c43e4c;
+        }
+        .search-summary {
+            background: #f8fafd;
+            padding: 10px;
+            border-radius: 20px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -461,9 +524,12 @@
     <div class="menu-container">
         <div class="menu-button" id="menuButton">☰</div>
         <div class="menu-dropdown" id="menuDropdown">
-            <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
-            <div class="menu-item" id="importMenuItem">📥 导入备份</div>
+            <div class="menu-item" id="statisticsMenuItem">📊 月度统计</div>
+            <div class="menu-item" id="searchMenuItem">🔍 搜索记录</div>
             <div class="menu-item" id="manageCategoriesMenuItem">⚙️ 管理分类</div>
+            <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
+            <div class="menu-item" id="excelMenuItem">📊 导出Excel</div>
+            <div class="menu-item" id="importMenuItem">📥 导入备份</div>
         </div>
     </div>
 
@@ -486,18 +552,18 @@
         </div>
     </div>
 
-    <!-- 可写可选输入区域 -->
+    <!-- 输入区域 -->
     <div class="input-card">
         <div class="amount-box">
             <span>RM</span>
             <input type="number" id="amountInput" placeholder="0.00" step="0.01" min="0" inputmode="decimal">
         </div>
         
-        <!-- 增强版分类组合框 -->
+        <!-- 分类组合框 -->
         <div class="category-wrapper">
             <span class="category-icon">📝</span>
             <div class="category-combobox">
-                <input type="text" id="categoryInput" placeholder="输入或选择分类" autocomplete="off">
+                <input type="text" id="categoryInput" placeholder="选择或输入分类" autocomplete="off">
                 <div class="category-dropdown" id="categoryDropdown"></div>
             </div>
             <button class="dropdown-btn" id="dropdownBtn">▼</button>
@@ -524,10 +590,10 @@
         const STORAGE_KEY = 'expense_record_final'
         const CATEGORIES_KEY = 'expense_categories'
         
-        // 默认分类（带emoji图标）
+        // 默认分类
         const DEFAULT_CATEGORIES = [
             '🍳 早餐', '🍱 午餐', '🍽️ 晚餐', 
-            '🛍️ 逛街', '🧴 用品', '🚗 交通', 
+            '🛍️ 逛街', '🧴 日用品', '🚗 交通', 
             '🎬 娱乐', '📚 学习', '🏠 家居', '其他'
         ]
         
@@ -570,7 +636,6 @@
             renderCategoryDropdown()
         }
         
-        // 渲染下拉菜单
         function renderCategoryDropdown() {
             const categories = loadCategories()
             const dropdown = elements.categoryDropdown
@@ -582,7 +647,6 @@
             })
             dropdown.innerHTML = html
             
-            // 绑定点击事件
             dropdown.querySelectorAll('.category-item').forEach(item => {
                 item.addEventListener('click', (e) => {
                     elements.categoryInput.value = item.textContent
@@ -591,7 +655,6 @@
             })
         }
         
-        // 显示/隐藏下拉菜单
         function toggleDropdown(show) {
             const dropdown = elements.categoryDropdown
             if (show === undefined) {
@@ -662,7 +725,6 @@
             elements.monthTotal.innerText = "本月已消费 RM" + total.toFixed(2)
         }
         
-        // 渲染日历
         function renderCalendar(){
             const entries = loadEntries()
             const firstDay = new Date(currentYear, currentMonth, 1)
@@ -718,7 +780,6 @@
             elements.currentMonthYear.innerText = `${currentYear}年${currentMonth+1}月`
         }
         
-        // 点击日历
         elements.calendarTable.addEventListener('click', (e) => {
             const td = e.target.closest('td')
             if (!td) return
@@ -731,7 +792,6 @@
             }
         })
         
-        // 渲染明细列表
         function renderEntriesList(){
             const entries = loadEntries()
             const dayEntries = entries.filter(e => e.date === selectedDateStr)
@@ -800,7 +860,6 @@
             const fallbackTimer = setTimeout(safeDelete, 2000)
         }
         
-        // 添加记账
         function addExpense(){
             const amount = parseFloat(elements.amountInput.value)
             if (!amount || amount <= 0) {
@@ -820,16 +879,13 @@
                 date: selectedDateStr,
                 time: new Date().toLocaleTimeString('zh-CN', {hour12: false}),
                 amount: amount,
-                note: category  // 直接使用分类作为备注
+                note: category
             })
             saveEntries(entries)
             
-            // 清空金额，保留分类方便连续记账
             elements.amountInput.value = ''
-            // 不自动清空分类，方便连续记同一类
             elements.amountInput.focus()
             
-            // 收起键盘
             if (document.activeElement) {
                 document.activeElement.blur()
                 document.body.focus()
@@ -853,29 +909,24 @@
             }
         })
         
-        // 下拉按钮点击
         elements.dropdownBtn.addEventListener('click', (e) => {
             e.stopPropagation()
             toggleDropdown()
         })
         
-        // 点击其他地方关闭下拉
         document.addEventListener('click', (e) => {
             if (!elements.categoryWrapper?.contains(e.target)) {
                 toggleDropdown(false)
             }
         })
         
-        // 为方便定位，把categoryWrapper补上
         elements.categoryWrapper = document.querySelector('.category-wrapper')
         
-        // 点击输入框时如果下拉没显示，可以显示
         elements.categoryInput.addEventListener('click', (e) => {
             e.stopPropagation()
             toggleDropdown(true)
         })
         
-        // 月份切换
         function changeMonth(delta){
             currentMonth += delta
             if (currentMonth < 0) { currentMonth = 11; currentYear-- }
@@ -901,7 +952,218 @@
             }
         })
         
-        // 导出备份
+        // ========= 统计功能 =========
+        document.getElementById('statisticsMenuItem').onclick = () => {
+            const entries = loadEntries()
+            
+            const monthEntries = entries.filter(e => {
+                const [y, m] = e.date.split('-').map(Number)
+                return y === currentYear && m === (currentMonth + 1)
+            })
+            
+            const total = monthEntries.reduce((s, e) => s + e.amount, 0)
+            const avgPerDay = (total / new Date(currentYear, currentMonth + 1, 0).getDate()).toFixed(2)
+            
+            const catStats = {}
+            monthEntries.forEach(e => {
+                catStats[e.note] = (catStats[e.note] || 0) + e.amount
+            })
+            
+            const maxEntry = monthEntries.length > 0 
+                ? monthEntries.reduce((max, e) => e.amount > max.amount ? e : max, monthEntries[0])
+                : null
+            
+            let statsMsg = `📊 ${currentYear}年${currentMonth+1}月统计\n`
+            statsMsg += `━━━━━━━━━━━━━━━━\n`
+            statsMsg += `总支出：RM${total.toFixed(2)}\n`
+            statsMsg += `日均：RM${avgPerDay}\n`
+            statsMsg += `记账天数：${new Set(monthEntries.map(e => e.date)).size}天\n`
+            
+            if (maxEntry) {
+                statsMsg += `最大一笔：RM${maxEntry.amount} (${maxEntry.note})\n`
+            }
+            
+            statsMsg += `━━━━━━━━━━━━━━━━\n`
+            statsMsg += `📌 分类统计：\n`
+            
+            const sortedCats = Object.entries(catStats).sort((a, b) => b[1] - a[1])
+            sortedCats.forEach(([cat, amt]) => {
+                const percent = ((amt / total) * 100).toFixed(1)
+                statsMsg += `${cat}：RM${amt.toFixed(2)} (${percent}%)\n`
+            })
+            
+            alert(statsMsg)
+            elements.menuDropdown.classList.remove('show')
+        }
+        
+        // ========= 搜索功能 =========
+        document.getElementById('searchMenuItem').onclick = () => {
+            showSearchPanel()
+            elements.menuDropdown.classList.remove('show')
+        }
+        
+        function showSearchPanel() {
+            const entries = loadEntries()
+            
+            const panel = document.createElement('div')
+            panel.className = 'search-panel'
+            panel.innerHTML = `
+                <div class="search-header">
+                    <h3>🔍 搜索记录</h3>
+                    <button class="close-btn" onclick="this.closest('.search-panel').remove()">✕</button>
+                </div>
+                
+                <div class="search-input-group">
+                    <label>📝 备注包含</label>
+                    <input type="text" id="searchNote" placeholder="输入关键字...">
+                </div>
+                
+                <div class="search-input-group">
+                    <label>💰 金额范围</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="number" id="searchMin" placeholder="最低" min="0" step="0.01" style="flex:1">
+                        <span style="align-self: center;">-</span>
+                        <input type="number" id="searchMax" placeholder="最高" min="0" step="0.01" style="flex:1">
+                    </div>
+                </div>
+                
+                <div class="search-input-group">
+                    <label>📅 日期范围</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="date" id="searchStartDate" style="flex:1">
+                        <span style="align-self: center;">至</span>
+                        <input type="date" id="searchEndDate" style="flex:1">
+                    </div>
+                </div>
+                
+                <div class="search-buttons">
+                    <button class="search-btn primary" id="doSearch">搜索</button>
+                    <button class="search-btn secondary" id="resetSearch">重置</button>
+                </div>
+                
+                <div id="searchResults" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
+            `
+            
+            document.body.appendChild(panel)
+            
+            document.getElementById('doSearch').onclick = () => {
+                const note = document.getElementById('searchNote').value.toLowerCase()
+                const min = parseFloat(document.getElementById('searchMin').value) || 0
+                const max = parseFloat(document.getElementById('searchMax').value) || Infinity
+                const startDate = document.getElementById('searchStartDate').value
+                const endDate = document.getElementById('searchEndDate').value
+                
+                const results = entries.filter(e => {
+                    if (note && !e.note.toLowerCase().includes(note)) return false
+                    if (e.amount < min || e.amount > max) return false
+                    if (startDate && e.date < startDate) return false
+                    if (endDate && e.date > endDate) return false
+                    return true
+                }).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+                
+                displaySearchResults(results)
+            }
+            
+            document.getElementById('resetSearch').onclick = () => {
+                document.getElementById('searchNote').value = ''
+                document.getElementById('searchMin').value = ''
+                document.getElementById('searchMax').value = ''
+                document.getElementById('searchStartDate').value = ''
+                document.getElementById('searchEndDate').value = ''
+                displaySearchResults([])
+            }
+            
+            function displaySearchResults(results) {
+                const resultsDiv = document.getElementById('searchResults')
+                
+                if (results.length === 0) {
+                    resultsDiv.innerHTML = '<div style="text-align:center; color:#94a8bd; padding:20px">没有找到匹配的记录</div>'
+                    return
+                }
+                
+                const total = results.reduce((s, e) => s + e.amount, 0)
+                
+                let html = `<div class="search-summary">找到 ${results.length} 条记录，合计 RM${total.toFixed(2)}</div>`
+                
+                results.forEach(e => {
+                    html += `
+                        <div class="search-result-item">
+                            <div>
+                                <div class="search-result-date">${e.date} ${e.time}</div>
+                                <div class="search-result-note">${escapeHtml(e.note)}</div>
+                            </div>
+                            <div class="search-result-amount">-RM${e.amount.toFixed(2)}</div>
+                        </div>
+                    `
+                })
+                
+                resultsDiv.innerHTML = html
+            }
+        }
+        
+        // ========= 导出Excel =========
+        document.getElementById('excelMenuItem').onclick = () => {
+            exportToExcel()
+            elements.menuDropdown.classList.remove('show')
+        }
+        
+        function exportToExcel() {
+            const entries = loadEntries()
+            
+            if (entries.length === 0) {
+                showToast('没有数据可导出', 1500)
+                return
+            }
+            
+            const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+            
+            let csv = '日期,时间,备注,金额(RM)\n'
+            
+            sorted.forEach(e => {
+                let note = e.note.includes(',') ? `"${e.note}"` : e.note
+                csv += `${e.date},${e.time},${note},${e.amount.toFixed(2)}\n`
+            })
+            
+            const total = entries.reduce((s, e) => s + e.amount, 0)
+            csv += `\n总计,,,${total.toFixed(2)}\n`
+            
+            const monthStats = {}
+            entries.forEach(e => {
+                const month = e.date.substring(0, 7)
+                monthStats[month] = (monthStats[month] || 0) + e.amount
+            })
+            
+            csv += '\n月份统计\n'
+            Object.keys(monthStats).sort().reverse().forEach(month => {
+                csv += `${month},,,${monthStats[month].toFixed(2)}\n`
+            })
+            
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `记账记录_${new Date().toISOString().slice(0,10)}.csv`
+            a.click()
+            URL.revokeObjectURL(url)
+            
+            showToast('✓ 导出Excel成功')
+        }
+        
+        // ========= 管理分类 =========
+        document.getElementById('manageCategoriesMenuItem').onclick = () => {
+            const categories = loadCategories()
+            let input = prompt('请输入分类（用逗号分隔，例如：早餐,午餐,晚餐,逛街）', categories.join(','))
+            if (input !== null) {
+                const newCats = input.split(',').map(s => s.trim()).filter(s => s)
+                if (newCats.length > 0) {
+                    saveCategories(newCats)
+                    showToast('✓ 分类已更新')
+                }
+            }
+            elements.menuDropdown.classList.remove('show')
+        }
+        
+        // ========= 导出备份 =========
         document.getElementById('exportMenuItem').onclick = () => {
             const entries = loadEntries()
             const categories = loadCategories()
@@ -918,7 +1180,7 @@
             elements.menuDropdown.classList.remove('show')
         }
         
-        // 导入备份
+        // ========= 导入备份 =========
         document.getElementById('importMenuItem').onclick = () => {
             const input = document.createElement('input')
             input.type = 'file'
@@ -929,20 +1191,16 @@
                 reader.onload = (e) => {
                     try {
                         const backup = JSON.parse(e.target.result)
-                        // 支持新版备份格式
                         if (backup.entries && Array.isArray(backup.entries)) {
                             saveEntries(backup.entries)
                             if (backup.categories && Array.isArray(backup.categories)) {
                                 saveCategories(backup.categories)
                             }
                             showToast('✓ 导入成功')
-                        } 
-                        // 兼容旧版
-                        else if (Array.isArray(backup)) {
+                        } else if (Array.isArray(backup)) {
                             saveEntries(backup)
                             showToast('✓ 导入成功')
-                        }
-                        else {
+                        } else {
                             showToast('❌ 文件格式错误')
                         }
                     } catch { showToast('❌ 导入失败') }
@@ -951,20 +1209,6 @@
                 elements.menuDropdown.classList.remove('show')
             }
             input.click()
-        }
-        
-        // 管理分类
-        document.getElementById('manageCategoriesMenuItem').onclick = () => {
-            const categories = loadCategories()
-            let input = prompt('请输入分类（用逗号分隔，例如：早餐,午餐,晚餐,逛街）', categories.join(','))
-            if (input !== null) {
-                const newCats = input.split(',').map(s => s.trim()).filter(s => s)
-                if (newCats.length > 0) {
-                    saveCategories(newCats)
-                    showToast('✓ 分类已更新')
-                }
-            }
-            elements.menuDropdown.classList.remove('show')
         }
         
         // 初始化
