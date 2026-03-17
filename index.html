@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>消费记账本</title>
     <style>
+        /* 原有样式保持不变，只添加新的样式 */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -45,6 +46,10 @@
             cursor: pointer;
             -webkit-backdrop-filter: blur(5px);
             backdrop-filter: blur(5px);
+            transition: background 0.2s;
+        }
+        .menu-button:active {
+            background: rgba(255, 255, 255, 0.5);
         }
         .menu-dropdown {
             position: absolute;
@@ -65,6 +70,7 @@
             border-bottom: 1px solid #f0f4fa;
             cursor: pointer;
             color: #1e2e3c;
+            transition: background 0.2s;
         }
         .menu-item:active {
             background: #f0f4fa;
@@ -100,6 +106,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s;
         }
         .nav-btn:active {
             background: rgba(255, 255, 255, 0.4);
@@ -229,6 +236,10 @@
             cursor: pointer;
             color: #94a8bd;
             flex-shrink: 0;
+            transition: color 0.2s;
+        }
+        .dropdown-btn:active {
+            color: #c43e4c;
         }
         .category-dropdown {
             position: absolute;
@@ -299,6 +310,11 @@
             background: #f8fafd;
             cursor: pointer;
             height: 52px;
+            transition: all 0.2s;
+        }
+        .calendar-table td:active {
+            background: #e8f0fe;
+            transform: scale(0.98);
         }
         .calendar-table td.selected {
             border: 2px solid #c43e4c;
@@ -335,12 +351,36 @@
             padding: 0 2px;
         }
         
-        /* 明细列表 */
+        /* 明细列表 - 优化版 */
         .list-card {
             background: white;
             border-radius: 20px;
             padding: 12px;
             min-height: 120px;
+        }
+        .entries-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 4px;
+        }
+        .entries-header h4 {
+            color: #2b3d4f;
+            font-size: 0.95rem;
+        }
+        .view-more-btn {
+            background: none;
+            border: none;
+            color: #c43e4c;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+        .view-more-btn:active {
+            background: #fff0f2;
         }
         .entries-list {
             list-style: none;
@@ -353,6 +393,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         .entries-list li.deleting {
             opacity: 0;
@@ -380,6 +432,7 @@
             opacity: 0.6;
             font-size: 1.1rem;
             padding: 4px;
+            transition: all 0.2s;
         }
         .delete-btn:active {
             opacity: 1;
@@ -389,6 +442,18 @@
             text-align: center;
             color: #b2c7dd;
             padding: 30px 20px;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f2f6fc;
+            border-top-color: #c43e4c;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         .toast {
             position: fixed;
@@ -402,6 +467,7 @@
             font-size: 0.9rem;
             z-index: 1000;
             backdrop-filter: blur(5px);
+            animation: toastIn 0.3s ease;
         }
         @keyframes toastIn {
             from { opacity: 0; transform: translateX(-50%) translateY(20px); }
@@ -477,14 +543,23 @@
             border-radius: 30px;
             font-size: 1rem;
             cursor: pointer;
+            transition: all 0.2s;
         }
         .search-btn.primary {
             background: #c43e4c;
             color: white;
         }
+        .search-btn.primary:active {
+            background: #a6323e;
+            transform: scale(0.98);
+        }
         .search-btn.secondary {
             background: #f2f6fc;
             color: #2b3d4f;
+        }
+        .search-btn.secondary:active {
+            background: #e0e9f2;
+            transform: scale(0.98);
         }
         .search-result-item {
             padding: 12px;
@@ -492,6 +567,16 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 12px;
+        }
+        .search-result-item:hover {
+            background: #f5f9ff;
+        }
+        .search-result-item:active {
+            background: #e8f0fe;
+            transform: scale(0.98);
         }
         .search-result-item:last-child {
             border-bottom: none;
@@ -515,6 +600,29 @@
             margin: 15px 0;
             text-align: center;
             font-weight: 500;
+        }
+        .view-all-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            border-radius: 30px;
+            padding: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            width: 90%;
+            max-width: 380px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .view-all-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #f0f4fa;
         }
     </style>
 </head>
@@ -552,7 +660,7 @@
         </div>
     </div>
 
-    <!-- 输入区域 - 移除了红色勾勾按钮 -->
+    <!-- 输入区域 -->
     <div class="input-card">
         <div class="amount-box">
             <span>RM</span>
@@ -578,443 +686,660 @@
         <table class="calendar-table" id="calendarTable"></table>
     </div>
 
-    <!-- 明细列表 -->
+    <!-- 明细列表 - 优化版 -->
     <div class="list-card">
+        <div class="entries-header">
+            <h4>📋 今日明细 <span id="entryCount" style="color:#94a8bd; font-weight:normal;"></span></h4>
+            <button class="view-more-btn" id="viewMoreBtn" style="display:none;">查看全部</button>
+        </div>
         <ul class="entries-list" id="entriesList"></ul>
     </div>
 </div>
 
 <script>
-    (function() {
-        // 存储键名
-        const STORAGE_KEY = 'expense_record_final'
-        const CATEGORIES_KEY = 'expense_categories'
-        
-        // 默认分类
-        const DEFAULT_CATEGORIES = [
-            '🍳 早餐', '🍱 午餐', '🍽️ 晚餐', 
-            '🛍️ 逛街', '🧴 日用品', '🚗 交通', 
-            '🎬 娱乐', '📚 学习', '🏠 家居', '其他'
-        ]
-        
-        // 当前日期
-        let currentDate = new Date()
-        let selectedDateStr = getTodayStr()
-        let currentMonth = currentDate.getMonth()
-        let currentYear = currentDate.getFullYear()
-        
-        // DOM元素
-        const elements = {
-            calendarTable: document.getElementById('calendarTable'),
-            entriesList: document.getElementById('entriesList'),
-            currentMonthYear: document.getElementById('currentMonthYear'),
-            selectedDateTotal: document.getElementById('selectedDateTotal'),
-            monthTotal: document.getElementById('monthTotal'),
-            selectedDateLabel: document.getElementById('selectedDateLabel'),
-            amountInput: document.getElementById('amountInput'),
-            categoryInput: document.getElementById('categoryInput'),
-            dropdownBtn: document.getElementById('dropdownBtn'),
-            categoryDropdown: document.getElementById('categoryDropdown'),
-            menuDropdown: document.getElementById('menuDropdown'),
-            menuButton: document.getElementById('menuButton')
-        }
-        
-        // ========= 分类管理 =========
-        function loadCategories() {
-            try {
-                const saved = localStorage.getItem(CATEGORIES_KEY)
-                if (saved) {
-                    const parsed = JSON.parse(saved)
-                    return Array.isArray(parsed) ? parsed : DEFAULT_CATEGORIES
-                }
-            } catch (e) {}
-            return DEFAULT_CATEGORIES
-        }
-        
-        function saveCategories(categories) {
-            localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories))
-            renderCategoryDropdown()
-        }
-        
-        function renderCategoryDropdown() {
-            const categories = loadCategories()
-            const dropdown = elements.categoryDropdown
-            if (!dropdown) return
-            
-            let html = ''
-            categories.forEach(cat => {
-                html += `<div class="category-item">${cat}</div>`
-            })
-            dropdown.innerHTML = html
-            
-            dropdown.querySelectorAll('.category-item').forEach(item => {
-                item.addEventListener('click', (e) => {
-                    elements.categoryInput.value = item.textContent
-                    dropdown.classList.remove('show')
-                    // 选择分类后保持键盘打开，方便直接按回车
-                    elements.categoryInput.focus()
-                })
-            })
-        }
-        
-        function toggleDropdown(show) {
-            const dropdown = elements.categoryDropdown
-            if (show === undefined) {
-                dropdown.classList.toggle('show')
-            } else if (show) {
-                dropdown.classList.add('show')
-            } else {
-                dropdown.classList.remove('show')
+(function() {
+    // ==================== 模块化重构 ====================
+    const ExpenseApp = {
+        // 配置常量
+        config: {
+            storageKey: 'expense_record_final',
+            categoriesKey: 'expense_categories',
+            defaultCategories: ['🍳 早餐', '🍱 午餐', '🍽️ 晚餐', '🛍️ 逛街', '🧴 日用品', '🚗 交通', '🎬 娱乐', '📚 学习', '🏠 家居', '其他'],
+            maxDisplayItems: 5, // 初始显示5条
+            submitCooldown: 500 // 提交冷却时间(ms)
+        },
+
+        // 状态管理
+        state: {
+            entries: [],
+            categories: [],
+            currentDate: new Date(),
+            selectedDateStr: '',
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
+            isSubmitting: false,
+            displayLimit: 5 // 当前显示条数限制
+        },
+
+        // DOM 元素缓存
+        dom: {},
+
+        // 工具函数
+        utils: {
+            getTodayStr: () => {
+                const d = new Date();
+                return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            },
+
+            showToast: (msg, duration = 1500) => {
+                const old = document.querySelector('.toast');
+                if(old) old.remove();
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = msg;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), duration);
+            },
+
+            escapeHtml: (unsafe) => {
+                return unsafe.replace(/[&<>"]/g, (m) => {
+                    if(m === '&') return '&amp;';
+                    if(m === '<') return '&lt;';
+                    if(m === '>') return '&gt;';
+                    if(m === '"') return '&quot;';
+                    return m;
+                });
+            },
+
+            debounce: (func, wait) => {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            },
+
+            // 跳转到指定日期
+            jumpToDate: function(dateStr) {
+                const [year, month, day] = dateStr.split('-').map(Number);
+                
+                // 更新当前年月
+                ExpenseApp.state.currentYear = year;
+                ExpenseApp.state.currentMonth = month - 1; // 月份从0开始
+                ExpenseApp.state.selectedDateStr = dateStr;
+                ExpenseApp.state.displayLimit = ExpenseApp.config.maxDisplayItems;
+                
+                // 重新渲染UI
+                ExpenseApp.ui.renderCalendar();
+                ExpenseApp.ui.renderEntriesList();
+                ExpenseApp.ui.updateTotals();
+                
+                // 显示成功提示
+                this.showToast(`已跳转到 ${dateStr}`);
             }
-        }
-        
-        // ========= 记账核心 =========
-        function getTodayStr(){
-            const d = new Date()
-            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-        }
-        
-        function loadEntries(){
-            try {
-                const s = localStorage.getItem(STORAGE_KEY)
-                return s ? JSON.parse(s) : []
-            } catch { return [] }
-        }
-        
-        function saveEntries(entries){
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
-            requestAnimationFrame(() => {
-                renderCalendar()
-                renderEntriesList()
-                updateTotals()
-            })
-        }
-        
-        function showToast(msg, duration=1500){
-            const old = document.querySelector('.toast')
-            if(old) old.remove()
-            const toast = document.createElement('div')
-            toast.className = 'toast'
-            toast.textContent = msg
-            document.body.appendChild(toast)
-            setTimeout(() => toast.remove(), duration)
-        }
-        
-        function updateTotals() {
-            updateSelectedTotal()
-            updateMonthTotal()
-        }
-        
-        function updateSelectedTotal(){
-            const entries = loadEntries()
-            const total = entries.filter(e => e.date === selectedDateStr).reduce((s, e) => s + e.amount, 0)
-            const el = elements.selectedDateTotal
-            el.innerText = 'RM' + total.toFixed(2)
-            el.classList.add('amount-change')
-            setTimeout(() => el.classList.remove('amount-change'), 200)
-            
-            const dateObj = new Date(selectedDateStr + 'T12:00:00')
-            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
-            elements.selectedDateLabel.innerText = (selectedDateStr === getTodayStr()) ? '今天' : weekdays[dateObj.getDay()]
-        }
-        
-        function updateMonthTotal(){
-            const entries = loadEntries()
-            const total = entries.filter(e => {
-                const [y, m] = e.date.split('-').map(Number)
-                return y === currentYear && m === (currentMonth + 1)
-            }).reduce((s, e) => s + e.amount, 0)
-            elements.monthTotal.innerText = "本月已消费 RM" + total.toFixed(2)
-        }
-        
-        function renderCalendar(){
-            const entries = loadEntries()
-            const firstDay = new Date(currentYear, currentMonth, 1)
-            let startCol = (firstDay.getDay() + 6) % 7
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate()
-            const todayStr = getTodayStr()
-            
-            let tableHtml = ''
-            let cellCount = 0
-            
-            for (let row = 0; row < 6; row++) {
-                tableHtml += '<tr>'
-                for (let col = 0; col < 7; col++) {
-                    const cellDateNum = cellCount - startCol + 1
-                    let isCurrentMonth = (cellCount >= startCol && cellCount < startCol + daysInMonth)
-                    let dateStr = ''
-                    let totalAmount = 0
-                    let isToday = false
-                    let isSelected = false
-                    
-                    if (isCurrentMonth) {
-                        dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(cellDateNum).padStart(2,'0')}`
-                        const dayEntries = entries.filter(e => e.date === dateStr)
-                        totalAmount = dayEntries.reduce((s,e) => s + e.amount, 0)
-                        isToday = (dateStr === todayStr)
-                        isSelected = (dateStr === selectedDateStr)
+        },
+
+        // 数据操作
+        data: {
+            loadEntries: () => {
+                try {
+                    const s = localStorage.getItem(ExpenseApp.config.storageKey);
+                    return s ? JSON.parse(s) : [];
+                } catch { 
+                    return []; 
+                }
+            },
+
+            saveEntries: (entries) => {
+                localStorage.setItem(ExpenseApp.config.storageKey, JSON.stringify(entries));
+                ExpenseApp.state.entries = entries;
+                // 批量更新UI
+                requestAnimationFrame(() => {
+                    ExpenseApp.ui.renderCalendar();
+                    ExpenseApp.ui.renderEntriesList();
+                    ExpenseApp.ui.updateTotals();
+                });
+            },
+
+            loadCategories: () => {
+                try {
+                    const saved = localStorage.getItem(ExpenseApp.config.categoriesKey);
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        return Array.isArray(parsed) ? parsed : ExpenseApp.config.defaultCategories;
                     }
-                    
-                    let tdClass = isSelected ? 'selected' : ''
-                    let contentHtml = ''
-                    
-                    if (isCurrentMonth) {
-                        contentHtml += '<div class="calendar-day-content">'
-                        if (isToday) {
-                            contentHtml += '<span class="today-badge-table">今天</span>'
+                } catch (e) {}
+                return ExpenseApp.config.defaultCategories;
+            },
+
+            saveCategories: (categories) => {
+                localStorage.setItem(ExpenseApp.config.categoriesKey, JSON.stringify(categories));
+                ExpenseApp.state.categories = categories;
+                ExpenseApp.ui.renderCategoryDropdown();
+            }
+        },
+
+        // UI 渲染
+        ui: {
+            init: function() {
+                // 缓存DOM元素
+                const ids = ['calendarTable', 'entriesList', 'currentMonthYear', 'selectedDateTotal', 
+                            'monthTotal', 'selectedDateLabel', 'amountInput', 'categoryInput', 
+                            'dropdownBtn', 'categoryDropdown', 'menuDropdown', 'menuButton', 'entryCount'];
+                ids.forEach(id => {
+                    ExpenseApp.dom[id] = document.getElementById(id);
+                });
+                ExpenseApp.dom.categoryWrapper = document.querySelector('.category-wrapper');
+                ExpenseApp.dom.viewMoreBtn = document.getElementById('viewMoreBtn');
+            },
+
+            renderCategoryDropdown: function() {
+                const categories = ExpenseApp.state.categories;
+                const dropdown = ExpenseApp.dom.categoryDropdown;
+                if (!dropdown) return;
+                
+                let html = '';
+                categories.forEach(cat => {
+                    html += `<div class="category-item">${cat}</div>`;
+                });
+                dropdown.innerHTML = html;
+                
+                dropdown.querySelectorAll('.category-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        ExpenseApp.dom.categoryInput.value = item.textContent;
+                        dropdown.classList.remove('show');
+                        ExpenseApp.dom.categoryInput.focus();
+                    });
+                });
+            },
+
+            toggleDropdown: (show) => {
+                const dropdown = ExpenseApp.dom.categoryDropdown;
+                if (show === undefined) {
+                    dropdown.classList.toggle('show');
+                } else if (show) {
+                    dropdown.classList.add('show');
+                } else {
+                    dropdown.classList.remove('show');
+                }
+            },
+
+            renderCalendar: function() {
+                const entries = ExpenseApp.state.entries;
+                const { currentYear, currentMonth, selectedDateStr } = ExpenseApp.state;
+                
+                const firstDay = new Date(currentYear, currentMonth, 1);
+                let startCol = (firstDay.getDay() + 6) % 7;
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const todayStr = ExpenseApp.utils.getTodayStr();
+                
+                let tableHtml = '';
+                let cellCount = 0;
+                
+                for (let row = 0; row < 6; row++) {
+                    tableHtml += '<tr>';
+                    for (let col = 0; col < 7; col++) {
+                        const cellDateNum = cellCount - startCol + 1;
+                        let isCurrentMonth = (cellCount >= startCol && cellCount < startCol + daysInMonth);
+                        let dateStr = '';
+                        let totalAmount = 0;
+                        let isToday = false;
+                        let isSelected = false;
+                        
+                        if (isCurrentMonth) {
+                            dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(cellDateNum).padStart(2,'0')}`;
+                            const dayEntries = entries.filter(e => e.date === dateStr);
+                            totalAmount = dayEntries.reduce((s,e) => s + e.amount, 0);
+                            isToday = (dateStr === todayStr);
+                            isSelected = (dateStr === selectedDateStr);
                         }
-                        contentHtml += `<span class="day-number-table">${cellDateNum}</span>`
-                        if (totalAmount > 0) {
-                            contentHtml += `<span class="day-amount-table">RM${totalAmount.toFixed(0)}</span>`
+                        
+                        let tdClass = isSelected ? 'selected' : '';
+                        let contentHtml = '';
+                        
+                        if (isCurrentMonth) {
+                            contentHtml += '<div class="calendar-day-content">';
+                            if (isToday) {
+                                contentHtml += '<span class="today-badge-table">今天</span>';
+                            }
+                            contentHtml += `<span class="day-number-table">${cellDateNum}</span>`;
+                            if (totalAmount > 0) {
+                                contentHtml += `<span class="day-amount-table">RM${totalAmount.toFixed(0)}</span>`;
+                            }
+                            contentHtml += '</div>';
+                            tableHtml += `<td class="${tdClass}" data-date="${dateStr}">${contentHtml}</td>`;
+                        } else {
+                            tableHtml += `<td class="${tdClass}"> </td>`;
                         }
-                        contentHtml += '</div>'
-                        tableHtml += `<td class="${tdClass}" data-date="${dateStr}">${contentHtml}</td>`
+                        
+                        cellCount++;
+                    }
+                    tableHtml += '</tr>';
+                }
+                
+                ExpenseApp.dom.calendarTable.innerHTML = tableHtml;
+                ExpenseApp.dom.currentMonthYear.innerText = `${currentYear}年${currentMonth+1}月`;
+            },
+
+            renderEntriesList: function() {
+                const entries = ExpenseApp.state.entries;
+                const { selectedDateStr, displayLimit } = ExpenseApp.state;
+                
+                const dayEntries = entries.filter(e => e.date === selectedDateStr)
+                                         .sort((a,b) => b.id - a.id);
+                
+                const ul = ExpenseApp.dom.entriesList;
+                const viewMoreBtn = ExpenseApp.dom.viewMoreBtn;
+                const entryCountSpan = ExpenseApp.dom.entryCount;
+                
+                if (entryCountSpan) {
+                    entryCountSpan.textContent = dayEntries.length ? `(${dayEntries.length})` : '';
+                }
+                
+                if (dayEntries.length === 0) {
+                    ul.innerHTML = '<li class="empty-state">📝 点击日期添加记录</li>';
+                    if (viewMoreBtn) viewMoreBtn.style.display = 'none';
+                    return;
+                }
+                
+                // 限制显示数量
+                const showAll = displayLimit >= dayEntries.length;
+                const displayEntries = showAll ? dayEntries : dayEntries.slice(0, displayLimit);
+                
+                // 使用文档片段批量添加
+                const fragment = document.createDocumentFragment();
+                displayEntries.forEach(e => {
+                    const li = document.createElement('li');
+                    li.dataset.id = e.id;
+                    li.innerHTML = `<div>
+                        <div class="entry-note">${ExpenseApp.utils.escapeHtml(e.note)}</div>
+                        <div class="entry-time">${e.time}</div>
+                    </div>
+                    <div style="display:flex; align-items:center">
+                        <span class="entry-amount">-RM${e.amount.toFixed(2)}</span>
+                        <span class="delete-btn" data-id="${e.id}">🗑</span>
+                    </div>`;
+                    fragment.appendChild(li);
+                });
+                
+                ul.innerHTML = '';
+                ul.appendChild(fragment);
+                
+                // 显示/隐藏"查看全部"按钮
+                if (viewMoreBtn) {
+                    if (dayEntries.length > displayLimit) {
+                        viewMoreBtn.style.display = 'block';
+                        viewMoreBtn.textContent = showAll ? '收起' : `查看全部(${dayEntries.length})`;
                     } else {
-                        tableHtml += `<td class="${tdClass}"> </td>`
+                        viewMoreBtn.style.display = 'none';
                     }
+                }
+                
+                // 绑定删除事件
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = Number(btn.dataset.id);
+                        const li = btn.closest('li');
+                        if (li) ExpenseApp.actions.deleteEntry(id, li);
+                    });
+                });
+            },
+
+            updateTotals: function() {
+                this.updateSelectedTotal();
+                this.updateMonthTotal();
+            },
+
+            updateSelectedTotal: function() {
+                const entries = ExpenseApp.state.entries;
+                const { selectedDateStr } = ExpenseApp.state;
+                
+                const total = entries.filter(e => e.date === selectedDateStr)
+                                    .reduce((s, e) => s + e.amount, 0);
+                
+                const el = ExpenseApp.dom.selectedDateTotal;
+                el.innerText = 'RM' + total.toFixed(2);
+                el.classList.add('amount-change');
+                setTimeout(() => el.classList.remove('amount-change'), 200);
+                
+                const dateObj = new Date(selectedDateStr + 'T12:00:00');
+                const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+                ExpenseApp.dom.selectedDateLabel.innerText = 
+                    (selectedDateStr === ExpenseApp.utils.getTodayStr()) ? '今天' : weekdays[dateObj.getDay()];
+            },
+
+            updateMonthTotal: function() {
+                const entries = ExpenseApp.state.entries;
+                const { currentYear, currentMonth } = ExpenseApp.state;
+                
+                const total = entries.filter(e => {
+                    const [y, m] = e.date.split('-').map(Number);
+                    return y === currentYear && m === (currentMonth + 1);
+                }).reduce((s, e) => s + e.amount, 0);
+                
+                ExpenseApp.dom.monthTotal.innerText = "本月已消费 RM" + total.toFixed(2);
+            }
+        },
+
+        // 动作处理
+        actions: {
+            addExpense: function() {
+                // 防重复提交
+                if (ExpenseApp.state.isSubmitting) {
+                    ExpenseApp.utils.showToast('请稍候...', 500);
+                    return;
+                }
+                
+                const amount = parseFloat(ExpenseApp.dom.amountInput.value);
+                if (!amount || amount <= 0) {
+                    ExpenseApp.utils.showToast('请输入有效金额', 1000);
+                    ExpenseApp.dom.amountInput.focus();
+                    return;
+                }
+                
+                let category = ExpenseApp.dom.categoryInput.value.trim();
+                if (!category) {
+                    category = '未分类';
+                }
+                
+                // 锁定提交
+                ExpenseApp.state.isSubmitting = true;
+                
+                const entries = ExpenseApp.state.entries;
+                entries.push({
+                    id: Date.now(),
+                    date: ExpenseApp.state.selectedDateStr,
+                    time: new Date().toLocaleTimeString('zh-CN', {hour12: false}),
+                    amount: amount,
+                    note: category
+                });
+                
+                ExpenseApp.data.saveEntries(entries);
+                
+                // 清空输入框
+                ExpenseApp.dom.amountInput.value = '';
+                ExpenseApp.dom.categoryInput.value = '';
+                
+                // 收起键盘
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+                document.body.focus();
+                
+                ExpenseApp.utils.showToast('✓ 记账成功');
+                
+                // 解锁提交（冷却时间后）
+                setTimeout(() => {
+                    ExpenseApp.state.isSubmitting = false;
+                }, ExpenseApp.config.submitCooldown);
+            },
+
+            deleteEntry: function(id, liElement) {
+                if (!confirm('删除这条记录？')) return;
+                
+                liElement.classList.add('deleting');
+                let deleted = false;
+                
+                const safeDelete = () => {
+                    if (deleted) return;
+                    deleted = true;
+                    liElement.removeEventListener('transitionend', onTransitionEnd);
+                    clearTimeout(fallbackTimer);
                     
-                    cellCount++
+                    if (liElement && liElement.parentNode) {
+                        const entries = ExpenseApp.state.entries.filter(e => e.id !== id);
+                        ExpenseApp.data.saveEntries(entries);
+                        ExpenseApp.utils.showToast('✓ 已删除');
+                    }
+                };
+                
+                const onTransitionEnd = (e) => {
+                    if (e.propertyName.includes('transform') || e.propertyName.includes('opacity')) {
+                        safeDelete();
+                    }
+                };
+                
+                liElement.addEventListener('transitionend', onTransitionEnd);
+                const fallbackTimer = setTimeout(safeDelete, 2000);
+            },
+
+            changeMonth: function(delta) {
+                ExpenseApp.state.currentMonth += delta;
+                if (ExpenseApp.state.currentMonth < 0) {
+                    ExpenseApp.state.currentMonth = 11;
+                    ExpenseApp.state.currentYear--;
+                } else if (ExpenseApp.state.currentMonth > 11) {
+                    ExpenseApp.state.currentMonth = 0;
+                    ExpenseApp.state.currentYear++;
                 }
-                tableHtml += '</tr>'
-            }
-            
-            elements.calendarTable.innerHTML = tableHtml
-            elements.currentMonthYear.innerText = `${currentYear}年${currentMonth+1}月`
-        }
-        
-        elements.calendarTable.addEventListener('click', (e) => {
-            const td = e.target.closest('td')
-            if (!td) return
-            const dateStr = td.dataset.date
-            if (dateStr) {
-                selectedDateStr = dateStr
-                renderCalendar()
-                renderEntriesList()
-                updateSelectedTotal()
-            }
-        })
-        
-        function renderEntriesList(){
-            const entries = loadEntries()
-            const dayEntries = entries.filter(e => e.date === selectedDateStr)
-            const ul = elements.entriesList
-            if (dayEntries.length === 0) {
-                ul.innerHTML = '<li class="empty-state">📝 点击日期添加记录</li>'
-                return
-            }
-            dayEntries.sort((a,b) => b.id - a.id)
-            const fragment = document.createDocumentFragment()
-            dayEntries.forEach(e => {
-                const li = document.createElement('li')
-                li.dataset.id = e.id
-                li.innerHTML = `<div>
-                    <div class="entry-note">${escapeHtml(e.note)}</div>
-                    <div class="entry-time">${e.time}</div>
-                </div>
-                <div style="display:flex; align-items:center">
-                    <span class="entry-amount">-RM${e.amount.toFixed(2)}</span>
-                    <span class="delete-btn" data-id="${e.id}">🗑</span>
-                </div>`
-                fragment.appendChild(li)
-            })
-            ul.innerHTML = ''
-            ul.appendChild(fragment)
-            
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation()
-                    const id = Number(btn.dataset.id)
-                    const li = btn.closest('li')
-                    if (li) deleteEntry(id, li)
-                })
-            })
-        }
-        
-        function escapeHtml(unsafe) {
-            return unsafe.replace(/[&<>"]/g, function(m) {
-                if(m === '&') return '&amp;'
-                if(m === '<') return '&lt;'
-                if(m === '>') return '&gt;'
-                if(m === '"') return '&quot;'
-                return m
-            })
-        }
-        
-        function deleteEntry(id, liElement){
-            if(!confirm('删除这条记录？')) return
-            liElement.classList.add('deleting')
-            let deleted = false
-            const safeDelete = function() {
-                if (deleted) return
-                deleted = true
-                liElement.removeEventListener('transitionend', onTransitionEnd)
-                clearTimeout(fallbackTimer)
-                if (liElement && liElement.parentNode) {
-                    const entries = loadEntries().filter(e => e.id !== id)
-                    saveEntries(entries)
-                    showToast('✓ 已删除')
+                
+                ExpenseApp.state.selectedDateStr = `${ExpenseApp.state.currentYear}-${String(ExpenseApp.state.currentMonth+1).padStart(2,'0')}-01`;
+                ExpenseApp.ui.renderCalendar();
+                ExpenseApp.ui.renderEntriesList();
+                ExpenseApp.ui.updateTotals();
+            },
+
+            toggleViewMore: function() {
+                const entries = ExpenseApp.state.entries.filter(e => e.date === ExpenseApp.state.selectedDateStr);
+                const currentLimit = ExpenseApp.state.displayLimit;
+                
+                if (currentLimit >= entries.length) {
+                    // 收起
+                    ExpenseApp.state.displayLimit = ExpenseApp.config.maxDisplayItems;
+                } else {
+                    // 展开全部
+                    ExpenseApp.state.displayLimit = entries.length;
                 }
+                
+                ExpenseApp.ui.renderEntriesList();
+            },
+
+            showAllEntries: function() {
+                // 弹出模态框显示所有记录
+                const entries = ExpenseApp.state.entries
+                    .filter(e => e.date === ExpenseApp.state.selectedDateStr)
+                    .sort((a,b) => b.id - a.id);
+                
+                if (entries.length === 0) return;
+                
+                const modal = document.createElement('div');
+                modal.className = 'view-all-modal';
+                
+                let entriesHtml = '';
+                entries.forEach(e => {
+                    entriesHtml += `
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #f0f4fa;">
+                            <div>
+                                <div style="font-weight:500;">${ExpenseApp.utils.escapeHtml(e.note)}</div>
+                                <div style="font-size:0.7rem; color:#94a8bd;">${e.time}</div>
+                            </div>
+                            <div style="display:flex; align-items:center;">
+                                <span style="font-weight:600; color:#c43e4c; margin-right:10px;">-RM${e.amount.toFixed(2)}</span>
+                                <span class="delete-btn-modal" data-id="${e.id}" style="cursor:pointer; opacity:0.6;">🗑</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                modal.innerHTML = `
+                    <div class="view-all-header">
+                        <h3>所有记录 (${entries.length})</h3>
+                        <button class="close-btn" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">✕</button>
+                    </div>
+                    ${entriesHtml}
+                `;
+                
+                document.body.appendChild(modal);
+                
+                modal.querySelector('.close-btn').onclick = () => modal.remove();
+                
+                modal.querySelectorAll('.delete-btn-modal').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = Number(btn.dataset.id);
+                        if (confirm('删除这条记录？')) {
+                            const entries = ExpenseApp.state.entries.filter(e => e.id !== id);
+                            ExpenseApp.data.saveEntries(entries);
+                            modal.remove();
+                        }
+                    });
+                });
+                
+                // 点击模态框外部关闭
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) modal.remove();
+                });
             }
-            const onTransitionEnd = (e) => {
-                if (e.propertyName.includes('transform') || e.propertyName.includes('opacity')) safeDelete()
-            }
-            liElement.addEventListener('transitionend', onTransitionEnd)
-            const fallbackTimer = setTimeout(safeDelete, 2000)
-        }
-        
-        function addExpense(){
-            const amount = parseFloat(elements.amountInput.value)
-            if (!amount || amount <= 0) {
-                showToast('请输入有效金额', 1000)
-                elements.amountInput.focus()
-                return
-            }
+        },
+
+        // 初始化
+        init: function() {
+            // 初始化状态
+            this.state.selectedDateStr = this.utils.getTodayStr();
+            this.state.entries = this.data.loadEntries();
+            this.state.categories = this.data.loadCategories();
             
-            let category = elements.categoryInput.value.trim()
-            if (!category) {
-                category = '未分类'
-            }
+            // 初始化UI
+            this.ui.init();
+            this.ui.renderCategoryDropdown();
+            this.ui.renderCalendar();
+            this.ui.renderEntriesList();
+            this.ui.updateTotals();
             
-            const entries = loadEntries()
-            entries.push({
-                id: Date.now(),
-                date: selectedDateStr,
-                time: new Date().toLocaleTimeString('zh-CN', {hour12: false}),
-                amount: amount,
-                note: category
-            })
-            saveEntries(entries)
+            // 绑定事件
+            this.bindEvents();
+        },
+
+        bindEvents: function() {
+            // 日历点击
+            this.dom.calendarTable.addEventListener('click', (e) => {
+                const td = e.target.closest('td');
+                if (!td) return;
+                const dateStr = td.dataset.date;
+                if (dateStr) {
+                    this.state.selectedDateStr = dateStr;
+                    this.state.displayLimit = this.config.maxDisplayItems; // 重置显示限制
+                    this.ui.renderCalendar();
+                    this.ui.renderEntriesList();
+                    this.ui.updateSelectedTotal();
+                }
+            });
+
+            // 输入框事件
+            this.dom.amountInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') {
+                    e.preventDefault();
+                    this.actions.addExpense();
+                }
+            });
             
-            // 清空输入框
-            elements.amountInput.value = ''
-            elements.categoryInput.value = ''
+            this.dom.categoryInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') {
+                    e.preventDefault();
+                    this.actions.addExpense();
+                }
+            });
             
-            // 关键修改：强制收起键盘 - 通过让输入框失去焦点
-            if (document.activeElement) {
-                document.activeElement.blur();
-            }
-            // 额外确保body获得焦点，进一步保证键盘收起
-            document.body.focus();
+            this.dom.categoryInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.ui.toggleDropdown(true);
+            });
             
-            showToast('✓ 记账成功')
-        }
-        
-        // ========= 事件绑定 =========
-        // 金额输入框回车
-        elements.amountInput.addEventListener('keypress', e => {
-            if(e.key === 'Enter') {
-                e.preventDefault()
-                addExpense()
+            this.dom.dropdownBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.ui.toggleDropdown();
+            });
+
+            // 月份导航
+            document.getElementById('prevMonth').onclick = () => this.actions.changeMonth(-1);
+            document.getElementById('nextMonth').onclick = () => this.actions.changeMonth(1);
+
+            // 菜单控制
+            this.dom.menuButton.onclick = (e) => {
+                e.stopPropagation();
+                this.dom.menuDropdown.classList.toggle('show');
+            };
+
+            document.addEventListener('click', (e) => {
+                if (!this.dom.menuButton.contains(e.target) && !this.dom.menuDropdown.contains(e.target)) {
+                    this.dom.menuDropdown.classList.remove('show');
+                }
+                if (!this.dom.categoryWrapper?.contains(e.target)) {
+                    this.ui.toggleDropdown(false);
+                }
+            });
+
+            // 查看全部按钮
+            if (this.dom.viewMoreBtn) {
+                this.dom.viewMoreBtn.addEventListener('click', () => {
+                    this.actions.showAllEntries();
+                });
             }
-        })
-        
-        // 分类输入框回车 - 按回车后确认并收起键盘
-        elements.categoryInput.addEventListener('keypress', e => {
-            if(e.key === 'Enter') {
-                e.preventDefault()
-                addExpense()
-            }
-        })
-        
-        // 下拉按钮
-        elements.dropdownBtn.addEventListener('click', (e) => {
-            e.stopPropagation()
-            toggleDropdown()
-        })
-        
-        document.addEventListener('click', (e) => {
-            if (!elements.categoryWrapper?.contains(e.target)) {
-                toggleDropdown(false)
-            }
-        })
-        
-        elements.categoryWrapper = document.querySelector('.category-wrapper')
-        
-        elements.categoryInput.addEventListener('click', (e) => {
-            e.stopPropagation()
-            toggleDropdown(true)
-        })
-        
-        function changeMonth(delta){
-            currentMonth += delta
-            if (currentMonth < 0) { currentMonth = 11; currentYear-- }
-            else if (currentMonth > 11) { currentMonth = 0; currentYear++ }
-            selectedDateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-01`
-            renderCalendar()
-            renderEntriesList()
-            updateTotals()
-        }
-        
-        document.getElementById('prevMonth').onclick = () => changeMonth(-1)
-        document.getElementById('nextMonth').onclick = () => changeMonth(1)
-        
-        // 菜单控制
-        elements.menuButton.onclick = (e) => {
-            e.stopPropagation()
-            elements.menuDropdown.classList.toggle('show')
-        }
-        
-        document.addEventListener('click', (e) => {
-            if (!elements.menuButton.contains(e.target) && !elements.menuDropdown.contains(e.target)) {
-                elements.menuDropdown.classList.remove('show')
-            }
-        })
-        
-        // ========= 统计功能 =========
-        document.getElementById('statisticsMenuItem').onclick = () => {
-            const entries = loadEntries()
+
+            // 菜单项事件
+            document.getElementById('statisticsMenuItem').onclick = () => this.showStatistics();
+            document.getElementById('searchMenuItem').onclick = () => this.showSearchPanel();
+            document.getElementById('manageCategoriesMenuItem').onclick = () => this.manageCategories();
+            document.getElementById('exportMenuItem').onclick = () => this.exportBackup();
+            document.getElementById('excelMenuItem').onclick = () => this.exportToExcel();
+            document.getElementById('importMenuItem').onclick = () => this.importBackup();
+        },
+
+        // 菜单功能
+        showStatistics: function() {
+            const entries = this.state.entries;
+            const { currentYear, currentMonth } = this.state;
             
             const monthEntries = entries.filter(e => {
-                const [y, m] = e.date.split('-').map(Number)
-                return y === currentYear && m === (currentMonth + 1)
-            })
+                const [y, m] = e.date.split('-').map(Number);
+                return y === currentYear && m === (currentMonth + 1);
+            });
             
-            const total = monthEntries.reduce((s, e) => s + e.amount, 0)
-            const avgPerDay = (total / new Date(currentYear, currentMonth + 1, 0).getDate()).toFixed(2)
+            const total = monthEntries.reduce((s, e) => s + e.amount, 0);
+            const avgPerDay = (total / new Date(currentYear, currentMonth + 1, 0).getDate()).toFixed(2);
             
-            const catStats = {}
+            const catStats = {};
             monthEntries.forEach(e => {
-                catStats[e.note] = (catStats[e.note] || 0) + e.amount
-            })
+                catStats[e.note] = (catStats[e.note] || 0) + e.amount;
+            });
             
             const maxEntry = monthEntries.length > 0 
                 ? monthEntries.reduce((max, e) => e.amount > max.amount ? e : max, monthEntries[0])
-                : null
+                : null;
             
-            let statsMsg = `📊 ${currentYear}年${currentMonth+1}月统计\n`
-            statsMsg += `━━━━━━━━━━━━━━━━\n`
-            statsMsg += `总支出：RM${total.toFixed(2)}\n`
-            statsMsg += `日均：RM${avgPerDay}\n`
-            statsMsg += `记账天数：${new Set(monthEntries.map(e => e.date)).size}天\n`
+            let statsMsg = `📊 ${currentYear}年${currentMonth+1}月统计\n`;
+            statsMsg += `━━━━━━━━━━━━━━━━\n`;
+            statsMsg += `总支出：RM${total.toFixed(2)}\n`;
+            statsMsg += `日均：RM${avgPerDay}\n`;
+            statsMsg += `记账天数：${new Set(monthEntries.map(e => e.date)).size}天\n`;
             
             if (maxEntry) {
-                statsMsg += `最大一笔：RM${maxEntry.amount} (${maxEntry.note})\n`
+                statsMsg += `最大一笔：RM${maxEntry.amount} (${maxEntry.note})\n`;
             }
             
-            statsMsg += `━━━━━━━━━━━━━━━━\n`
-            statsMsg += `📌 分类统计：\n`
+            statsMsg += `━━━━━━━━━━━━━━━━\n`;
+            statsMsg += `📌 分类统计：\n`;
             
-            const sortedCats = Object.entries(catStats).sort((a, b) => b[1] - a[1])
+            const sortedCats = Object.entries(catStats).sort((a, b) => b[1] - a[1]);
             sortedCats.forEach(([cat, amt]) => {
-                const percent = ((amt / total) * 100).toFixed(1)
-                statsMsg += `${cat}：RM${amt.toFixed(2)} (${percent}%)\n`
-            })
+                const percent = ((amt / total) * 100).toFixed(1);
+                statsMsg += `${cat}：RM${amt.toFixed(2)} (${percent}%)\n`;
+            });
             
-            alert(statsMsg)
-            elements.menuDropdown.classList.remove('show')
-        }
-        
-        // ========= 搜索功能 =========
-        document.getElementById('searchMenuItem').onclick = () => {
-            showSearchPanel()
-            elements.menuDropdown.classList.remove('show')
-        }
-        
-        function showSearchPanel() {
-            const entries = loadEntries()
+            alert(statsMsg);
+            this.dom.menuDropdown.classList.remove('show');
+        },
+
+        showSearchPanel: function() {
+            const entries = this.state.entries;
             
-            const panel = document.createElement('div')
-            panel.className = 'search-panel'
+            const panel = document.createElement('div');
+            panel.className = 'search-panel';
             panel.innerHTML = `
                 <div class="search-header">
                     <h3>🔍 搜索记录</h3>
@@ -1050,185 +1375,197 @@
                 </div>
                 
                 <div id="searchResults" style="margin-top: 20px; max-height: 300px; overflow-y: auto;"></div>
-            `
+            `;
             
-            document.body.appendChild(panel)
+            document.body.appendChild(panel);
             
             document.getElementById('doSearch').onclick = () => {
-                const note = document.getElementById('searchNote').value.toLowerCase()
-                const min = parseFloat(document.getElementById('searchMin').value) || 0
-                const max = parseFloat(document.getElementById('searchMax').value) || Infinity
-                const startDate = document.getElementById('searchStartDate').value
-                const endDate = document.getElementById('searchEndDate').value
+                const note = document.getElementById('searchNote').value.toLowerCase();
+                const min = parseFloat(document.getElementById('searchMin').value) || 0;
+                const max = parseFloat(document.getElementById('searchMax').value) || Infinity;
+                const startDate = document.getElementById('searchStartDate').value;
+                const endDate = document.getElementById('searchEndDate').value;
                 
                 const results = entries.filter(e => {
-                    if (note && !e.note.toLowerCase().includes(note)) return false
-                    if (e.amount < min || e.amount > max) return false
-                    if (startDate && e.date < startDate) return false
-                    if (endDate && e.date > endDate) return false
-                    return true
-                }).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+                    if (note && !e.note.toLowerCase().includes(note)) return false;
+                    if (e.amount < min || e.amount > max) return false;
+                    if (startDate && e.date < startDate) return false;
+                    if (endDate && e.date > endDate) return false;
+                    return true;
+                }).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 
-                displaySearchResults(results)
-            }
-            
-            document.getElementById('resetSearch').onclick = () => {
-                document.getElementById('searchNote').value = ''
-                document.getElementById('searchMin').value = ''
-                document.getElementById('searchMax').value = ''
-                document.getElementById('searchStartDate').value = ''
-                document.getElementById('searchEndDate').value = ''
-                displaySearchResults([])
-            }
-            
-            function displaySearchResults(results) {
-                const resultsDiv = document.getElementById('searchResults')
+                const resultsDiv = document.getElementById('searchResults');
                 
                 if (results.length === 0) {
-                    resultsDiv.innerHTML = '<div style="text-align:center; color:#94a8bd; padding:20px">没有找到匹配的记录</div>'
-                    return
+                    resultsDiv.innerHTML = '<div style="text-align:center; color:#94a8bd; padding:20px">没有找到匹配的记录</div>';
+                    return;
                 }
                 
-                const total = results.reduce((s, e) => s + e.amount, 0)
+                const total = results.reduce((s, e) => s + e.amount, 0);
                 
-                let html = `<div class="search-summary">找到 ${results.length} 条记录，合计 RM${total.toFixed(2)}</div>`
+                let html = `<div class="search-summary">找到 ${results.length} 条记录，合计 RM${total.toFixed(2)}</div>`;
                 
                 results.forEach(e => {
                     html += `
-                        <div class="search-result-item">
+                        <div class="search-result-item" data-date="${e.date}">
                             <div>
                                 <div class="search-result-date">${e.date} ${e.time}</div>
-                                <div class="search-result-note">${escapeHtml(e.note)}</div>
+                                <div class="search-result-note">${this.utils.escapeHtml(e.note)}</div>
                             </div>
                             <div class="search-result-amount">-RM${e.amount.toFixed(2)}</div>
                         </div>
-                    `
-                })
+                    `;
+                });
                 
-                resultsDiv.innerHTML = html
-            }
-        }
-        
-        // ========= 导出Excel =========
-        document.getElementById('excelMenuItem').onclick = () => {
-            exportToExcel()
-            elements.menuDropdown.classList.remove('show')
-        }
+                resultsDiv.innerHTML = html;
+                
+                // 为每个搜索结果添加点击事件
+                resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const dateStr = item.dataset.date;
+                        if (dateStr) {
+                            // 关闭搜索面板
+                            panel.remove();
+                            // 跳转到对应日期
+                            this.utils.jumpToDate(dateStr);
+                        }
+                    });
+                });
+            };
+            
+            document.getElementById('resetSearch').onclick = () => {
+                document.getElementById('searchNote').value = '';
+                document.getElementById('searchMin').value = '';
+                document.getElementById('searchMax').value = '';
+                document.getElementById('searchStartDate').value = '';
+                document.getElementById('searchEndDate').value = '';
+                document.getElementById('searchResults').innerHTML = '';
+            };
+            
+            this.dom.menuDropdown.classList.remove('show');
+        },
 
-        function exportToExcel() {
-            const entries = loadEntries()
+        manageCategories: function() {
+            const categories = this.state.categories;
+            let input = prompt('请输入分类（用逗号分隔，例如：早餐,午餐,晚餐,逛街）', categories.join(','));
+            if (input !== null) {
+                const newCats = input.split(',').map(s => s.trim()).filter(s => s);
+                if (newCats.length > 0) {
+                    this.data.saveCategories(newCats);
+                    this.utils.showToast('✓ 分类已更新');
+                }
+            }
+            this.dom.menuDropdown.classList.remove('show');
+        },
+
+        exportBackup: function() {
+            const backup = { 
+                entries: this.state.entries, 
+                categories: this.state.categories, 
+                version: '1.0' 
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `记账备份_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            this.utils.showToast('✓ 导出成功');
+            this.dom.menuDropdown.classList.remove('show');
+        },
+
+        exportToExcel: function() {
+            const entries = this.state.entries;
             
             if (entries.length === 0) {
-                showToast('没有数据可导出', 1500)
-                return
+                this.utils.showToast('没有数据可导出', 1500);
+                return;
             }
             
-            const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+            const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             
-            // 创建CSV内容
-            let csv = '日期,时间,备注,金额(RM)\n'
+            let csv = '日期,时间,备注,金额(RM)\n';
             
             sorted.forEach(e => {
-                let note = e.note.replace(/,/g, '，').replace(/\n/g, ' ')
+                let note = e.note.replace(/,/g, '，').replace(/\n/g, ' ');
                 if (note.includes('"') || note.includes(',')) {
-                    note = `"${note.replace(/"/g, '""')}"`
+                    note = `"${note.replace(/"/g, '""')}"`;
                 }
-                csv += `${e.date},${e.time},${note},RM${e.amount.toFixed(2)}\n`
-            })
+                csv += `${e.date},${e.time},${note},RM${e.amount.toFixed(2)}\n`;
+            });
             
-            const total = entries.reduce((s, e) => s + e.amount, 0)
-            csv += `\n总计,,,RM${total.toFixed(2)}\n`
+            const total = entries.reduce((s, e) => s + e.amount, 0);
+            csv += `\n总计,,,RM${total.toFixed(2)}\n`;
             
-            const monthStats = {}
+            const monthStats = {};
             entries.forEach(e => {
-                const month = e.date.substring(0, 7)
-                monthStats[month] = (monthStats[month] || 0) + e.amount
-            })
+                const month = e.date.substring(0, 7);
+                monthStats[month] = (monthStats[month] || 0) + e.amount;
+            });
             
-            csv += '\n月份统计\n'
+            csv += '\n月份统计\n';
             Object.keys(monthStats).sort().reverse().forEach(month => {
-                csv += `${month},,,RM${monthStats[month].toFixed(2)}\n`
-            })
+                csv += `${month},,,RM${monthStats[month].toFixed(2)}\n`;
+            });
             
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `记账记录_${new Date().toISOString().slice(0,10)}.csv`
-            a.click()
-            URL.revokeObjectURL(url)
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `记账记录_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
             
-            showToast('✓ 导出Excel成功')
-        }
-        
-        // ========= 管理分类 =========
-        document.getElementById('manageCategoriesMenuItem').onclick = () => {
-            const categories = loadCategories()
-            let input = prompt('请输入分类（用逗号分隔，例如：早餐,午餐,晚餐,逛街）', categories.join(','))
-            if (input !== null) {
-                const newCats = input.split(',').map(s => s.trim()).filter(s => s)
-                if (newCats.length > 0) {
-                    saveCategories(newCats)
-                    showToast('✓ 分类已更新')
-                }
-            }
-            elements.menuDropdown.classList.remove('show')
-        }
-        
-        // ========= 导出备份 =========
-        document.getElementById('exportMenuItem').onclick = () => {
-            const entries = loadEntries()
-            const categories = loadCategories()
-            const backup = { entries, categories, version: '1.0' }
-            const dataStr = JSON.stringify(backup, null, 2)
-            const blob = new Blob([dataStr], {type: 'application/json'})
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = `记账备份_${new Date().toISOString().slice(0,10)}.json`
-            a.click()
-            URL.revokeObjectURL(url)
-            showToast('✓ 导出成功')
-            elements.menuDropdown.classList.remove('show')
-        }
-        
-        // ========= 导入备份 =========
-        document.getElementById('importMenuItem').onclick = () => {
-            const input = document.createElement('input')
-            input.type = 'file'
-            input.accept = '.json'
+            this.utils.showToast('✓ 导出Excel成功');
+            this.dom.menuDropdown.classList.remove('show');
+        },
+
+        importBackup: function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
             input.onchange = (e) => {
-                const file = e.target.files[0]
-                const reader = new FileReader()
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
                 reader.onload = (e) => {
                     try {
-                        const backup = JSON.parse(e.target.result)
+                        const backup = JSON.parse(e.target.result);
+                        
                         if (backup.entries && Array.isArray(backup.entries)) {
-                            saveEntries(backup.entries)
+                            this.data.saveEntries(backup.entries);
                             if (backup.categories && Array.isArray(backup.categories)) {
-                                saveCategories(backup.categories)
+                                this.data.saveCategories(backup.categories);
                             }
-                            showToast('✓ 导入成功')
+                            this.utils.showToast('✓ 导入成功');
                         } else if (Array.isArray(backup)) {
-                            saveEntries(backup)
-                            showToast('✓ 导入成功')
+                            this.data.saveEntries(backup);
+                            this.utils.showToast('✓ 导入成功');
                         } else {
-                            showToast('❌ 文件格式错误')
+                            this.utils.showToast('❌ 文件格式错误');
                         }
-                    } catch { showToast('❌ 导入失败') }
-                }
-                reader.readAsText(file)
-                elements.menuDropdown.classList.remove('show')
-            }
-            input.click()
+                    } catch {
+                        this.utils.showToast('❌ 导入失败');
+                    }
+                    
+                    this.dom.menuDropdown.classList.remove('show');
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
         }
-        
-        // 初始化
-        renderCategoryDropdown()
-        renderCalendar()
-        renderEntriesList()
-        updateTotals()
-    })()
+    };
+
+    // 启动应用
+    ExpenseApp.init();
+})();
 </script>
 </body>
 </html>
