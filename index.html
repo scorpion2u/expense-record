@@ -236,9 +236,8 @@
         
         .amount-box:focus-within {
     box-shadow: 0 0 0 2px var(--focus-color);
+    background: rgba(0,0,0,0.05);
 }
-            background: rgba(0,0,0,0.05);
-        }
         
         .category-wrapper:focus-within {
             box-shadow: 0 0 0 2px var(--focus-color);
@@ -303,9 +302,9 @@
         .category-item:last-child { border-bottom: none; }
         .category-item:active { background: rgba(0,0,0,0.05); }
         .category-item.active-cat {
-            background: var(--expense-color);
-            color: white;
-        }
+    background: var(--focus-color);
+    color: white;
+}
 
         .calendar-card { padding: calc(var(--card-padding) - 2px) calc(var(--card-padding) - 2px) calc(var(--card-padding) - 4px); }
         .weekdays {
@@ -1488,7 +1487,7 @@ body.dark-mode canvas {
         if(!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
         
         entries.push({ 
-            id: Date.now(), 
+            id: crypto.randomUUID(),
             date: selectedDate, 
             time: new Date().toLocaleTimeString('zh-CN', {hour12: false}), 
             amount, 
@@ -1581,9 +1580,9 @@ body.dark-mode canvas {
     function showStatistics() {
         let stats = getMonthStats(currentYear, currentMonth);
         let monthEntries = entries.filter(e => {
-            let [y, m] = e.date.split('-');
-            return y === currentYear && m === currentMonth + 1;
-        });
+    let [y, m] = e.date.split('-').map(Number);
+    return y === currentYear && m === currentMonth + 1;
+});
         
         let expMap = {}, incMap = {};
         for (let e of monthEntries) {
