@@ -805,7 +805,7 @@
             <div class="input-row">
                <div class="amount-box"><span id="currencySymbol">RM</span><input type="number" id="amountInput" placeholder="0.00" step="0.01"></div>
                <div class="category-wrapper">
-                  <input type="text" id="categoryInput" placeholder="输入或选择分类" readonly>
+                  <input type="text" id="categoryInput" placeholder="输入或选择分类">
                   <button class="dropdown-btn" id="dropdownBtn">▼</button>
                   <div class="category-dropdown" id="categoryDropdown"></div>
                </div>
@@ -1627,202 +1627,148 @@
              }
              
              function showSearch() {
-                 let modal = document.createElement('div');
-                 modal.className = 'modal-overlay';
-                 modal.innerHTML = `
-                     <div class="search-panel" style="max-width: 400px;">
-                         <h3 style="margin-bottom: 16px;">🔍 搜索记录</h3>
-                         
-                         <div style="margin-bottom: 12px;">
-                             <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">关键词（分类名称）</label>
-                             <input type="text" id="searchKeyword" placeholder="输入分类名称..." style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
-                         </div>
-                         
-                         <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                             <div style="flex:1;">
-                                 <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">起始日期</label>
-                                 <input type="date" id="searchStartDate" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
-                             </div>
-                             <div style="flex:1;">
-                                 <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">结束日期</label>
-                                 <input type="date" id="searchEndDate" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
-                             </div>
-                         </div>
-                         
-                         <div style="display: flex; gap: 10px; margin-bottom: 12px;">
-                             <div style="flex:1;">
-                                 <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">最小金额 (RM)</label>
-                                 <input type="number" id="searchMinAmount" placeholder="0" step="0.01" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
-                             </div>
-                             <div style="flex:1;">
-                                 <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">最大金额 (RM)</label>
-                                 <input type="number" id="searchMaxAmount" placeholder="不限" step="0.01" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
-                             </div>
-                         </div>
-                         
-                         <div style="margin-bottom: 16px;">
-                             <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 8px;">收支类型</label>
-                             <div style="display: flex; gap: 12px;">
-                                 <label style="display: flex; align-items: center; gap: 6px;"><input type="radio" name="searchType" value="all" checked> <span>全部</span></label>
-                                 <label style="display: flex; align-items: center; gap: 6px;"><input type="radio" name="searchType" value="expense"> <span style="color: var(--expense-color);">💸 支出</span></label>
-                                 <label style="display: flex; align-items: center; gap: 6px;"><input type="radio" name="searchType" value="income"> <span style="color: var(--income-color);">💰 收入</span></label>
-                             </div>
-                         </div>
-                         
-                         <div style="display: flex; gap: 10px; margin-bottom: 16px;">
-                             <button id="doSearchBtn" style="flex:1; background: var(--expense-color); color: white; border: none; padding: 10px; border-radius: 28px; font-size: 0.85rem; cursor: pointer;">🔍 搜索</button>
-                             <button id="resetSearchBtn" style="flex:1; background: #f1f5f9; border: none; padding: 10px; border-radius: 28px; font-size: 0.85rem; cursor: pointer;">重置</button>
-                         </div>
-                         
-                         <div id="searchResults" style="max-height: 300px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 12px;">
-                             <div style="text-align: center; color: #94a3b8; padding: 20px;">输入条件后点击搜索</div>
-                         </div>
-                         
-                         <button id="closeSearchBtn" style="width:100%; background:#f1f5f9; border:none; padding:10px; border-radius:28px; margin-top: 12px; cursor: pointer;">关闭</button>
-                     </div>
-                 `;
-                 document.body.appendChild(modal);
+    let modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="search-panel" style="max-width: 400px;">
+            <h3 style="margin-bottom: 16px;">🔍 搜索记录</h3>
+            
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">关键词（分类名称）</label>
+                <input type="text" id="searchKeyword" placeholder="输入分类名称..." style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <div style="flex:1;">
+                    <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">起始日期</label>
+                    <input type="date" id="searchStartDate" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">结束日期</label>
+                    <input type="date" id="searchEndDate" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+                <div style="flex:1;">
+                    <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">最小金额 (RM)</label>
+                    <input type="number" id="searchMinAmount" placeholder="0" step="0.01" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 4px;">最大金额 (RM)</label>
+                    <input type="number" id="searchMaxAmount" placeholder="不限" step="0.01" style="width:100%; padding:8px; border-radius:28px; border:1px solid #e2e8f0; outline:none;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label style="font-size: 0.8rem; color: #64748b; display: block; margin-bottom: 8px;">收支类型</label>
+                <div style="display: flex; gap: 12px;">
+                    <label><input type="radio" name="searchType" value="all" checked> 全部</label>
+                    <label><input type="radio" name="searchType" value="expense"> 💸 支出</label>
+                    <label><input type="radio" name="searchType" value="income"> 💰 收入</label>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+                <button id="doSearchBtn" style="flex:1; background: var(--expense-color); color: white; border: none; padding: 10px; border-radius: 28px;">🔍 搜索</button>
+                <button id="resetSearchBtn" style="flex:1; background: #f1f5f9; border: none; padding: 10px; border-radius: 28px;">重置</button>
+            </div>
+            
+            <div id="searchResults" style="max-height: 300px; overflow-y: auto; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                <div style="text-align: center; color: #94a3b8; padding: 20px;">输入条件后点击搜索</div>
+            </div>
+            
+            <button id="closeSearchBtn" style="width:100%; background:#f1f5f9; border:none; padding:10px; border-radius:28px;">关闭</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // ✅ 本地时间格式（避免时区 bug）
+    function formatDateLocal(date) {
+        let y = date.getFullYear();
+        let m = String(date.getMonth() + 1).padStart(2, '0');
+        let d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    }
+
+    // ✅ 重置函数（统一逻辑）
+    function resetSearch() {
+        document.getElementById('searchKeyword').value = '';
+
+        let today = new Date();
+        let oneYearAgo = new Date();
+        oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+        document.getElementById('searchStartDate').value = formatDateLocal(oneYearAgo);
+        document.getElementById('searchEndDate').value = formatDateLocal(today);
+
+        document.getElementById('searchMinAmount').value = '';
+        document.getElementById('searchMaxAmount').value = '';
+        document.querySelector('input[name="searchType"][value="all"]').checked = true;
+
+        document.getElementById('searchResults').innerHTML =
+            '<div style="text-align: center; color: #94a3b8; padding: 20px;">输入条件后点击搜索</div>';
+    }
+
+    // ✅ 打开时默认 = 近1年
+    resetSearch();
+
+    function performSearch() {
+        let keyword = document.getElementById('searchKeyword').value.trim().toLowerCase();
+        let startDate = document.getElementById('searchStartDate').value;
+        let endDate = document.getElementById('searchEndDate').value;
+        let minAmount = parseFloat(document.getElementById('searchMinAmount').value);
+        let maxAmount = parseFloat(document.getElementById('searchMaxAmount').value);
+        let type = document.querySelector('input[name="searchType"]:checked').value;
+
+        let results = [...entries];
+
+        if (startDate) results = results.filter(e => e.date >= startDate);
+        if (endDate) results = results.filter(e => e.date <= endDate);
+        if (keyword) results = results.filter(e => e.note.toLowerCase().includes(keyword));
+        if (!isNaN(minAmount)) results = results.filter(e => e.amount >= minAmount);
+        if (!isNaN(maxAmount)) results = results.filter(e => e.amount <= maxAmount);
+        if (type !== 'all') results = results.filter(e => e.type === type);
+
+        results.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        let resultsDiv = document.getElementById('searchResults');
+
+        if (!results.length) {
+            resultsDiv.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">📭 没有找到记录</div>';
+            return;
+        }
+
+        let html = '';
+        for (let e of results) {
+            let sign = e.type === 'expense' ? '-' : '+';
+            let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
+
+            html += `
+                <div style="padding:10px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;">
+                    <div>
+                        <div>${escapeHtml(e.note)}</div>
+                        <div style="font-size:0.6rem;color:#94a3b8;">${e.date} ${e.time}</div>
+                    </div>
+                    <div style="color:${color};font-weight:600;">
+                        ${sign}RM${e.amount.toFixed(2)}
+                    </div>
+                </div>
+            `;
+        }
+
+        resultsDiv.innerHTML = html;
+    }
+
+    document.getElementById('doSearchBtn').onclick = performSearch;
+    document.getElementById('resetSearchBtn').onclick = resetSearch;
+    document.getElementById('closeSearchBtn').onclick = () => modal.remove();
+
+    modal.onclick = (e) => {
+        if (e.target === modal) modal.remove();
+    };
+}
                  
-                 let today = new Date();
-                 let thirtyDaysAgo = new Date();
-                 thirtyDaysAgo.setDate(today.getDate() - 30);
-                 document.getElementById('searchStartDate').value = thirtyDaysAgo.toISOString().slice(0,10);
-                 document.getElementById('searchEndDate').value = today.toISOString().slice(0,10);
-                 
-                 function jumpToDate(dateStr, entryId) {
-                     modal.remove();
-                     let [year, month, day] = dateStr.split('-').map(Number);
-                     currentYear = year;
-                     currentMonth = month - 1;
-                     selectedDate = dateStr;
-                     displayLimit = 5;
-                     renderCalendar();
-                     renderEntries();
-                     
-                     setTimeout(() => {
-                         let entryElement = document.querySelector(`.edit-btn[data-id="${entryId}"]`);
-                         if (entryElement) {
-                             let listItem = entryElement.closest('li');
-                             if (listItem) {
-                                 listItem.style.transition = 'background 0.3s';
-                                 listItem.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                                 setTimeout(() => {
-                                     listItem.style.backgroundColor = '';
-                                 }, 1500);
-                                 listItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                             }
-                         }
-                         showToast(`已跳转到 ${dateStr} 的记录`);
-                     }, 100);
-                 }
-                 
-                 function performSearch() {
-                     let keyword = document.getElementById('searchKeyword').value.trim().toLowerCase();
-                     let startDate = document.getElementById('searchStartDate').value;
-                     let endDate = document.getElementById('searchEndDate').value;
-                     let minAmount = parseFloat(document.getElementById('searchMinAmount').value);
-                     let maxAmount = parseFloat(document.getElementById('searchMaxAmount').value);
-                     let typeRadio = document.querySelector('input[name="searchType"]:checked');
-                     let type = typeRadio ? typeRadio.value : 'all';
-                     
-                     let results = [...entries];
-                     if (startDate) results = results.filter(e => e.date >= startDate);
-                     if (endDate) results = results.filter(e => e.date <= endDate);
-                     if (keyword) results = results.filter(e => e.note.toLowerCase().includes(keyword));
-                     if (!isNaN(minAmount) && minAmount > 0) results = results.filter(e => e.amount >= minAmount);
-                     if (!isNaN(maxAmount) && maxAmount > 0) results = results.filter(e => e.amount <= maxAmount);
-                     if (type === 'expense') results = results.filter(e => e.type === 'expense');
-                     else if (type === 'income') results = results.filter(e => e.type === 'income');
-                     results.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
-                     
-                     let resultsDiv = document.getElementById('searchResults');
-                     if (results.length === 0) {
-                         resultsDiv.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">📭 没有找到匹配的记录</div>';
-                         return;
-                     }
-                     
-                     let totalExpense = results.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
-                     let totalIncome = results.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
-                     
-                     let html = `<div style="margin-bottom: 12px; padding: 8px; background: #f1f5f9; border-radius: 12px; font-size: 0.75rem;">
-                         <span>共找到 ${results.length} 条记录</span>
-                         <span style="margin-left: 12px; color: var(--expense-color);">支出: RM${totalExpense.toFixed(2)}</span>
-                         <span style="margin-left: 12px; color: var(--income-color);">收入: RM${totalIncome.toFixed(2)}</span>
-                     </div>`;
-                     
-                     for (let e of results) {
-                         let sign = e.type === 'expense' ? '-' : '+';
-                         let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-                         html += `
-                             <div class="search-result-item" data-date="${e.date}" data-id="${e.id}" style="padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.1s;">
-                                 <div style="flex: 1;">
-                                     <div style="font-weight: 500;">${escapeHtml(e.note)}</div>
-                                     <div style="font-size: 0.6rem; color: #94a3b8;">${e.date} ${e.time}</div>
-                                 </div>
-                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                     <span style="font-weight: 600; color: ${color};">${sign}RM${e.amount.toFixed(2)}</span>
-                                     <button class="search-edit-btn" data-id="${e.id}" style="background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 4px;">✏️</button>
-                                     <button class="search-delete-btn" data-id="${e.id}" style="background: none; border: none; cursor: pointer; font-size: 0.8rem; padding: 4px;">🗑</button>
-                                 </div>
-                             </div>
-                         `;
-                     }
-                     resultsDiv.innerHTML = html;
-                     
-                     resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
-                         item.onclick = (e) => {
-                             if (e.target.classList.contains('search-edit-btn') || e.target.classList.contains('search-delete-btn')) return;
-                             let date = item.dataset.date;
-                             let id = item.dataset.id;
-                             jumpToDate(date, id);
-                         };
-                     });
-                     
-                     resultsDiv.querySelectorAll('.search-edit-btn').forEach(btn => {
-                         btn.onclick = (e) => {
-                             e.stopPropagation();
-                             let id = btn.dataset.id;
-                             let entry = entries.find(e => e.id === id);
-                             if (entry) { modal.remove(); editEntry(id); }
-                         };
-                     });
-                     
-                     resultsDiv.querySelectorAll('.search-delete-btn').forEach(btn => {
-                         btn.onclick = (e) => {
-                             e.stopPropagation();
-                             let id = btn.dataset.id;
-                             if (confirm('确定删除这条记录吗？')) {
-                                 entries = entries.filter(e => e.id !== id);
-                                 save();
-                                 performSearch();
-                                 renderCalendar();
-                                 renderEntries();
-                                 renderCategoryDropdown();
-                                 showToast('已删除');
-                             }
-                         };
-                     });
-                 }
-                 
-                 function resetSearch() {
-                     document.getElementById('searchKeyword').value = '';
-                     let today = new Date();
-                     let thirtyDaysAgo = new Date();
-                     thirtyDaysAgo.setDate(today.getDate() - 30);
-                     document.getElementById('searchStartDate').value = thirtyDaysAgo.toISOString().slice(0,10);
-                     document.getElementById('searchEndDate').value = today.toISOString().slice(0,10);
-                     document.getElementById('searchMinAmount').value = '';
-                     document.getElementById('searchMaxAmount').value = '';
-                     document.querySelector('input[name="searchType"][value="all"]').checked = true;
-                     document.getElementById('searchResults').innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 20px;">输入条件后点击搜索</div>';
-                 }
-                 
-                 document.getElementById('doSearchBtn').onclick = performSearch;
-                 document.getElementById('resetSearchBtn').onclick = resetSearch;
-                 document.getElementById('closeSearchBtn').onclick = () => modal.remove();
-                 modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-             }
-             
              function exportBackup() { let backup={entries,expenseCats,incomeCats,uiSettings}; let blob=new Blob([JSON.stringify(backup)],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`记账_${new Date().toISOString().slice(0,10)}.json`; a.click(); showToast('导出成功'); }
              function exportExcel() { if(!entries.length){showToast('无数据');return;} let csv="日期,时间,类型,分类,金额\n"; for(let e of entries){ let sign=e.type==='expense'?'-':'+'; csv+=`${e.date},${e.time},${e.type==='expense'?'支出':'收入'},${e.note},${sign}RM${e.amount.toFixed(2)}\n`; } let blob=new Blob(["\uFEFF"+csv],{type:'text/csv'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`收支_${new Date().toISOString().slice(0,10)}.csv`; a.click(); showToast('导出CSV完成'); }
              function importBackup() { let input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=(e)=>{ let file=e.target.files[0]; let reader=new FileReader(); reader.onload=(ev)=>{ try{ let data=JSON.parse(ev.target.result); if(data.entries) {
@@ -1871,8 +1817,26 @@
                  });
                  
                  document.getElementById('amountInput').addEventListener('input', () => { updateInputColor(); });
-                 document.getElementById('amountInput').addEventListener('keypress',e=>{if(e.key==='Enter') addRecord();});
-                 document.getElementById('categoryInput').addEventListener('keypress',e=>{if(e.key==='Enter') addRecord();});
+                 document.getElementById('amountInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault(); // 防止默认行为
+
+        // 👉 跳到分类输入框
+        const categoryInput = document.getElementById('categoryInput');
+        categoryInput.focus();
+
+        // 👉 自动打开分类下拉（更顺手）
+        const dropdown = document.getElementById('categoryDropdown');
+        dropdown.classList.add('show');
+        renderCategoryDropdown();
+    }
+});
+                 document.getElementById('categoryInput').addEventListener('keypress', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addRecord();
+    }
+});
          
          document.getElementById('entriesList').addEventListener('click', (e) => {
              let editBtn = e.target.closest('.edit-btn');
