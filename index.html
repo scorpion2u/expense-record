@@ -1559,12 +1559,17 @@
                  modal.innerHTML = `
                      <div class="settings-panel" style="max-width: 400px;">
                          <h3 style="margin-bottom: 16px;">📊 ${currentYear}年${currentMonth+1}月 统计</h3>
-                         <div style="margin-bottom: 20px;">
-                             <canvas id="expensePieChart" style="max-height: 200px;"></canvas>
-                         </div>
-                         <div style="margin-bottom: 20px;">
-                             <canvas id="incomePieChart" style="max-height: 200px;"></canvas>
-                         </div>
+                         <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">
+📌 本月汇总
+</div>
+${monthEntries.length > 0 
+    ? `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">
+         📌 本月共 ${monthEntries.length} 笔记录
+       </div>`
+    : `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">
+         📭 本月暂无记录
+       </div>`
+}
                          <div style="background: #f8fafc; padding: 12px; border-radius: 16px; margin-bottom: 16px;">
                              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                                  <span>💸 支出</span>
@@ -1585,43 +1590,7 @@
                      </div>
                  `;
                  document.body.appendChild(modal);
-                 
-                 let expenseCtx = document.getElementById('expensePieChart').getContext('2d');
-                 new Chart(expenseCtx, {
-                     type: 'pie',
-                     data: {
-                         labels: Object.keys(expMap).length ? Object.keys(expMap) : ['无支出'],
-                         datasets: [{
-                             data: Object.keys(expMap).length ? Object.values(expMap) : [1],
-                             backgroundColor: ['#f97316', '#e11d48', '#d97706', '#c2413a', '#ef4444', '#f59e0b', '#dc2626']
-                         }]
-                     },
-                     options: {
-                         plugins: {
-                             legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                             title: { display: true, text: '支出分类占比', font: { size: 12 } }
-                         }
-                     }
-                 });
-                 
-                 let incomeCtx = document.getElementById('incomePieChart').getContext('2d');
-                 new Chart(incomeCtx, {
-                     type: 'pie',
-                     data: {
-                         labels: Object.keys(incMap).length ? Object.keys(incMap) : ['无收入'],
-                         datasets: [{
-                             data: Object.keys(incMap).length ? Object.values(incMap) : [1],
-                             backgroundColor: ['#10b981', '#3b82f6', '#06b6d4', '#14b8a6', '#2dd4bf']
-                         }]
-                     },
-                     options: {
-                         plugins: {
-                             legend: { position: 'bottom', labels: { font: { size: 10 } } },
-                             title: { display: true, text: '收入分类占比', font: { size: 12 } }
-                         }
-                     }
-                 });
-                 
+                               
                  modal.querySelector('#closeStatsBtn').onclick = () => modal.remove();
                  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
              }
