@@ -753,6 +753,10 @@
          filter: brightness(0.9);
          }
       </style>
+      <link rel="manifest" href="/expense-record/manifest.json">
+<meta name="theme-color" content="#c2413a">
+<link rel="apple-touch-icon" href="/expense-record/icon-192.png">
+      
    </head>
    <body>
       <div class="container">
@@ -851,6 +855,23 @@
              let currentType = 'expense';
              let displayLimit = 5;
              let isAdding = false;
+         
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  setTimeout(() => {
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'block';
+  }, 100);
+});
+
+window.addEventListener('appinstalled', () => {
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
          
              let uiSettings = {
                  cardRadius: 24,
@@ -1841,7 +1862,82 @@ ${monthEntries.length > 0
              renderEntries();
              renderCategoryDropdown();
              updateInputColor();
-         })();
+const isIOS = () => {
+  return /iphone|ipad|ipod/i.test(navigator.userAgent)
+    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+             window.addEventListener('load', () => {
+
+  // 🍎 iOS 提示
+  if (isIOS() &&
+      !('standalone' in window.navigator && window.navigator.standalone)) {
+    setTimeout(() => {
+      showToast('👉 点击分享 → 添加到主屏幕');
+    }, 2000);
+  }
+
+  // 📲 安装按钮点击
+  const btn = document.getElementById('installBtn');
+
+if (btn && !btn.dataset.bound) {
+  btn.dataset.bound = 'true'; // 防止重复绑定
+
+  btn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+
+      deferredPrompt.prompt();
+      const choice = await deferredPrompt.userChoice;
+
+      if (choice.outcome === 'accepted') {
+        showToast('安装成功 🎉');
+      }
+
+      deferredPrompt = null;
+      btn.style.display = 'none';
+    });
+  }
+
+  // 🚀 Service Worker（合并进来）
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/expense-record/sw.js').then(reg => {
+      console.log('PWA ready');
+
+      reg.onupdatefound = () => {
+        const newWorker = reg.installing;
+
+        newWorker.onstatechange = () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('🔄 已更新，刷新生效');
+          }
+        };
+      };
+
+    }).catch(err => console.log(err));
+  }
+
+});
+             
+  
+            
+})();
       </script>
+      <button id="installBtn" style="
+position: fixed;
+bottom: 80px;
+left: 50%;
+transform: translateX(-50%);
+padding: 10px 18px;
+border-radius: 30px;
+border: none;
+background: var(--expense-color);
+color: white;
+font-size: 14px;
+display: none;
+z-index: 999;
+box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+">
+📲 安装App
+</button>
+
    </body>
 </html>
