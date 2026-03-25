@@ -1759,7 +1759,46 @@ ${monthEntries.length > 0
     };
 }
                  
-             function exportBackup() { let backup={entries,expenseCats,incomeCats,uiSettings}; let blob=new Blob([JSON.stringify(backup)],{type:'application/json'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`记账_${new Date().toISOString().slice(0,10)}.json`; a.click(); showToast('导出成功'); }
+             function exportBackup() {
+  let data = {
+    entries,
+    expenseCats,
+    incomeCats,
+    uiSettings
+  };
+
+  let json = JSON.stringify(data, null, 2);
+
+  // 📱 优先：系统分享（APK / 手机）
+  if (navigator.share) {
+    let blob = new Blob([json], { type: 'application/json' });
+    let file = new File([blob], '记账备份.json', { type: 'application/json' });
+
+    navigator.share({
+      title: '记账备份',
+      text: '我的记账数据备份',
+      files: [file]
+    }).then(() => {
+      showToast('已分享备份 📤');
+    }).catch(() => {
+      showToast('已取消分享');
+    });
+
+  } else {
+    // 💻 备用：浏览器下载（电脑 / 普通网页）
+    let blob = new Blob([json], { type: 'application/json' });
+    let url = URL.createObjectURL(blob);
+
+    let a = document.createElement('a');
+    a.href = url;
+    a.download = '记账备份.json';
+    a.click();
+
+    URL.revokeObjectURL(url);
+
+    showToast('已下载备份 📥');
+  }
+}
              function exportExcel() { if(!entries.length){showToast('无数据');return;} let csv="日期,时间,类型,分类,金额\n"; for(let e of entries){ let sign=e.type==='expense'?'-':'+'; csv+=`${e.date},${e.time},${e.type==='expense'?'支出':'收入'},${e.note},${sign}RM${e.amount.toFixed(2)}\n`; } let blob=new Blob(["\uFEFF"+csv],{type:'text/csv'}); let a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`收支_${new Date().toISOString().slice(0,10)}.csv`; a.click(); showToast('导出CSV完成'); }
              function importBackup() { let input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=(e)=>{ let file=e.target.files[0]; let reader=new FileReader(); reader.onload=(ev)=>{ try{ let data=JSON.parse(ev.target.result); if(data.entries) {
              entries = data.entries.map(e => ({
