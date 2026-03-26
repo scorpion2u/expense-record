@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>信用卡管家 | 账单管理助手</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f5f7fb;
+      padding: 16px 12px;
+      transition: background 0.3s ease;
+    }
+
+    /* 暗色模式变量 */
+    :root {
+      --bg-color: #f5f7fb;
+      --card-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+      --expense-color: #e53e3e;
+      --income-color: #38a169;
+      --warning-color: #ed8936;
+      --success-color: #48bb78;
+      --primary-color: #4299e1;
+    }
+
+    body.dark {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      background: var(--bg-color);
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* 头部 */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: 28px;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--text-primary);
+      transition: all 0.1s;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* 信用卡卡片 */
+    .credit-cards-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .credit-card-item {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .card-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .card-bank {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-left: 8px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .card-actions span {
+      cursor: pointer;
+      font-size: 1rem;
+      opacity: 0.6;
+    }
+
+    .card-details {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-item {
+      flex: 1;
+      text-align: center;
+    }
+
+    .detail-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+    }
+
+    .detail-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .detail-value.warning {
+      color: var(--warning-color);
+    }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary-color);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+
+    .progress-fill.warning {
+      background: var(--warning-color);
+    }
+
+    .progress-fill.danger {
+      background: var(--expense-color);
+    }
+
+    /* 账单周期卡片 */
+    .bill-period-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .bill-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .bill-period {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .bill-amount {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--expense-color);
+    }
+
+    .bill-stats {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .stat {
+      text-align: center;
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* 交易列表 */
+    .transactions-section {
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .section-header h3 {
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+
+    .add-btn {
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    .transaction-list {
+      list-style: none;
+    }
+
+    .transaction-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .transaction-info {
+      flex: 1;
+    }
+
+    .transaction-category {
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--text-primary);
+    }
+
+    .transaction-date {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .transaction-amount {
+      font-weight: 600;
+      color: var(--expense-color);
+    }
+
+    .transaction-actions {
+      display: flex;
+      gap: 12px;
+      margin-left: 12px;
+    }
+
+    .transaction-actions span {
+      cursor: pointer;
+      opacity: 0.5;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px;
+      color: var(--text-secondary);
+    }
+
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 24px;
+      padding: 20px;
+      width: 90%;
+      max-width: 340px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h3 {
+      margin-bottom: 16px;
+      color: var(--text-primary);
+    }
+
+    .modal-content input,
+    .modal-content select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 28px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+      padding: 10px;
+      border-radius: 28px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-confirm {
+      background: var(--primary-color);
+      color: white;
+    }
+
+    .btn-cancel {
+      background: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    /* 其他 */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 8px 18px;
+      border-radius: 32px;
+      font-size: 0.8rem;
+      z-index: 1100;
+      animation: fadeInOut 2s ease;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+    }
+
+    .select-card {
+      width: 100%;
+      padding: 10px;
+      border-radius: 28px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💳 信用卡管家</h1>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggle">🌙</button>
+        <button class="icon-btn" id="backToMain" onclick="window.location.href='index.html'">🏠 返回</button>
+      </div>
+    </div>
+
+    <!-- 信用卡列表 -->
+    <div class="credit-cards-grid" id="creditCardsList"></div>
+
+    <!-- 添加信用卡按钮 -->
+    <button class="icon-btn" id="addCardBtn" style="width: 100%; margin-bottom: 20px; padding: 12px;">+ 添加信用卡</button>
+
+    <!-- 当前账单周期 -->
+    <div class="bill-period-card" id="billPeriodCard" style="display: none;">
+      <div class="bill-header">
+        <span class="bill-period" id="billPeriod"></span>
+        <button class="icon-btn" id="repayBtn" style="padding: 4px 12px; font-size: 0.7rem;">💰 还款</button>
+      </div>
+      <div class="bill-amount" id="billAmount">RM0.00</div>
+      <div class="bill-stats">
+        <div class="stat">
+          <div class="stat-label">剩余额度</div>
+          <div class="stat-value" id="remainingLimit">-</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">使用率</div>
+          <div class="stat-value" id="usageRate">0%</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">距离还款</div>
+          <div class="stat-value" id="daysToDue">-</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 消费记录 -->
+    <div class="transactions-section" id="transactionsSection" style="display: none;">
+      <div class="section-header">
+        <h3>📋 本期消费明细</h3>
+        <button class="add-btn" id="addTransactionBtn">+ 添加消费</button>
+      </div>
+      <ul class="transaction-list" id="transactionList"></ul>
+    </div>
+  </div>
+
+  <script>
+    // 存储 Key
+    const STORAGE_CREDIT_CARDS = 'credit_cards_data';
+    const STORAGE_TRANSACTIONS = 'credit_transactions_data';
+    const STORAGE_REPAYMENTS = 'credit_repayments_data';
+
+    // 全局数据
+    let creditCards = [];
+    let transactions = [];
+    let repayments = [];
+    let currentSelectedCardId = null;
+    let darkMode = false;
+
+    // 默认分类
+    const categories = ['餐饮', '购物', '交通', '娱乐', '居家', '医疗', '教育', '其他'];
+
+    // ========== 工具函数 ==========
+    function showToast(msg) {
+      let t = document.querySelector('.toast');
+      if (t) t.remove();
+      let toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = msg;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    function saveData() {
+      localStorage.setItem(STORAGE_CREDIT_CARDS, JSON.stringify(creditCards));
+      localStorage.setItem(STORAGE_TRANSACTIONS, JSON.stringify(transactions));
+      localStorage.setItem(STORAGE_REPAYMENTS, JSON.stringify(repayments));
+    }
+
+    function loadData() {
+      try {
+        let cards = localStorage.getItem(STORAGE_CREDIT_CARDS);
+        if (cards) creditCards = JSON.parse(cards);
+        
+        let trans = localStorage.getItem(STORAGE_TRANSACTIONS);
+        if (trans) transactions = JSON.parse(trans);
+        
+        let reps = localStorage.getItem(STORAGE_REPAYMENTS);
+        if (reps) repayments = JSON.parse(reps);
+      } catch(e) {}
+      
+      if (creditCards.length === 0) {
+        // 示例数据
+        creditCards.push({
+          id: 'cc_001',
+          name: '招商银行',
+          bank: '招商银行',
+          billDay: 5,
+          dueDay: 23,
+          creditLimit: 50000,
+          remark: ''
+        });
+        saveData();
+      }
+    }
+
+    // 获取信用卡当前已用额度（未还款的交易总额）
+    function getCardCurrentBalance(cardId) {
+      return transactions
+        .filter(t => t.cardId === cardId && !t.isPaid)
+        .reduce((sum, t) => sum + t.amount, 0);
+    }
+
+    // 获取当前账单周期（基于账单日）
+    function getCurrentBillPeriod(card) {
+      const today = new Date();
+      const billDay = card.billDay;
+      
+      let billStart, billEnd;
+      let currentYear = today.getFullYear();
+      let currentMonth = today.getMonth();
+      
+      if (today.getDate() >= billDay) {
+        // 当前账单周期: 本月 billDay 到 下月 billDay-1
+        billStart = new Date(currentYear, currentMonth, billDay);
+        billEnd = new Date(currentYear, currentMonth + 1, billDay - 1);
+      } else {
+        // 当前账单周期: 上月 billDay 到 本月 billDay-1
+        billStart = new Date(currentYear, currentMonth - 1, billDay);
+        billEnd = new Date(currentYear, currentMonth, billDay - 1);
+      }
+      
+      return {
+        start: billStart,
+        end: billEnd,
+        startStr: `${billStart.getFullYear()}-${String(billStart.getMonth()+1).padStart(2,'0')}-${String(billStart.getDate()).padStart(2,'0')}`,
+        endStr: `${billEnd.getFullYear()}-${String(billEnd.getMonth()+1).padStart(2,'0')}-${String(billEnd.getDate()).padStart(2,'0')}`
+      };
+    }
+
+    // 获取账单周期内的消费总额
+    function getBillPeriodAmount(cardId, billPeriod) {
+      return transactions
+        .filter(t => {
+          if (t.cardId !== cardId) return false;
+          if (t.isPaid) return false;
+          let transDate = new Date(t.date);
+          return transDate >= billPeriod.start && transDate <= billPeriod.end;
+        })
+        .reduce((sum, t) => sum + t.amount, 0);
+    }
+
+    // 获取距离还款日的天数
+    function getDaysToDue(card) {
+      const today = new Date();
+      const dueDay = card.dueDay;
+      let dueDate = new Date(today.getFullYear(), today.getMonth(), dueDay);
+      
+      if (today.getDate() > dueDay) {
+        dueDate = new Date(today.getFullYear(), today.getMonth() + 1, dueDay);
+      }
+      
+      const diffTime = dueDate - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    }
+
+    // 渲染信用卡列表
+    function renderCreditCards() {
+      const container = document.getElementById('creditCardsList');
+      if (creditCards.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary)">暂无信用卡，点击上方添加</div>';
+        return;
+      }
+      
+      container.innerHTML = creditCards.map(card => {
+        const balance = getCardCurrentBalance(card.id);
+        const limit = card.creditLimit;
+        const usagePercent = (balance / limit * 100).toFixed(1);
+        let progressClass = '';
+        if (usagePercent >= 90) progressClass = 'danger';
+        else if (usagePercent >= 70) progressClass = 'warning';
+        
+        return `
+          <div class="credit-card-item" data-card-id="${card.id}">
+            <div class="card-header">
+              <div>
+                <span class="card-name">${escapeHtml(card.name)}</span>
+                <span class="card-bank">${escapeHtml(card.bank)}</span>
+              </div>
+              <div class="card-actions">
+                <span class="edit-card" data-id="${card.id}">✏️</span>
+                <span class="delete-card" data-id="${card.id}">🗑</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="detail-item">
+                <div class="detail-label">已用额度</div>
+                <div class="detail-value">RM${balance.toFixed(2)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">可用额度</div>
+                <div class="detail-value">RM${(limit - balance).toFixed(2)}</div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">账单日/还款日</div>
+                <div class="detail-value">${card.billDay}号 / ${card.dueDay}号</div>
+              </div>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill ${progressClass}" style="width: ${Math.min(usagePercent, 100)}%"></div>
+            </div>
+            <div style="font-size:0.65rem; color:var(--text-secondary); margin-top: 6px;">使用率 ${usagePercent}%</div>
+          </div>
+        `;
+      }).join('');
+      
+      // 绑定卡片点击事件（选择卡片）
+      document.querySelectorAll('.credit-card-item').forEach(el => {
+        el.addEventListener('click', (e) => {
+          if (e.target.classList.contains('edit-card') || e.target.classList.contains('delete-card')) return;
+          const cardId = el.dataset.cardId;
+          selectCard(cardId);
+        });
+      });
+      
+      // 编辑卡片
+      document.querySelectorAll('.edit-card').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          editCreditCard(id);
+        };
+      });
+      
+      // 删除卡片
+      document.querySelectorAll('.delete-card').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          if (confirm('删除信用卡将同时删除所有相关消费记录，确定吗？')) {
+            creditCards = creditCards.filter(c => c.id !== id);
+            transactions = transactions.filter(t => t.cardId !== id);
+            if (currentSelectedCardId === id) {
+              currentSelectedCardId = null;
+              document.getElementById('billPeriodCard').style.display = 'none';
+              document.getElementById('transactionsSection').style.display = 'none';
+            }
+            saveData();
+            renderCreditCards();
+            if (creditCards.length > 0 && !currentSelectedCardId) {
+              selectCard(creditCards[0].id);
+            }
+            showToast('已删除');
+          }
+        };
+      });
+    }
+
+    // 选择信用卡
+    function selectCard(cardId) {
+      currentSelectedCardId = cardId;
+      const card = creditCards.find(c => c.id === cardId);
+      if (!card) return;
+      
+      const billPeriod = getCurrentBillPeriod(card);
+      const billAmount = getBillPeriodAmount(cardId, billPeriod);
+      const balance = getCardCurrentBalance(cardId);
+      const remaining = card.creditLimit - balance;
+      const usageRate = (balance / card.creditLimit * 100).toFixed(1);
+      const daysToDue = getDaysToDue(card);
+      
+      document.getElementById('billPeriod').innerHTML = `📅 账单周期：${billPeriod.startStr} ~ ${billPeriod.endStr}`;
+      document.getElementById('billAmount').innerHTML = `RM${billAmount.toFixed(2)}`;
+      document.getElementById('remainingLimit').innerHTML = `RM${remaining.toFixed(2)}`;
+      document.getElementById('usageRate').innerHTML = `${usageRate}%`;
+      document.getElementById('daysToDue').innerHTML = daysToDue >= 0 ? `${daysToDue}天后` : '已逾期';
+      
+      document.getElementById('billPeriodCard').style.display = 'block';
+      document.getElementById('transactionsSection').style.display = 'block';
+      
+      renderTransactions(cardId, billPeriod);
+    }
+
+    // 渲染交易记录（只显示当前账单周期）
+    function renderTransactions(cardId, billPeriod) {
+      const periodTransactions = transactions
+        .filter(t => {
+          if (t.cardId !== cardId) return false;
+          let transDate = new Date(t.date);
+          return transDate >= billPeriod.start && transDate <= billPeriod.end && !t.isPaid;
+        })
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      const listEl = document.getElementById('transactionList');
+      
+      if (periodTransactions.length === 0) {
+        listEl.innerHTML = '<li class="empty-state">暂无消费记录</li>';
+        return;
+      }
+      
+      listEl.innerHTML = periodTransactions.map(t => `
+        <li class="transaction-item">
+          <div class="transaction-info">
+            <div class="transaction-category">${escapeHtml(t.category)}</div>
+            <div class="transaction-date">${t.date} ${t.time || ''}</div>
+            <div style="font-size:0.6rem; color:var(--text-secondary);">${escapeHtml(t.remark || '')}</div>
+          </div>
+          <div class="transaction-amount">RM${t.amount.toFixed(2)}</div>
+          <div class="transaction-actions">
+            <span class="edit-trans" data-id="${t.id}">✏️</span>
+            <span class="delete-trans" data-id="${t.id}">🗑</span>
+          </div>
+        </li>
+      `).join('');
+      
+      // 编辑交易
+      document.querySelectorAll('.edit-trans').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          editTransaction(id);
+        };
+      });
+      
+      // 删除交易
+      document.querySelectorAll('.delete-trans').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          if (confirm('删除此消费记录？')) {
+            transactions = transactions.filter(t => t.id !== id);
+            saveData();
+            if (currentSelectedCardId) {
+              const card = creditCards.find(c => c.id === currentSelectedCardId);
+              if (card) {
+                const newBillPeriod = getCurrentBillPeriod(card);
+                renderTransactions(currentSelectedCardId, newBillPeriod);
+                renderCreditCards();
+                selectCard(currentSelectedCardId);
+              }
+            }
+            showToast('已删除');
+          }
+        };
+      });
+    }
+
+    // 添加信用卡弹窗
+    function addCreditCard() {
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>💳 添加信用卡</h3>
+          <input type="text" id="cardName" placeholder="卡名称 (如: 招商银行)" autocomplete="off">
+          <input type="text" id="cardBank" placeholder="发卡行" autocomplete="off">
+          <input type="number" id="cardLimit" placeholder="信用额度 (RM)" step="0.01">
+          <input type="number" id="billDay" placeholder="账单日 (1-28)" min="1" max="28">
+          <input type="number" id="dueDay" placeholder="还款日 (1-28)" min="1" max="28">
+          <div class="modal-buttons">
+            <button class="btn-confirm" id="confirmAdd">确认添加</button>
+            <button class="btn-cancel" id="cancelAdd">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('confirmAdd').onclick = () => {
+        const name = document.getElementById('cardName').value.trim();
+        const bank = document.getElementById('cardBank').value.trim();
+        const limit = parseFloat(document.getElementById('cardLimit').value);
+        const billDay = parseInt(document.getElementById('billDay').value);
+        const dueDay = parseInt(document.getElementById('dueDay').value);
+        
+        if (!name || !limit || !billDay || !dueDay) {
+          showToast('请填写完整信息');
+          return;
+        }
+        
+        creditCards.push({
+          id: 'cc_' + Date.now(),
+          name: name,
+          bank: bank || name,
+          creditLimit: limit,
+          billDay: billDay,
+          dueDay: dueDay,
+          remark: ''
+        });
+        
+        saveData();
+        renderCreditCards();
+        if (creditCards.length === 1) selectCard(creditCards[0].id);
+        modal.remove();
+        showToast('添加成功');
+      };
+      
+      document.getElementById('cancelAdd').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+
+    // 编辑信用卡
+    function editCreditCard(id) {
+      const card = creditCards.find(c => c.id === id);
+      if (!card) return;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>✏️ 编辑信用卡</h3>
+          <input type="text" id="cardName" value="${escapeHtml(card.name)}" placeholder="卡名称">
+          <input type="text" id="cardBank" value="${escapeHtml(card.bank)}" placeholder="发卡行">
+          <input type="number" id="cardLimit" value="${card.creditLimit}" placeholder="信用额度 (RM)" step="0.01">
+          <input type="number" id="billDay" value="${card.billDay}" placeholder="账单日" min="1" max="28">
+          <input type="number" id="dueDay" value="${card.dueDay}" placeholder="还款日" min="1" max="28">
+          <div class="modal-buttons">
+            <button class="btn-confirm" id="confirmEdit">保存修改</button>
+            <button class="btn-cancel" id="cancelEdit">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('confirmEdit').onclick = () => {
+        card.name = document.getElementById('cardName').value.trim() || card.name;
+        card.bank = document.getElementById('cardBank').value.trim() || card.bank;
+        card.creditLimit = parseFloat(document.getElementById('cardLimit').value) || card.creditLimit;
+        card.billDay = parseInt(document.getElementById('billDay').value) || card.billDay;
+        card.dueDay = parseInt(document.getElementById('dueDay').value) || card.dueDay;
+        
+        saveData();
+        renderCreditCards();
+        if (currentSelectedCardId === id) selectCard(id);
+        modal.remove();
+        showToast('保存成功');
+      };
+      
+      document.getElementById('cancelEdit').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+
+    // 添加消费记录
+    function addTransaction() {
+      if (!currentSelectedCardId) {
+        showToast('请先选择一张信用卡');
+        return;
+      }
+      
+      const card = creditCards.find(c => c.id === currentSelectedCardId);
+      const today = new Date().toISOString().slice(0, 10);
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>➕ 添加消费记录</h3>
+          <input type="number" id="transAmount" placeholder="金额 (RM)" step="0.01" autocomplete="off">
+          <select id="transCategory">
+            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+          </select>
+          <input type="date" id="transDate" value="${today}">
+          <input type="text" id="transRemark" placeholder="备注 (选填)" autocomplete="off">
+          <div class="modal-buttons">
+            <button class="btn-confirm" id="confirmTrans">确认添加</button>
+            <button class="btn-cancel" id="cancelTrans">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('confirmTrans').onclick = () => {
+        const amount = parseFloat(document.getElementById('transAmount').value);
+        const category = document.getElementById('transCategory').value;
+        const date = document.getElementById('transDate').value;
+        const remark = document.getElementById('transRemark').value.trim();
+        
+        if (!amount || amount <= 0) {
+          showToast('请输入有效金额');
+          return;
+        }
+        
+        transactions.push({
+          id: 'tx_' + Date.now(),
+          cardId: currentSelectedCardId,
+          amount: amount,
+          category: category,
+          date: date,
+          time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+          remark: remark,
+          isPaid: false
+        });
+        
+        saveData();
+        
+        // 刷新视图
+        const newBillPeriod = getCurrentBillPeriod(card);
+        renderTransactions(currentSelectedCardId, newBillPeriod);
+        renderCreditCards();
+        selectCard(currentSelectedCardId);
+        
+        modal.remove();
+        showToast('添加成功');
+      };
+      
+      document.getElementById('cancelTrans').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+
+    // 编辑交易
+    function editTransaction(id) {
+      const trans = transactions.find(t => t.id === id);
+      if (!trans) return;
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>✏️ 编辑消费</h3>
+          <input type="number" id="editAmount" value="${trans.amount}" step="0.01">
+          <select id="editCategory">
+            ${categories.map(c => `<option value="${c}" ${c === trans.category ? 'selected' : ''}>${c}</option>`).join('')}
+          </select>
+          <input type="date" id="editDate" value="${trans.date}">
+          <input type="text" id="editRemark" value="${escapeHtml(trans.remark || '')}" placeholder="备注">
+          <div class="modal-buttons">
+            <button class="btn-confirm" id="confirmEditTrans">保存</button>
+            <button class="btn-cancel" id="cancelEditTrans">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('confirmEditTrans').onclick = () => {
+        trans.amount = parseFloat(document.getElementById('editAmount').value) || trans.amount;
+        trans.category = document.getElementById('editCategory').value;
+        trans.date = document.getElementById('editDate').value;
+        trans.remark = document.getElementById('editRemark').value.trim();
+        
+        saveData();
+        
+        const card = creditCards.find(c => c.id === trans.cardId);
+        if (card && currentSelectedCardId === trans.cardId) {
+          const billPeriod = getCurrentBillPeriod(card);
+          renderTransactions(currentSelectedCardId, billPeriod);
+          renderCreditCards();
+          selectCard(currentSelectedCardId);
+        }
+        
+        modal.remove();
+        showToast('保存成功');
+      };
+      
+      document.getElementById('cancelEditTrans').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+
+    // 还款功能
+    function repay() {
+      if (!currentSelectedCardId) return;
+      const card = creditCards.find(c => c.id === currentSelectedCardId);
+      const billPeriod = getCurrentBillPeriod(card);
+      const billAmount = getBillPeriodAmount(currentSelectedCardId, billPeriod);
+      
+      if (billAmount <= 0) {
+        showToast('本期暂无待还金额');
+        return;
+      }
+      
+      const modal = document.createElement('div');
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `
+        <div class="modal-content">
+          <h3>💰 还款</h3>
+          <div style="margin-bottom: 12px; text-align: center;">
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">本期应还</div>
+            <div style="font-size: 1.4rem; font-weight: 700; color: var(--expense-color);">RM${billAmount.toFixed(2)}</div>
+          </div>
+          <input type="number" id="repayAmount" placeholder="还款金额" step="0.01" value="${billAmount.toFixed(2)}">
+          <input type="date" id="repayDate" value="${new Date().toISOString().slice(0, 10)}">
+          <div class="modal-buttons">
+            <button class="btn-confirm" id="confirmRepay">确认还款</button>
+            <button class="btn-cancel" id="cancelRepay">取消</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('confirmRepay').onclick = () => {
+        const repayAmount = parseFloat(document.getElementById('repayAmount').value);
+        const repayDate = document.getElementById('repayDate').value;
+        
+        if (!repayAmount || repayAmount <= 0) {
+          showToast('请输入有效金额');
+          return;
+        }
+        
+        // 标记账单周期内的交易为已还款
+        transactions.forEach(t => {
+          if (t.cardId === currentSelectedCardId && !t.isPaid) {
+            let transDate = new Date(t.date);
+            if (transDate >= billPeriod.start && transDate <= billPeriod.end) {
+              t.isPaid = true;
+            }
+          }
+        });
+        
+        repayments.push({
+          id: 'rp_' + Date.now(),
+          cardId: currentSelectedCardId,
+          amount: repayAmount,
+          date: repayDate,
+          billPeriod: `${billPeriod.startStr} ~ ${billPeriod.endStr}`
+        });
+        
+        saveData();
+        
+        // 刷新
+        renderCreditCards();
+        selectCard(currentSelectedCardId);
+        modal.remove();
+        showToast(`还款 RM${repayAmount.toFixed(2)} 成功`);
+      };
+      
+      document.getElementById('cancelRepay').onclick = () => modal.remove();
+      modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    }
+
+    // 暗色模式
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      if (darkMode) {
+        document.body.classList.add('dark');
+        localStorage.setItem('credit_dark_mode', 'true');
+      } else {
+        document.body.classList.remove('dark');
+        localStorage.setItem('credit_dark_mode', 'false');
+      }
+    }
+
+    function loadDarkMode() {
+      const saved = localStorage.getItem('credit_dark_mode');
+      if (saved === 'true') {
+        darkMode = true;
+        document.body.classList.add('dark');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // 初始化
+    function init() {
+      loadData();
+      loadDarkMode();
+      renderCreditCards();
+      
+      if (creditCards.length > 0) {
+        selectCard(creditCards[0].id);
+      }
+      
+      document.getElementById('addCardBtn').onclick = addCreditCard;
+      document.getElementById('addTransactionBtn').onclick = addTransaction;
+      document.getElementById('repayBtn').onclick = repay;
+      document.getElementById('themeToggle').onclick = toggleDarkMode;
+    }
+    
+    init();
+  </script>
+</body>
+</html>
