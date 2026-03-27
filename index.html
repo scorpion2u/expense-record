@@ -1624,22 +1624,33 @@
       let isClearing = false;
 
       function clearAllData() {
-        if (isClearing) return;
-        isClearing = true;
+  if (isClearing) return;
+  isClearing = true;
 
-        const confirmStep1 = confirm('⚠️ 警告：将删除所有记录，无法恢复！\n\n是否继续？');
-        if (!confirmStep1) {
-          isClearing = false;
-          return;
-        }
+  // 第一步确认框
+  const confirmModal = createModal(
+    '⚠️ 警告',
+    '<div style="text-align:center; padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>',
+    '<div style="display:flex; gap:12px;"><button id="confirmClearBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确定</button><button id="cancelClearBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
+  );
 
-        const input = prompt('请输入 DELETE 确认清空：');
-        if (input !== 'DELETE') {
-          showToast('已取消');
-          isClearing = false;
-          return;
-        }
+  confirmModal.querySelector('#confirmClearBtn').onclick = () => {
+    confirmModal.remove();
 
+    // 第二步：输入 DELETE 确认
+    const inputModal = createModal(
+      '⚠️ 最终确认',
+      '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; text-align:center; font-size:16px; outline:none;"></div>',
+      '<button id="finalConfirmBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确认清空</button>'
+    );
+
+    inputModal.querySelector('#finalConfirmBtn').onclick = () => {
+      const input = inputModal.querySelector('#deleteConfirmInput').value;
+      if (input !== 'DELETE') {
+        showToast('已取消');
+        inputModal.remove();
+      } else {
+        // 执行清空
         entries = [];
         expenseCats = [...DEFAULT_EXPENSE];
         incomeCats = [...DEFAULT_INCOME];
@@ -1650,7 +1661,7 @@
         currentMonth = now.getMonth();
         selectedDate = getLocalDate();
         currentType = 'expense';
-        
+
         document.getElementById('amountInput').value = '';
         document.getElementById('categoryInput').value = '';
         document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
@@ -1666,9 +1677,24 @@
         renderCategoryDropdown();
         closeCategoryDropdown();
         closeMenu();
+
         showToast('数据已清空');
-        isClearing = false;
+        inputModal.remove();
       }
+      isClearing = false;
+    };
+
+    inputModal.querySelector('.modal-close').onclick = () => {
+      inputModal.remove();
+      isClearing = false;
+    };
+  };
+
+  confirmModal.querySelector('#cancelClearBtn').onclick = () => {
+    confirmModal.remove();
+    isClearing = false;
+  };
+}
 
       function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
@@ -2736,16 +2762,27 @@
             let id = editBtn.getAttribute('data-id');
             editEntry(id);
           } else if (deleteBtn) {
-            let id = deleteBtn.getAttribute('data-id');
-            if (!confirm('删除记录？')) return;
-            entries = entries.filter(e => String(e.id) !== String(id));
-            rebuildStatsCache();
-            save();
-            renderCalendar();
-            renderEntries();
-            renderCategoryDropdown();
-            showToast('已删除');
-          }
+  let id = deleteBtn.getAttribute('data-id');
+  
+  const modal = createModal(
+    '🗑 删除记录',
+    '<div style="text-align:center; padding:8px 0;">确定要删除这条记录吗？<br><br>删除后无法恢复。</div>',
+    '<div style="display:flex; gap:12px;"><button id="confirmDeleteBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">删除</button><button id="cancelDeleteBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
+  );
+  
+  modal.querySelector('#confirmDeleteBtn').onclick = () => {
+    entries = entries.filter(e => String(e.id) !== String(id));
+    rebuildStatsCache();
+    save();
+    renderCalendar();
+    renderEntries();
+    renderCategoryDropdown();
+    showToast('已删除');
+    modal.remove();
+  };
+  
+  modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove();
+}
         });
         
         // 修复：查看全部按钮始终显示，点击打开模态框
