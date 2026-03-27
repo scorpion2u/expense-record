@@ -1211,6 +1211,12 @@
       70% { opacity: 1; }
       100% { opacity: 0; visibility: hidden; }
     }
+
+    /* 高亮提示 */
+    .highlight-category {
+      background-color: #fef3c7 !important;
+      transition: background-color 0.3s;
+    }
   </style>
   <link rel="manifest" href="/expense-record/manifest.json">
   <meta name="theme-color" content="#c2413a">
@@ -1624,77 +1630,74 @@
       let isClearing = false;
 
       function clearAllData() {
-  if (isClearing) return;
-  isClearing = true;
+        if (isClearing) return;
+        isClearing = true;
 
-  // 第一步确认框
-  const confirmModal = createModal(
-    '⚠️ 警告',
-    '<div style="text-align:center; padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>',
-    '<div style="display:flex; gap:12px;"><button id="confirmClearBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确定</button><button id="cancelClearBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
-  );
+        const confirmModal = createModal(
+          '⚠️ 警告',
+          '<div style="text-align:center; padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>',
+          '<div style="display:flex; gap:12px;"><button id="confirmClearBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确定</button><button id="cancelClearBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
+        );
 
-  confirmModal.querySelector('#confirmClearBtn').onclick = () => {
-    confirmModal.remove();
+        confirmModal.querySelector('#confirmClearBtn').onclick = () => {
+          confirmModal.remove();
 
-    // 第二步：输入 DELETE 确认
-    const inputModal = createModal(
-      '⚠️ 最终确认',
-      '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; text-align:center; font-size:16px; outline:none;"></div>',
-      '<button id="finalConfirmBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确认清空</button>'
-    );
+          const inputModal = createModal(
+            '⚠️ 最终确认',
+            '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; text-align:center; font-size:16px; outline:none;"></div>',
+            '<button id="finalConfirmBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">确认清空</button>'
+          );
 
-    inputModal.querySelector('#finalConfirmBtn').onclick = () => {
-      const input = inputModal.querySelector('#deleteConfirmInput').value;
-      if (input !== 'DELETE') {
-        showToast('已取消');
-        inputModal.remove();
-      } else {
-        // 执行清空
-        entries = [];
-        expenseCats = [...DEFAULT_EXPENSE];
-        incomeCats = [...DEFAULT_INCOME];
-        rebuildStatsCache();
+          inputModal.querySelector('#finalConfirmBtn').onclick = () => {
+            const input = inputModal.querySelector('#deleteConfirmInput').value;
+            if (input !== 'DELETE') {
+              showToast('已取消');
+              inputModal.remove();
+            } else {
+              entries = [];
+              expenseCats = [...DEFAULT_EXPENSE];
+              incomeCats = [...DEFAULT_INCOME];
+              rebuildStatsCache();
 
-        const now = new Date();
-        currentYear = now.getFullYear();
-        currentMonth = now.getMonth();
-        selectedDate = getLocalDate();
-        currentType = 'expense';
+              const now = new Date();
+              currentYear = now.getFullYear();
+              currentMonth = now.getMonth();
+              selectedDate = getLocalDate();
+              currentType = 'expense';
 
-        document.getElementById('amountInput').value = '';
-        document.getElementById('categoryInput').value = '';
-        document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
-        document.querySelector('.type-option.expense').classList.add('active');
-        updateInputColor();
+              document.getElementById('amountInput').value = '';
+              document.getElementById('categoryInput').value = '';
+              document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+              document.querySelector('.type-option.expense').classList.add('active');
+              updateInputColor();
 
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(CAT_EXPENSE_KEY);
-        localStorage.removeItem(CAT_INCOME_KEY);
+              localStorage.removeItem(STORAGE_KEY);
+              localStorage.removeItem(CAT_EXPENSE_KEY);
+              localStorage.removeItem(CAT_INCOME_KEY);
 
-        renderCalendar();
-        renderEntries();
-        renderCategoryDropdown();
-        closeCategoryDropdown();
-        closeMenu();
+              renderCalendar();
+              renderEntries();
+              renderCategoryDropdown();
+              closeCategoryDropdown();
+              closeMenu();
 
-        showToast('数据已清空');
-        inputModal.remove();
+              showToast('数据已清空');
+              inputModal.remove();
+            }
+            isClearing = false;
+          };
+
+          inputModal.querySelector('.modal-close').onclick = () => {
+            inputModal.remove();
+            isClearing = false;
+          };
+        };
+
+        confirmModal.querySelector('#cancelClearBtn').onclick = () => {
+          confirmModal.remove();
+          isClearing = false;
+        };
       }
-      isClearing = false;
-    };
-
-    inputModal.querySelector('.modal-close').onclick = () => {
-      inputModal.remove();
-      isClearing = false;
-    };
-  };
-
-  confirmModal.querySelector('#cancelClearBtn').onclick = () => {
-    confirmModal.remove();
-    isClearing = false;
-  };
-}
 
       function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
@@ -1948,13 +1951,11 @@
               </div>
             </li>
           `;
-          // 修复：没有记录时隐藏查看全部按钮
           const viewMoreBtn = document.getElementById('viewMoreBtn');
           viewMoreBtn.style.display = 'none';
           return;
         }
         
-        // 始终只显示前5条
         let displayEntries = dayEntries.slice(0, 5);
         let html = '';
         
@@ -1980,7 +1981,6 @@
         
         ul.innerHTML = html;
         
-        // 修复：只要有记录就显示按钮，并根据记录数量显示不同文案
         let viewMoreBtn = document.getElementById('viewMoreBtn');
         viewMoreBtn.style.display = 'block';
         if (dayEntries.length > 5) {
@@ -2008,93 +2008,100 @@
         el.classList.remove('show');
       }
 
-      function addRecord() {
-        if (isAdding) return false;
-        isAdding = true;
-        setTimeout(() => { isAdding = false; }, 800);
+      // 修改后的 addRecord 函数 - 保存后清空输入框并退出键盘
+      // 修改 addRecord 函数中的清空部分
+function addRecord() {
+  if (isAdding) return false;
+  isAdding = true;
 
-        let amountInput = document.getElementById('amountInput').value.trim();
-        let amount = parseFloat(amountInput);
-        if (isNaN(amount) || amount <= 0) {
-          showToast('请输入有效金额');
-          isAdding = false;
-          return false;
-        }
+  let amountInput = document.getElementById('amountInput').value.trim();
+  let amount = parseFloat(amountInput);
+  if (isNaN(amount) || amount <= 0) {
+    showToast('请输入有效金额');
+    isAdding = false;
+    return false;
+  }
 
-        let category = document.getElementById('categoryInput').value.trim();
-        if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
+  let category = document.getElementById('categoryInput').value.trim();
+  if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
 
-        entries.push({
-          id: generateUniqueId(),
-          timestamp: Date.now(),
-          date: selectedDate,
-          time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-          amount,
-          note: category,
-          type: currentType
-        });
-        
-        rebuildStatsCache();
-        save();
+  entries.push({
+    id: generateUniqueId(),
+    timestamp: Date.now(),
+    date: selectedDate,
+    time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+    amount,
+    note: category,
+    type: currentType
+  });
+  
+  rebuildStatsCache();
+  save();
 
-        document.getElementById('amountInput').value = '';
-        document.getElementById('categoryInput').value = '';
-        document.getElementById('amountInput').focus();
+  // 清空输入框、关闭下拉菜单、退出键盘
+  document.getElementById('amountInput').value = '';
+  document.getElementById('categoryInput').value = '';
+  document.getElementById('amountInput').blur();
+  document.getElementById('categoryInput').blur();
+  
+  // 关键：关闭分类下拉菜单
+  closeCategoryDropdown();
 
-        renderEntries();
-        renderTopCards();
-        renderSelectedDayTotal();
-        renderCalendar();
+  renderEntries();
+  renderTopCards();
+  renderSelectedDayTotal();
+  renderCalendar();
 
-        showToast(currentType === 'expense' ? '支出已记' : '收入已记');
-        return true;
-      }
+  showToast(currentType === 'expense' ? '支出已记' : '收入已记');
+  
+  setTimeout(() => {
+    isAdding = false;
+  }, 500);
+  
+  return true;
+}
 
       function editEntry(id) {
-  let entry = entries.find(e => e.id === id);
-  if (!entry) return;
-  
-  // 保存原始类型，用于编辑后恢复
-  const originalType = entry.type;
-  
-  const modal = createModal('✏️ 编辑记录', `
-    <input type="number" id="editAmount" value="${entry.amount}" step="0.01" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; margin-bottom:10px;">
-    <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0;">
-  `, '<button id="saveEditBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:10px; border-radius:32px;">保存</button>');
-  
-  modal.querySelector('#saveEditBtn').onclick = () => {
-    let newAmount = parseFloat(document.getElementById('editAmount').value);
-    if (!newAmount || newAmount <= 0) {
-      showToast('请输入有效金额');
-      return;
-    }
-    let newCat = document.getElementById('editCategory').value.trim();
-    if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
+        let entry = entries.find(e => e.id === id);
+        if (!entry) return;
+        
+        const modal = createModal('✏️ 编辑记录', `
+          <input type="number" id="editAmount" value="${entry.amount}" step="0.01" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; margin-bottom:10px;">
+          <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0;">
+        `, '<button id="saveEditBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:10px; border-radius:32px;">保存</button>');
+        
+        modal.querySelector('#saveEditBtn').onclick = () => {
+          let newAmount = parseFloat(document.getElementById('editAmount').value);
+          if (!newAmount || newAmount <= 0) {
+            showToast('请输入有效金额');
+            return;
+          }
+          let newCat = document.getElementById('editCategory').value.trim();
+          if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
 
-    entry.amount = newAmount;
-    entry.note = newCat;
-    entry.timestamp = Date.now();
-    entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+          entry.amount = newAmount;
+          entry.note = newCat;
+          entry.timestamp = Date.now();
+          entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
 
-    rebuildStatsCache();
-    save();
-    renderCalendar();
-    renderEntries();
-    renderCategoryDropdown();
-    
-    // 如果编辑的记录类型与当前激活的类型不同，切换类型以保持一致
-    if (entry.type !== currentType) {
-      currentType = entry.type;
-      document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
-      document.querySelector(`.type-option.${entry.type}`).classList.add('active');
-      renderCategoryDropdown();
-      updateInputColor();
-    }
+          rebuildStatsCache();
+          save();
+          renderCalendar();
+          renderEntries();
+          renderCategoryDropdown();
+          
+          if (entry.type !== currentType) {
+            currentType = entry.type;
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+            document.querySelector(`.type-option.${entry.type}`).classList.add('active');
+            renderCategoryDropdown();
+            updateInputColor();
+          }
 
-    modal.remove();
-    showToast('修改成功');
-  };
-}
+          modal.remove();
+          showToast('修改成功');
+        };
+      }
 
       function changeMonth(delta) {
         currentMonth += delta;
@@ -2291,32 +2298,31 @@
           listDiv.innerHTML = currentCats.map((cat, idx) => `<div class="category-list-item"><span>${escapeHtml(cat)}</span><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">删除</button></div>`).join('');
           listDiv.querySelectorAll('.delete-cat-btn').forEach(btn => {
             btn.onclick = () => {
-  let catName = btn.getAttribute('data-cat');
-  if (catName === '其他') {
-    showToast('「其他」分类不可删除');
-    return;
-  }
-  if (confirm(`确定删除「${catName}」？`)) {
-    if (type === 'expense') {
-      expenseCats = expenseCats.filter(c => c !== catName);
-      if (expenseCats.length === 0) expenseCats = ['其他'];
-    } else {
-      incomeCats = incomeCats.filter(c => c !== catName);
-      if (incomeCats.length === 0) incomeCats = ['其他'];
-    }
-    save();
-    
-    // 检查当前输入框是否是被删除的分类
-    const categoryInput = document.getElementById('categoryInput');
-    if (categoryInput.value === catName) {
-      categoryInput.value = '';
-    }
-    
-    renderCategoryList();
-    renderCategoryDropdown();
-    showToast('已删除');
-  }
-};
+              let catName = btn.getAttribute('data-cat');
+              if (catName === '其他') {
+                showToast('「其他」分类不可删除');
+                return;
+              }
+              if (confirm(`确定删除「${catName}」？`)) {
+                if (type === 'expense') {
+                  expenseCats = expenseCats.filter(c => c !== catName);
+                  if (expenseCats.length === 0) expenseCats = ['其他'];
+                } else {
+                  incomeCats = incomeCats.filter(c => c !== catName);
+                  if (incomeCats.length === 0) incomeCats = ['其他'];
+                }
+                save();
+                
+                const categoryInput = document.getElementById('categoryInput');
+                if (categoryInput.value === catName) {
+                  categoryInput.value = '';
+                }
+                
+                renderCategoryList();
+                renderCategoryDropdown();
+                showToast('已删除');
+              }
+            };
           });
         }
         
@@ -2424,7 +2430,6 @@
         
         const modal = createModal('🎨 界面设置', html, '<button id="closeSettingsBtn" class="close-btn">关闭</button>');
         
-        // 颜色预览临时存储
         let tempExpenseColor = uiSettings.expenseColor;
         let tempIncomeColor = uiSettings.incomeColor;
         let tempCardBgColor = uiSettings.cardBg;
@@ -2577,7 +2582,6 @@
         };
         
         modal.querySelector('#closeSettingsBtn').onclick = () => {
-          // 应用所有临时颜色
           uiSettings.expenseColor = tempExpenseColor;
           uiSettings.incomeColor = tempIncomeColor;
           uiSettings.cardBg = tempCardBgColor;
@@ -2609,7 +2613,6 @@
             try {
               let data = JSON.parse(ev.target.result);
               
-              // 数据验证
               if (!validateBackupData(data)) {
                 showToast('文件格式错误或数据损坏');
                 return;
@@ -2641,10 +2644,8 @@
         input.click();
       }
 
-      // 返回顶部功能
       function initBackToTop() {
         const backTopBtn = document.getElementById('floatBackTop');
-        let scrollTimeout;
         
         window.addEventListener('scroll', () => {
           if (window.scrollY > 300) {
@@ -2659,52 +2660,85 @@
         };
       }
 
-      // ==================== 事件绑定 ====================
+      // ==================== 事件绑定（三种交互模式） ====================
       function bindEvents() {
+        // 金额输入格式化
         document.getElementById('amountInput').addEventListener('input', function(e) {
-  let val = this.value;
-  // 允许以小数点开头
-  if (val === '.') {
-    this.value = '0.';
-    return;
-  }
-  val = val.replace(/[^\d.]/g, '');
-  // 确保只有一个小数点
-  val = val.replace(/(\..*)\./g, '$1');
-  // 如果以0开头且后面还有数字，且不是小数，则移除开头的0
-  if (val.length > 1 && val[0] === '0' && val[1] !== '.') {
-    val = val.replace(/^0+/, '');
-    if (val === '') val = '0';
-  }
-  this.value = val;
-  updateInputColor();
-});
+          let val = this.value;
+          if (val === '.') {
+            this.value = '0.';
+            return;
+          }
+          val = val.replace(/[^\d.]/g, '');
+          val = val.replace(/(\..*)\./g, '$1');
+          if (val.length > 1 && val[0] === '0' && val[1] !== '.') {
+            val = val.replace(/^0+/, '');
+            if (val === '') val = '0';
+          }
+          this.value = val;
+          updateInputColor();
+        });
 
-// 添加失焦时的格式化
-document.getElementById('amountInput').addEventListener('blur', function() {
-  let val = parseFloat(this.value);
-  if (!isNaN(val) && val > 0) {
-    this.value = val.toFixed(2);
-  } else if (this.value === '' || this.value === '0') {
-    this.value = '';
-  }
-});
+        document.getElementById('amountInput').addEventListener('blur', function() {
+          let val = parseFloat(this.value);
+          if (!isNaN(val) && val > 0) {
+            this.value = val.toFixed(2);
+          } else if (this.value === '' || this.value === '0') {
+            this.value = '';
+          }
+        });
+
+        // ========== 模式1 & 模式2 & 模式3 交互实现 ==========
         
-        document.getElementById('amountInput').addEventListener('keypress', e => {
+        // 金额框回车：有分类则保存，否则提示选择分类
+        document.getElementById('amountInput').addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            document.getElementById('categoryInput').focus();
-            document.getElementById('categoryDropdown').classList.add('show');
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            const category = document.getElementById('categoryInput').value.trim();
+            
+            if (!amount || amount <= 0) {
+              showToast('请输入有效金额');
+              return;
+            }
+            
+            if (category) {
+              // 有分类，直接保存
+              addRecord();
+            } else {
+              // 无分类，提示用户选择分类
+              showToast('请选择或输入分类');
+              const catInput = document.getElementById('categoryInput');
+              catInput.classList.add('highlight-category');
+              setTimeout(() => catInput.classList.remove('highlight-category'), 800);
+            }
           }
         });
         
-        document.getElementById('categoryInput').addEventListener('keypress', e => {
+        // 分类框回车：有金额则保存，否则跳到金额框
+        document.getElementById('categoryInput').addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
-            addRecord();
+            const category = document.getElementById('categoryInput').value.trim();
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            
+            if (!category) {
+              showToast('请输入分类');
+              return;
+            }
+            
+            if (amount && amount > 0) {
+              // 有金额，直接保存
+              addRecord();
+            } else {
+              // 无金额，跳到金额框
+              document.getElementById('amountInput').focus();
+              showToast('请输入金额');
+            }
           }
         });
         
+        // 日历点击
         document.getElementById('calendarGrid').addEventListener('click', (e) => {
           let day = e.target.closest('.calendar-day');
           if (day && day.dataset.date) {
@@ -2720,15 +2754,13 @@ document.getElementById('amountInput').addEventListener('blur', function() {
         document.getElementById('prevMonth').onclick = () => changeMonth(-1);
         document.getElementById('nextMonth').onclick = () => changeMonth(1);
         
-        // 优化触摸滑动：仅限顶部日期区域
+        // 滑动切换月份
         const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0;
-        let touchStartY = 0;
         let isSwiping = false;
         
         swipeArea.addEventListener('touchstart', (e) => {
           touchStartX = e.changedTouches[0].screenX;
-          touchStartY = e.changedTouches[0].screenY;
           isSwiping = true;
         });
         
@@ -2736,10 +2768,7 @@ document.getElementById('amountInput').addEventListener('blur', function() {
           if (!isSwiping) return;
           isSwiping = false;
           let diffX = e.changedTouches[0].screenX - touchStartX;
-          let diffY = e.changedTouches[0].screenY - touchStartY;
-          
-          // 水平滑动距离大于垂直滑动距离，且超过50px才触发
-          if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+          if (Math.abs(diffX) > 50) {
             if (diffX > 0) {
               changeMonth(-1);
             } else {
@@ -2748,6 +2777,7 @@ document.getElementById('amountInput').addEventListener('blur', function() {
           }
         });
         
+        // 菜单
         document.getElementById('menuButton').onclick = (e) => {
           e.stopPropagation();
           closeCategoryDropdown();
@@ -2763,6 +2793,7 @@ document.getElementById('amountInput').addEventListener('blur', function() {
           if (!isCategory) closeCategoryDropdown();
         });
         
+        // 下拉按钮
         document.getElementById('dropdownBtn').onclick = (e) => {
           e.stopPropagation();
           let dropdown = document.getElementById('categoryDropdown');
@@ -2777,23 +2808,29 @@ document.getElementById('amountInput').addEventListener('blur', function() {
           renderCategoryDropdown();
         };
         
+        // ========== 模式3：下拉选择分类 ==========
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
           const item = e.target.closest('.category-item');
           if (!item) return;
           e.stopPropagation();
-          let selectedCat = item.getAttribute('data-cat') || item.innerText;
-          let amount = parseFloat(document.getElementById('amountInput').value);
+          
+          const selectedCat = item.getAttribute('data-cat') || item.innerText;
+          document.getElementById('categoryInput').value = selectedCat;
+          closeCategoryDropdown();
+          
+          const amount = parseFloat(document.getElementById('amountInput').value);
+          
           if (amount && amount > 0) {
-            document.getElementById('categoryInput').value = selectedCat;
+            // 金额已存在，直接保存
             addRecord();
           } else {
-            document.getElementById('categoryInput').value = selectedCat;
+            // 金额为空，跳到金额框
             document.getElementById('amountInput').focus();
-            showToast('请先输入金额');
+            showToast('请输入金额');
           }
-          closeCategoryDropdown();
         });
         
+        // 编辑删除
         document.getElementById('entriesList').addEventListener('click', (e) => {
           const editBtn = e.target.closest('.edit-btn');
           const deleteBtn = e.target.closest('.delete-btn');
@@ -2801,34 +2838,34 @@ document.getElementById('amountInput').addEventListener('blur', function() {
             let id = editBtn.getAttribute('data-id');
             editEntry(id);
           } else if (deleteBtn) {
-  let id = deleteBtn.getAttribute('data-id');
-  
-  const modal = createModal(
-    '🗑 删除记录',
-    '<div style="text-align:center; padding:8px 0;">确定要删除这条记录吗？<br><br>删除后无法恢复。</div>',
-    '<div style="display:flex; gap:12px;"><button id="confirmDeleteBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">删除</button><button id="cancelDeleteBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
-  );
-  
-  modal.querySelector('#confirmDeleteBtn').onclick = () => {
-    entries = entries.filter(e => String(e.id) !== String(id));
-    rebuildStatsCache();
-    save();
-    renderCalendar();
-    renderEntries();
-    renderCategoryDropdown();
-    showToast('已删除');
-    modal.remove();
-  };
-  
-  modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove();
-}
+            let id = deleteBtn.getAttribute('data-id');
+            
+            const modal = createModal(
+              '🗑 删除记录',
+              '<div style="text-align:center; padding:8px 0;">确定要删除这条记录吗？<br><br>删除后无法恢复。</div>',
+              '<div style="display:flex; gap:12px;"><button id="confirmDeleteBtn" style="flex:1; background:var(--expense-color); color:white; border:none; padding:12px; border-radius:32px; font-size:16px;">删除</button><button id="cancelDeleteBtn" style="flex:1; background:#e2e8f0; border:none; padding:12px; border-radius:32px; font-size:16px;">取消</button></div>'
+            );
+            
+            modal.querySelector('#confirmDeleteBtn').onclick = () => {
+              entries = entries.filter(e => String(e.id) !== String(id));
+              rebuildStatsCache();
+              save();
+              renderCalendar();
+              renderEntries();
+              renderCategoryDropdown();
+              showToast('已删除');
+              modal.remove();
+            };
+            
+            modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove();
+          }
         });
         
-        // 修复：查看全部按钮始终显示，点击打开模态框
         document.getElementById('viewMoreBtn').onclick = () => {
           showAllEntriesModal();
         };
 
+        // 菜单项
         const clearBtn = document.getElementById('clearDataMenuItem');
         if (clearBtn && !clearBtn.dataset.bound) {
           clearBtn.dataset.bound = 'true';
@@ -2909,14 +2946,13 @@ document.getElementById('amountInput').addEventListener('blur', function() {
           });
         }
 
-        // 改为立即注册，不等待页面完全加载
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/expense-record/sw.js')
-      .then(reg => console.log('SW registered:', reg))
-      .catch(err => console.error('SW registration failed:', err));
-  });
-}
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/expense-record/sw.js')
+              .then(reg => console.log('SW registered:', reg))
+              .catch(err => console.error('SW registration failed:', err));
+          });
+        }
       });
     })();
   </script>
