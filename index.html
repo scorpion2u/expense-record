@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh">
-
 <head>
   <meta http-equiv="Cache-Control" content="no-cache">
   <meta charset="UTF-8">
@@ -122,6 +121,9 @@
 
     .date-header {
       padding: calc(var(--card-padding) - 2px) var(--card-padding);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
     }
 
     .calendar-nav {
@@ -419,8 +421,7 @@
     }
 
     .calendar-day {
-      aspect-ratio: 1;
-      min-height: 44px;
+      min-height: 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -461,13 +462,11 @@
         background: rgba(194, 65, 58, 0.1);
         box-shadow: 0 0 0px 0px rgba(194, 65, 58, 0.2);
       }
-
       50% {
         border-color: var(--expense-color);
         background: rgba(194, 65, 58, 0.25);
         box-shadow: 0 0 8px 3px rgba(194, 65, 58, 0.4);
       }
-
       100% {
         border-color: var(--expense-color);
         background: rgba(194, 65, 58, 0.1);
@@ -516,6 +515,11 @@
       font-size: calc(var(--font-size-base) * 0.7);
       cursor: pointer;
       padding: 8px 12px;
+      transition: opacity 0.2s;
+    }
+    
+    .view-more-btn:active {
+      opacity: 0.6;
     }
 
     .entries-list {
@@ -618,17 +622,14 @@
         opacity: 0;
         transform: translateY(10px);
       }
-
       15% {
         opacity: 1;
         transform: translateY(0);
       }
-
       85% {
         opacity: 1;
         transform: translateY(0);
       }
-
       100% {
         opacity: 0;
         transform: translateY(-10px);
@@ -653,7 +654,6 @@
       from {
         opacity: 0;
       }
-
       to {
         opacity: 1;
       }
@@ -716,7 +716,6 @@
         opacity: 0;
         transform: translateY(20px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
@@ -734,7 +733,7 @@
     }
 
     .settings-label {
-      font-size: 0.85rem;
+      font-size: 14px;
       font-weight: 600;
       color: #334155;
       margin-bottom: 10px;
@@ -813,28 +812,66 @@
       flex-shrink: 0;
     }
 
+    .hsl-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .hsl-sub-label {
+      width: 42px;
+      font-size: 0.7rem;
+      color: #6c7a8e;
+      flex-shrink: 0;
+    }
+
+    .color-preview-block {
+      width: 42px;
+      height: 36px;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      flex-shrink: 0;
+    }
+
     .hsl-row input[type="range"],
-    .settings-panel input[type="range"] {
-      flex: 1;
+    .settings-item input[type="range"] {
+      flex: 1 1 auto;
       width: 100%;
       min-width: 0;
-      height: 4px;
+      display: block;
+      height: 5px;
       appearance: none;
-      border-radius: 10px;
-      background: linear-gradient(to right, #ddd, #bbb);
+      border-radius: 999px;
+      background: linear-gradient(to right, #e5e7eb, #cbd5e1);
       outline: none;
     }
 
     .hsl-row input[type="range"]::-webkit-slider-thumb,
-    .settings-panel input[type="range"]::-webkit-slider-thumb {
+    .settings-item input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
       background: #ffffff;
       border: 2px solid #cbd5e1;
       cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .hsl-row input[type="range"]:active::-webkit-slider-thumb,
+    .settings-item input[type="range"]:active::-webkit-slider-thumb {
+      transform: scale(1.1);
+    }
+
+    body.dark-mode .hsl-row input[type="range"],
+    body.dark-mode .settings-item input[type="range"] {
+      background: linear-gradient(to right, #334155, #475569);
+    }
+
+    body.dark-mode .hsl-row input[type="range"]::-webkit-slider-thumb {
+      background: #1e293b;
+      border: 2px solid #64748b;
     }
 
     .color-preview-block {
@@ -896,20 +933,17 @@
       justify-content: space-between;
     }
 
-    /* 小屏优化 */
     @media (max-width: 380px) {
       .calendar-day {
         min-height: 40px;
         font-size: calc(var(--font-size-base) * 0.7);
       }
-
       .day-expense,
       .day-income {
         font-size: calc(var(--font-size-base) * 0.45);
       }
     }
 
-    /* 暗色模式 */
     body.dark-mode {
       --bg-color: #0f172a;
       --card-bg: #1e293b;
@@ -1051,12 +1085,137 @@
       background: rgba(255, 255, 255, 0.1) !important;
       color: #e2e8f0 !important;
     }
+
+    .modal-content {
+      font-size: 16px;
+      color: #1e293b;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .settings-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .hsl-sub-label {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .settings-value {
+      font-size: 14px;
+      color: #475569;
+      margin-top: 4px;
+    }
+
+    .reset-btn,
+    .close-btn {
+      font-size: 15px;
+      font-weight: 500;
+    }
+
+    body.dark-mode .modal-content {
+      color: #e2e8f0;
+    }
+
+    body.dark-mode .modal-title {
+      color: #f1f5f9;
+    }
+
+    body.dark-mode .settings-label {
+      color: #cbd5e1;
+    }
+
+    body.dark-mode .hsl-sub-label {
+      color: #94a3b8;
+    }
+
+    body.dark-mode .settings-value {
+      color: #cbd5e1;
+    }
+
+    .modal-body div[style*="background"] {
+      color: inherit;
+    }
+
+    .selected-amount {
+      color: #1e293b;
+    }
+
+    body.dark-mode .selected-amount {
+      color: #e2e8f0;
+    }
+
+    .selected-amount.positive {
+      color: var(--income-color) !important;
+    }
+
+    .selected-amount.negative {
+      color: var(--expense-color) !important;
+    }
+
+    /* 浮动返回顶部按钮 */
+    .float-back-top {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--expense-color);
+      color: white;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      z-index: 900;
+      font-size: 20px;
+      transition: transform 0.2s;
+    }
+    
+    .float-back-top:active {
+      transform: scale(0.95);
+    }
+    
+    .float-back-top.show {
+      display: flex;
+    }
+    
+    /* 滑动区域提示 */
+    .swipe-hint {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 1000;
+      animation: fadeOut 1s ease forwards;
+    }
+    
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; }
+    }
   </style>
   <link rel="manifest" href="/expense-record/manifest.json">
   <meta name="theme-color" content="#c2413a">
   <link rel="apple-touch-icon" href="/expense-record/icon-192.png">
 </head>
-
 <body>
   <div class="container">
     <div class="stats-row">
@@ -1073,8 +1232,7 @@
         <div class="stat-number" id="monthBalanceAmount">RM0.00</div>
       </div>
     </div>
-
-    <div class="date-header">
+    <div class="date-header" id="swipeArea">
       <div class="calendar-nav">
         <button class="nav-btn" id="prevMonth" aria-label="上个月">←</button>
         <div id="currentYearMonthDay"></div>
@@ -1095,7 +1253,7 @@
         <div class="menu-container">
           <div class="menu-button" id="menuButton" aria-label="菜单" aria-expanded="false">☰</div>
           <div class="menu-dropdown" id="menuDropdown">
-          <div class="menu-item" id="creditMenuItem">💳 信用卡管家</div>
+            <div class="menu-item" id="creditMenuItem">💳 信用卡管家</div>
             <div class="menu-item" id="settingsMenuItem">🎨 界面设置</div>
             <div class="menu-item" id="darkModeMenuItem">🌙 暗色模式</div>
             <div class="menu-item" id="statisticsMenuItem">📊 月度统计</div>
@@ -1104,6 +1262,7 @@
             <div class="menu-item" id="manageIncomeCategories">💰 管理收入分类</div>
             <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
             <div class="menu-item" id="importMenuItem">📥 导入备份</div>
+            <div class="menu-item" id="clearDataMenuItem">🗑 清空所有数据</div>
           </div>
         </div>
       </div>
@@ -1130,13 +1289,14 @@
     <div class="list-card">
       <div class="entries-header">
         <h4>📋 今日明细 <span id="entryCount"></span></h4>
-        <button class="view-more-btn" id="viewMoreBtn" style="display: none;">查看全部</button>
+        <button class="view-more-btn" id="viewMoreBtn">查看全部</button>
       </div>
       <ul class="entries-list" id="entriesList"></ul>
     </div>
   </div>
-
-  <!-- 弹窗模板 -->
+  
+  <div class="float-back-top" id="floatBackTop" aria-label="返回顶部">↑</div>
+  
   <template id="modalTemplate">
     <div class="modal-overlay">
       <div class="modal-content">
@@ -1149,7 +1309,7 @@
       </div>
     </div>
   </template>
-
+  
   <script>
     (function() {
       // ==================== 常量定义 ====================
@@ -1157,7 +1317,7 @@
       const CAT_EXPENSE_KEY = 'book_expense_cats_full';
       const CAT_INCOME_KEY = 'book_income_cats_full';
       const SETTINGS_KEY = 'book_ui_settings';
-      const DEFAULT_EXPENSE = ['🍳 早餐', '🍱 午餐', '🍽️ 晚餐', '🛍️ 购物', '🚗 交通', '🎬 娱乐', '🏠 居家', '其他'];
+      const DEFAULT_EXPENSE = ['🍳 早餐', '🍱 午餐', '🍽️ 晚餐', '🛍️ 购物', '⛽ 打油', '🎬 娱乐', '🏠 居家', '其他'];
       const DEFAULT_INCOME = ['💼 工资', '🎁 红包', '📈 理财', '💵 兼职', '其他'];
 
       const THEMES = {
@@ -1174,14 +1334,18 @@
       let entries = [];
       let expenseCats = [...DEFAULT_EXPENSE];
       let incomeCats = [...DEFAULT_INCOME];
+      let monthStatsCache = {};
+      let dateMap = {};
+      let monthMap = {};
       let currentYear = new Date().getFullYear();
       let currentMonth = new Date().getMonth();
       let selectedDate = getLocalDate();
       let currentType = 'expense';
-      let displayLimit = 5;
       let isAdding = false;
       let applyTimeout = null;
       let deferredPrompt = null;
+      let swipeStartX = 0;
+      let swipeStartY = 0;
 
       let uiSettings = {
         cardRadius: 24,
@@ -1196,6 +1360,39 @@
         cardBg: '#ffffff',
         darkMode: false
       };
+
+      // ==================== 缓存构建函数 ====================
+      function rebuildStatsCache() {
+        monthStatsCache = {};
+        dateMap = {};
+        monthMap = {};
+
+        for (let e of entries) {
+          if (!dateMap[e.date]) {
+            dateMap[e.date] = [];
+          }
+          dateMap[e.date].push(e);
+
+          let monthKey = e.date.slice(0, 7);
+          if (!monthStatsCache[monthKey]) {
+            monthStatsCache[monthKey] = { expense: 0, income: 0 };
+          }
+          monthStatsCache[monthKey][e.type] += e.amount;
+
+          if (!monthMap[monthKey]) {
+            monthMap[monthKey] = [];
+          }
+          monthMap[monthKey].push(e);
+        }
+
+        for (let date in dateMap) {
+          dateMap[date].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+        
+        for (let month in monthMap) {
+          monthMap[month].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+      }
 
       // ==================== 辅助函数 ====================
       function getLocalDate() {
@@ -1227,45 +1424,80 @@
         toast.textContent = msg;
         toast.setAttribute('role', 'status');
         container.appendChild(toast);
-
         setTimeout(() => toast.remove(), 2000);
       }
 
+      // 生成唯一ID（增强版）
+      function generateUniqueId() {
+        if (crypto.randomUUID && crypto.randomUUID()) {
+          return crypto.randomUUID();
+        }
+        return Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now();
+      }
+
+      // ==================== 数据验证函数 ====================
+      function validateEntry(entry) {
+        if (!entry || typeof entry !== 'object') return false;
+        if (!entry.id || typeof entry.id !== 'string') return false;
+        if (!entry.date || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return false;
+        if (typeof entry.amount !== 'number' || isNaN(entry.amount) || entry.amount <= 0) return false;
+        if (entry.type !== 'expense' && entry.type !== 'income') return false;
+        if (!entry.note || typeof entry.note !== 'string') return false;
+        if (entry.timestamp && typeof entry.timestamp !== 'number') return false;
+        if (entry.time && typeof entry.time !== 'string') return false;
+        return true;
+      }
+
+      function validateBackupData(data) {
+        if (!data || typeof data !== 'object') return false;
+        
+        if (data.entries && Array.isArray(data.entries)) {
+          for (let entry of data.entries) {
+            if (!validateEntry(entry)) return false;
+          }
+        }
+        
+        if (data.expenseCats && Array.isArray(data.expenseCats)) {
+          for (let cat of data.expenseCats) {
+            if (typeof cat !== 'string') return false;
+          }
+        }
+        
+        if (data.incomeCats && Array.isArray(data.incomeCats)) {
+          for (let cat of data.incomeCats) {
+            if (typeof cat !== 'string') return false;
+          }
+        }
+        
+        return true;
+      }
+
       // ==================== 弹窗管理 ====================
-      function createModal(title, bodyHtml, footerHtml = '', onClose = null) {
+      function createModal(title, bodyHtml, footerHtml = '') {
         const template = document.getElementById('modalTemplate');
         const modal = template.content.cloneNode(true).firstElementChild;
-
+        
         modal.querySelector('.modal-title').textContent = title;
         modal.querySelector('.modal-body').innerHTML = bodyHtml;
         
+        const footer = modal.querySelector('.modal-footer');
         if (footerHtml) {
-          modal.querySelector('.modal-footer').innerHTML = footerHtml;
+          footer.innerHTML = footerHtml;
+          footer.style.display = 'block';
         } else {
-          modal.querySelector('.modal-footer').style.display = 'none';
+          footer.style.display = 'none';
         }
-
-        const previousFocus = document.activeElement;
+        
         const closeBtn = modal.querySelector('.modal-close');
-
-        closeBtn.onclick = () => {
-          modal.remove();
-          if (previousFocus && previousFocus.focus) previousFocus.focus();
-          if (onClose) onClose();
-        };
-
+        if (closeBtn) {
+          closeBtn.onclick = () => modal.remove();
+        }
+        
         modal.onclick = (e) => {
-          if (e.target === modal) {
-            modal.remove();
-            if (previousFocus && previousFocus.focus) previousFocus.focus();
-            if (onClose) onClose();
-          }
+          if (e.target === modal) modal.remove();
         };
-
+        
         document.body.appendChild(modal);
-        
-        setTimeout(() => closeBtn.focus(), 100);
-        
         return modal;
       }
 
@@ -1389,6 +1621,55 @@
       }
 
       // ==================== 数据管理 ====================
+      let isClearing = false;
+
+      function clearAllData() {
+        if (isClearing) return;
+        isClearing = true;
+
+        const confirmStep1 = confirm('⚠️ 警告：将删除所有记录，无法恢复！\n\n是否继续？');
+        if (!confirmStep1) {
+          isClearing = false;
+          return;
+        }
+
+        const input = prompt('请输入 DELETE 确认清空：');
+        if (input !== 'DELETE') {
+          showToast('已取消');
+          isClearing = false;
+          return;
+        }
+
+        entries = [];
+        expenseCats = [...DEFAULT_EXPENSE];
+        incomeCats = [...DEFAULT_INCOME];
+        rebuildStatsCache();
+
+        const now = new Date();
+        currentYear = now.getFullYear();
+        currentMonth = now.getMonth();
+        selectedDate = getLocalDate();
+        currentType = 'expense';
+        
+        document.getElementById('amountInput').value = '';
+        document.getElementById('categoryInput').value = '';
+        document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+        document.querySelector('.type-option.expense').classList.add('active');
+        updateInputColor();
+
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(CAT_EXPENSE_KEY);
+        localStorage.removeItem(CAT_INCOME_KEY);
+
+        renderCalendar();
+        renderEntries();
+        renderCategoryDropdown();
+        closeCategoryDropdown();
+        closeMenu();
+        showToast('数据已清空');
+        isClearing = false;
+      }
+
       function save() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
         localStorage.setItem(CAT_EXPENSE_KEY, JSON.stringify(expenseCats));
@@ -1399,12 +1680,25 @@
       function load() {
         try {
           let e = localStorage.getItem(STORAGE_KEY);
-          if (e) entries = JSON.parse(e);
+          if (e) {
+            let parsed = JSON.parse(e);
+            if (Array.isArray(parsed)) {
+              entries = parsed.filter(validateEntry);
+            }
+          }
           let ec = localStorage.getItem(CAT_EXPENSE_KEY);
-          if (ec) expenseCats = JSON.parse(ec);
+          if (ec) {
+            let parsed = JSON.parse(ec);
+            if (Array.isArray(parsed)) expenseCats = parsed;
+          }
           let ic = localStorage.getItem(CAT_INCOME_KEY);
-          if (ic) incomeCats = JSON.parse(ic);
-        } catch (e) { }
+          if (ic) {
+            let parsed = JSON.parse(ic);
+            if (Array.isArray(parsed)) incomeCats = parsed;
+          }
+        } catch (e) { 
+          console.warn('数据加载失败', e);
+        }
         loadSettings();
       }
 
@@ -1413,20 +1707,24 @@
       }
 
       function getDayStats(date) {
-        let dayEntries = entries.filter(e => e.date === date);
-        let expense = dayEntries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
-        let income = dayEntries.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
+        let dayEntries = dateMap[date] || [];
+        let expense = 0;
+        let income = 0;
+        for (let e of dayEntries) {
+          if (e.type === 'expense') expense += e.amount;
+          else income += e.amount;
+        }
         return { expense, income, balance: income - expense };
       }
 
       function getMonthStats(year, month) {
-        let monthEntries = entries.filter(e => {
-          let [y, m] = e.date.split('-').map(Number);
-          return y === year && m === month + 1;
-        });
-        let expense = monthEntries.filter(e => e.type === 'expense').reduce((s, e) => s + e.amount, 0);
-        let income = monthEntries.filter(e => e.type === 'income').reduce((s, e) => s + e.amount, 0);
-        return { expense, income, balance: income - expense };
+        let key = `${year}-${String(month + 1).padStart(2, '0')}`;
+        let stats = monthStatsCache[key] || { expense: 0, income: 0 };
+        return {
+          expense: stats.expense,
+          income: stats.income,
+          balance: stats.income - stats.expense
+        };
       }
 
       // ==================== 渲染函数 ====================
@@ -1434,22 +1732,34 @@
         let stats = getMonthStats(currentYear, currentMonth);
         document.getElementById('monthIncomeAmount').innerHTML = stats.income > 0 ? `+RM${stats.income.toFixed(2)}` : 'RM0.00';
         document.getElementById('monthExpenseAmount').innerHTML = stats.expense > 0 ? `-RM${stats.expense.toFixed(2)}` : 'RM0.00';
+        
         let balVal = stats.balance;
         let balanceEl = document.getElementById('monthBalanceAmount');
-        if (balVal > 0) balanceEl.innerHTML = `+RM${balVal.toFixed(2)}`;
-        else if (balVal < 0) balanceEl.innerHTML = `-RM${Math.abs(balVal).toFixed(2)}`;
-        else balanceEl.innerHTML = 'RM0.00';
+        if (balVal > 0) {
+          balanceEl.innerHTML = `+RM${balVal.toFixed(2)}`;
+          balanceEl.className = 'stat-number positive';
+        } else if (balVal < 0) {
+          balanceEl.innerHTML = `-RM${Math.abs(balVal).toFixed(2)}`;
+          balanceEl.className = 'stat-number negative';
+        } else {
+          balanceEl.innerHTML = 'RM0.00';
+          balanceEl.className = 'stat-number';
+        }
       }
 
       function renderSelectedDayTotal() {
         let net = getDayStats(selectedDate).balance;
         let totalEl = document.getElementById('selectedDateTotal');
-        if (net > 0) totalEl.innerHTML = `+RM${net.toFixed(2)}`;
-        else if (net < 0) totalEl.innerHTML = `-RM${Math.abs(net).toFixed(2)}`;
-        else totalEl.innerHTML = 'RM0.00';
-        totalEl.className = 'selected-amount';
-        if (net > 0) totalEl.classList.add('positive');
-        else if (net < 0) totalEl.classList.add('negative');
+        if (net > 0) {
+          totalEl.innerHTML = `+RM${net.toFixed(2)}`;
+          totalEl.className = 'selected-amount positive';
+        } else if (net < 0) {
+          totalEl.innerHTML = `-RM${Math.abs(net).toFixed(2)}`;
+          totalEl.className = 'selected-amount negative';
+        } else {
+          totalEl.innerHTML = 'RM0.00';
+          totalEl.className = 'selected-amount';
+        }
       }
 
       function renderCalendar() {
@@ -1492,7 +1802,12 @@
             dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
           }
 
-          let stats = getDayStats(dateStr);
+          let dayEntries = dateMap[dateStr] || [];
+          let stats = { expense: 0, income: 0 };
+          for (let e of dayEntries) {
+            if (e.type === 'expense') stats.expense += e.amount;
+            else stats.income += e.amount;
+          }
 
           dayDiv.classList.toggle('selected', dateStr === selectedDate);
           dayDiv.classList.toggle('today', dateStr === todayStr);
@@ -1526,22 +1841,74 @@
           }
         }
 
+        let [y, m, d] = selectedDate.split('-');
+        let dateObj = new Date(y, m - 1, d);
         let weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        let [y, m, day] = selectedDate.split('-');
-        let d = new Date(y, m - 1, day);
-        let label = weekdays[d.getDay()];
+        let label = weekdays[dateObj.getDay()];
         let today = new Date();
-        if (d.toDateString() === today.toDateString()) label = `今天 · ${label}`;
+        if (dateObj.toDateString() === today.toDateString()) {
+          label = `今天 · ${label}`;
+        }
+
         document.getElementById('selectedDateLabel').innerHTML = label;
-        document.getElementById('currentYearMonthDay').innerText = `${year}年${month + 1}月${day}日`;
+        document.getElementById('currentYearMonthDay').innerText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
         renderTopCards();
         renderSelectedDayTotal();
       }
 
+      function showAllEntriesModal() {
+        let dayEntries = dateMap[selectedDate] || [];
+        if (!dayEntries.length) {
+          showToast('暂无记录');
+          return;
+        }
+        
+        let html = '';
+        for (let e of dayEntries) {
+          let sign = e.type === 'expense' ? '-' : '+';
+          let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
+          html += `<div class="search-result-item" style="margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding: 10px;">
+            <div style="flex:1;">
+              <div style="font-weight:500;">${escapeHtml(e.note)}</div>
+              <div style="font-size:0.6rem; color:#94a3b8;">${e.time}</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-weight:600; color:${color}">${sign}RM${e.amount.toFixed(2)}</span>
+              <span class="edit-modal" data-id="${e.id}" style="cursor:pointer; opacity:0.6;">✏️</span>
+              <span class="delete-modal" data-id="${e.id}" style="cursor:pointer; opacity:0.6;">🗑</span>
+            </div>
+          </div>`;
+        }
+        
+        const modal = createModal(`📋 全部记录 (${dayEntries.length}条)`, html, '<button id="closeModalBtn" class="close-btn">关闭</button>');
+        
+        modal.querySelector('#closeModalBtn').onclick = () => modal.remove();
+        modal.querySelectorAll('.delete-modal').forEach(btn => {
+          btn.onclick = () => {
+            let id = btn.dataset.id;
+            if (confirm('删除记录？')) {
+              entries = entries.filter(e => e.id !== id);
+              rebuildStatsCache();
+              save();
+              modal.remove();
+              renderCalendar();
+              renderEntries();
+              renderCategoryDropdown();
+              showToast('已删除');
+            }
+          };
+        });
+        modal.querySelectorAll('.edit-modal').forEach(btn => {
+          btn.onclick = () => {
+            let id = btn.dataset.id;
+            modal.remove();
+            editEntry(id);
+          };
+        });
+      }
+
       function renderEntries() {
-        let dayEntries = entries
-          .filter(e => e.date === selectedDate)
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        let dayEntries = dateMap[selectedDate] || [];
         document.getElementById('entryCount').innerText = dayEntries.length ? `(${dayEntries.length})` : '';
         let ul = document.getElementById('entriesList');
         
@@ -1550,29 +1917,50 @@
             <li class="empty-state" style="text-align: center; padding: 32px 20px;">
               <div style="font-size: 3rem; margin-bottom: 12px;">📭</div>
               <div style="font-weight: 500; color: #64748b;">暂无记录</div>
-              <div style="font-size: 0.7rem; margin-top: 8px; color: #94a3b8;">选择日期并添加收支记录</div>
+              <div style="font-size: 0.7rem; margin-top: 8px; color: #94a3b8;">
+                选择日期并添加收支记录
+              </div>
             </li>
           `;
-          document.getElementById('viewMoreBtn').style.display = 'none';
+          // 修复：没有记录时隐藏查看全部按钮
+          const viewMoreBtn = document.getElementById('viewMoreBtn');
+          viewMoreBtn.style.display = 'none';
           return;
         }
         
-        let showAll = displayLimit >= dayEntries.length;
-        let display = showAll ? dayEntries : dayEntries.slice(0, displayLimit);
-        ul.innerHTML = '';
+        // 始终只显示前5条
+        let displayEntries = dayEntries.slice(0, 5);
+        let html = '';
         
-        for (let e of display) {
+        for (let e of displayEntries) {
           let sign = e.type === 'expense' ? '-' : '+';
           let cls = e.type === 'expense' ? 'expense' : 'income';
-          ul.innerHTML += `<li><div class="entry-info"><div class="entry-note">${escapeHtml(e.note)}</div><div class="entry-time">${e.time}</div></div><div class="entry-actions"><span class="entry-amount ${cls}">${sign}RM${e.amount.toFixed(2)}</span><span class="edit-btn" data-id="${e.id}">✏️</span><span class="delete-btn" data-id="${e.id}">🗑</span></div></li>`;
+          html += `
+            <li>
+              <div class="entry-info">
+                <div class="entry-note">${escapeHtml(e.note)}</div>
+                <div class="entry-time">${e.time}</div>
+              </div>
+              <div class="entry-actions">
+                <span class="entry-amount ${cls}">
+                  ${sign}RM${e.amount.toFixed(2)}
+                </span>
+                <span class="edit-btn" data-id="${e.id}">✏️</span>
+                <span class="delete-btn" data-id="${e.id}">🗑</span>
+              </div>
+            </li>
+          `;
         }
         
-        let btn = document.getElementById('viewMoreBtn');
+        ul.innerHTML = html;
+        
+        // 修复：只要有记录就显示按钮，并根据记录数量显示不同文案
+        let viewMoreBtn = document.getElementById('viewMoreBtn');
+        viewMoreBtn.style.display = 'block';
         if (dayEntries.length > 5) {
-          btn.style.display = 'block';
-          btn.innerText = showAll ? '收起' : `查看全部(${dayEntries.length})`;
+          viewMoreBtn.innerText = `查看全部 (${dayEntries.length})`;
         } else {
-          btn.style.display = 'none';
+          viewMoreBtn.innerText = `查看详情 (${dayEntries.length}条)`;
         }
       }
 
@@ -1583,17 +1971,24 @@
       }
 
       // ==================== 业务逻辑 ====================
+      function closeMenu() {
+        document.getElementById('menuDropdown').classList.remove('show');
+        document.getElementById('menuButton').setAttribute('aria-expanded', 'false');
+      }
+
+      function closeCategoryDropdown() {
+        const el = document.getElementById('categoryDropdown');
+        if (!el) return;
+        el.classList.remove('show');
+      }
+
       function addRecord() {
-        if (isAdding) {
-          showToast('请稍后再试');
-          return false;
-        }
+        if (isAdding) return false;
         isAdding = true;
-        setTimeout(() => { isAdding = false; }, 500);
+        setTimeout(() => { isAdding = false; }, 800);
 
         let amountInput = document.getElementById('amountInput').value.trim();
         let amount = parseFloat(amountInput);
-
         if (isNaN(amount) || amount <= 0) {
           showToast('请输入有效金额');
           isAdding = false;
@@ -1604,7 +1999,7 @@
         if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
 
         entries.push({
-          id: crypto.randomUUID(),
+          id: generateUniqueId(),
           timestamp: Date.now(),
           date: selectedDate,
           time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
@@ -1612,7 +2007,8 @@
           note: category,
           type: currentType
         });
-
+        
+        rebuildStatsCache();
         save();
 
         document.getElementById('amountInput').value = '';
@@ -1631,7 +2027,6 @@
       function editEntry(id) {
         let entry = entries.find(e => e.id === id);
         if (!entry) return;
-        let originalTime = entry.time;
         
         const modal = createModal('✏️ 编辑记录', `
           <input type="number" id="editAmount" value="${entry.amount}" step="0.01" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; margin-bottom:10px;">
@@ -1646,13 +2041,18 @@
           }
           let newCat = document.getElementById('editCategory').value.trim();
           if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
+
           entry.amount = newAmount;
           entry.note = newCat;
-          entry.time = originalTime;
+          entry.timestamp = Date.now();
+          entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+          rebuildStatsCache();
           save();
           renderCalendar();
           renderEntries();
           renderCategoryDropdown();
+
           modal.remove();
           showToast('修改成功');
         };
@@ -1668,89 +2068,64 @@
           currentMonth = 0;
           currentYear++;
         }
-        let maxDay = new Date(currentYear, currentMonth + 1, 0).getDate();
-        let curDay = Math.min(parseInt(selectedDate.split('-')[2]), maxDay);
-        selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(curDay).padStart(2, '0')}`;
-        displayLimit = 5;
+
+        let monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        let monthEntries = monthMap[monthKey] || [];
+        
+        if (monthEntries.length > 0) {
+          let datesWithRecords = [...new Set(monthEntries.map(e => e.date))];
+          datesWithRecords.sort().reverse();
+          selectedDate = datesWithRecords[0];
+        } else {
+          selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+        }
+        
         renderCalendar();
         renderEntries();
       }
 
-      function showAllModal() {
-        let dayEntries = entries.filter(e => e.date === selectedDate).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        if (!dayEntries.length) return;
-        
-        let html = '';
-        for (let e of dayEntries) {
-          let sign = e.type === 'expense' ? '-' : '+';
-          let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-          html += `<div class="search-result-item">
-            <div>
-              <div>${escapeHtml(e.note)}</div>
-              <div style="font-size:0.6rem; color:#94a3b8;">${e.time}</div>
-            </div>
-            <div>
-              <span style="font-weight:600; color:${color}">${sign}RM${e.amount.toFixed(2)}</span>
-              <span class="delete-modal" data-id="${e.id}" style="margin-left:12px; cursor:pointer;">🗑</span>
-              <span class="edit-modal" data-id="${e.id}" style="margin-left:10px; cursor:pointer;">✏️</span>
-            </div>
-          </div>`;
-        }
-        
-        const modal = createModal('全部记录', html, '<button id="closeModalBtn" class="close-btn">关闭</button>');
-        
-        modal.querySelector('#closeModalBtn').onclick = () => modal.remove();
-        modal.querySelectorAll('.delete-modal').forEach(btn => {
-          btn.onclick = () => {
-            let id = btn.dataset.id;
-            if (confirm('删除？')) {
-              entries = entries.filter(e => e.id !== id);
-              save();
-              modal.remove();
-              renderCalendar();
-              renderEntries();
-              renderCategoryDropdown();
-            }
-          };
-        });
-        modal.querySelectorAll('.edit-modal').forEach(btn => {
-          btn.onclick = () => {
-            let id = btn.dataset.id;
-            modal.remove();
-            editEntry(id);
-          };
-        });
-      }
-
       function showStatistics() {
         let stats = getMonthStats(currentYear, currentMonth);
-        let monthEntries = entries.filter(e => {
-          let [y, m] = e.date.split('-').map(Number);
-          return y === currentYear && m === currentMonth + 1;
-        });
-        
+        let key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+        let monthEntries = monthMap[key] || [];
+
         let html = `
-          <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">📌 本月汇总</div>
-          ${monthEntries.length > 0 ? `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">📌 本月共 ${monthEntries.length} 笔记录</div>` : `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">📭 本月暂无记录</div>`}
-          <div style="background: #f8fafc; padding: 12px; border-radius: 16px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span>💸 支出</span>
-              <span style="color: var(--expense-color); font-weight: bold;">RM${stats.expense.toFixed(2)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-              <span>💰 收入</span>
-              <span style="color: var(--income-color); font-weight: bold;">RM${stats.income.toFixed(2)}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #e2e8f0;">
-              <span>🧾 结余</span>
-              <span style="font-weight: bold; color: ${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">
-                ${stats.balance >= 0 ? '+' : '-'}RM${Math.abs(stats.balance).toFixed(2)}
-              </span>
-            </div>
+        <div style="font-size: 0.8rem; color: #64748b; margin-bottom: 8px;">📌 本月汇总</div>
+        ${monthEntries.length > 0
+          ? `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">
+              📌 本月共 ${monthEntries.length} 笔记录
+            </div>`
+          : `<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px;">
+              📭 本月暂无记录
+            </div>`
+        }
+        <div style="background: var(--card-bg); padding: 12px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.08);">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>💸 支出</span>
+            <span style="color: var(--expense-color); font-weight: bold;">
+              RM${stats.expense.toFixed(2)}
+            </span>
           </div>
-        `;
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>💰 收入</span>
+            <span style="color: var(--income-color); font-weight: bold;">
+              RM${stats.income.toFixed(2)}
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <span>🧾 结余</span>
+            <span style="font-weight: bold; color: ${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">
+              ${stats.balance >= 0 ? '+' : '-'}RM${Math.abs(stats.balance).toFixed(2)}
+            </span>
+          </div>
+        </div>`;
+
+        const modal = createModal(`📊 ${currentYear}年${currentMonth + 1}月 统计`, html, '<button id="closeStatsBtn" class="close-btn">关闭</button>');
         
-        createModal(`📊 ${currentYear}年${currentMonth + 1}月 统计`, html, '<button id="closeStatsBtn" class="close-btn">关闭</button>');
+        const closeBtn = modal.querySelector('#closeStatsBtn');
+        if (closeBtn) {
+          closeBtn.onclick = () => modal.remove();
+        }
       }
 
       function showSearch() {
@@ -1818,18 +2193,15 @@
           let type = document.querySelector('input[name="searchType"]:checked').value;
           
           let results = [...entries];
-          
           if (startDate) results = results.filter(e => e.date >= startDate);
           if (endDate) results = results.filter(e => e.date <= endDate);
           if (keyword) results = results.filter(e => e.note.toLowerCase().includes(keyword));
           if (!isNaN(minAmount)) results = results.filter(e => e.amount >= minAmount);
           if (!isNaN(maxAmount)) results = results.filter(e => e.amount <= maxAmount);
           if (type !== 'all') results = results.filter(e => e.type === type);
-          
           results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           
           let resultsDiv = document.getElementById('searchResults');
-          
           if (!results.length) {
             resultsDiv.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">📭 没有找到记录</div>';
             return;
@@ -1875,13 +2247,17 @@
           let currentCats = type === 'expense' ? expenseCats : incomeCats;
           let listDiv = modal.querySelector('#categoryList');
           if (currentCats.length === 0) {
-            listDiv.innerHTML = '<div style="text-align:center; padding:16px;">暂无分类</div>';
+            listDiv.innerHTML = '<div style="text-align:center; padding:16px;">暂无分类，请添加</div>';
             return;
           }
           listDiv.innerHTML = currentCats.map((cat, idx) => `<div class="category-list-item"><span>${escapeHtml(cat)}</span><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">删除</button></div>`).join('');
           listDiv.querySelectorAll('.delete-cat-btn').forEach(btn => {
             btn.onclick = () => {
               let catName = btn.getAttribute('data-cat');
+              if (catName === '其他') {
+                showToast('「其他」分类不可删除');
+                return;
+              }
               if (confirm(`确定删除「${catName}」？`)) {
                 if (type === 'expense') {
                   expenseCats = expenseCats.filter(c => c !== catName);
@@ -1908,7 +2284,6 @@
         `;
         
         const modal = createModal(title, html, '<button id="closeCatModal" class="close-btn">关闭</button>');
-        
         renderCategoryList();
         
         modal.querySelector('#addCategoryBtn').onclick = () => {
@@ -1936,7 +2311,6 @@
           renderCategoryDropdown();
           showToast(`已添加「${newCat}」`);
         };
-        
         modal.querySelector('#closeCatModal').onclick = () => modal.remove();
       }
 
@@ -2005,107 +2379,112 @@
         
         const modal = createModal('🎨 界面设置', html, '<button id="closeSettingsBtn" class="close-btn">关闭</button>');
         
+        // 颜色预览临时存储
+        let tempExpenseColor = uiSettings.expenseColor;
+        let tempIncomeColor = uiSettings.incomeColor;
+        let tempCardBgColor = uiSettings.cardBg;
+        let tempBgColor = uiSettings.bgColor;
+        
         const expenseHue = modal.querySelector('#expenseHue');
         const expenseSat = modal.querySelector('#expenseSat');
         const expenseLight = modal.querySelector('#expenseLight');
         const expensePreview = modal.querySelector('#expensePreview');
         
-        function updateExpenseColor() {
+        function updateExpensePreview() {
           let h = parseInt(expenseHue.value);
           let s = parseInt(expenseSat.value);
           let l = parseInt(expenseLight.value);
           let newColor = hslToHex(h, s, l);
-          uiSettings.expenseColor = newColor;
-          applyUISettings();
           expensePreview.style.background = newColor;
+          tempExpenseColor = newColor;
         }
-        expenseHue.oninput = updateExpenseColor;
-        expenseSat.oninput = updateExpenseColor;
-        expenseLight.oninput = updateExpenseColor;
+        expenseHue.oninput = updateExpensePreview;
+        expenseSat.oninput = updateExpensePreview;
+        expenseLight.oninput = updateExpensePreview;
         
         const incomeHue = modal.querySelector('#incomeHue');
         const incomeSat = modal.querySelector('#incomeSat');
         const incomeLight = modal.querySelector('#incomeLight');
         const incomePreview = modal.querySelector('#incomePreview');
         
-        function updateIncomeColor() {
+        function updateIncomePreview() {
           let h = parseInt(incomeHue.value);
           let s = parseInt(incomeSat.value);
           let l = parseInt(incomeLight.value);
           let newColor = hslToHex(h, s, l);
-          uiSettings.incomeColor = newColor;
-          applyUISettings();
           incomePreview.style.background = newColor;
+          tempIncomeColor = newColor;
         }
-        incomeHue.oninput = updateIncomeColor;
-        incomeSat.oninput = updateIncomeColor;
-        incomeLight.oninput = updateIncomeColor;
+        incomeHue.oninput = updateIncomePreview;
+        incomeSat.oninput = updateIncomePreview;
+        incomeLight.oninput = updateIncomePreview;
         
         const cardBgHue = modal.querySelector('#cardBgHue');
         const cardBgSat = modal.querySelector('#cardBgSat');
         const cardBgLight = modal.querySelector('#cardBgLight');
         const cardBgPreview = modal.querySelector('#cardBgPreview');
         
-        function updateCardBgColor() {
+        function updateCardBgPreview() {
           let h = parseInt(cardBgHue.value);
           let s = parseInt(cardBgSat.value);
           let l = parseInt(cardBgLight.value);
           let newColor = hslToHex(h, s, l);
-          uiSettings.cardBg = newColor;
-          applyUISettings();
           cardBgPreview.style.background = newColor;
+          tempCardBgColor = newColor;
         }
-        cardBgHue.oninput = updateCardBgColor;
-        cardBgSat.oninput = updateCardBgColor;
-        cardBgLight.oninput = updateCardBgColor;
+        cardBgHue.oninput = updateCardBgPreview;
+        cardBgSat.oninput = updateCardBgPreview;
+        cardBgLight.oninput = updateCardBgPreview;
         
         const bgHue = modal.querySelector('#bgHue');
         const bgSat = modal.querySelector('#bgSat');
         const bgLight = modal.querySelector('#bgLight');
         const bgPreview = modal.querySelector('#bgPreview');
         
-        function updateBgColor() {
+        function updateBgPreview() {
           let h = parseInt(bgHue.value);
           let s = parseInt(bgSat.value);
           let l = parseInt(bgLight.value);
           let newColor = hslToHex(h, s, l);
-          uiSettings.bgColor = newColor;
-          applyUISettings();
           bgPreview.style.background = newColor;
+          tempBgColor = newColor;
         }
-        bgHue.oninput = updateBgColor;
-        bgSat.oninput = updateBgColor;
-        bgLight.oninput = updateBgColor;
+        bgHue.oninput = updateBgPreview;
+        bgSat.oninput = updateBgPreview;
+        bgLight.oninput = updateBgPreview;
         
         modal.querySelectorAll('#themeButtons .theme-btn').forEach(btn => {
           btn.onclick = () => {
-            applyTheme(btn.dataset.theme);
-            let newExpense = hexToHsl(uiSettings.expenseColor);
-            let newIncome = hexToHsl(uiSettings.incomeColor);
-            let newCardBg = hexToHsl(uiSettings.cardBg);
-            let newBg = hexToHsl(uiSettings.bgColor);
-            expenseHue.value = newExpense.h;
-            expenseSat.value = newExpense.s;
-            expenseLight.value = newExpense.l;
-            incomeHue.value = newIncome.h;
-            incomeSat.value = newIncome.s;
-            incomeLight.value = newIncome.l;
-            cardBgHue.value = newCardBg.h;
-            cardBgSat.value = newCardBg.s;
-            cardBgLight.value = newCardBg.l;
-            bgHue.value = newBg.h;
-            bgSat.value = newBg.s;
-            bgLight.value = newBg.l;
-            expensePreview.style.background = uiSettings.expenseColor;
-            incomePreview.style.background = uiSettings.incomeColor;
-            cardBgPreview.style.background = uiSettings.cardBg;
-            bgPreview.style.background = uiSettings.bgColor;
-            modal.querySelector('#spacingGap').value = uiSettings.spacingGap;
-            modal.querySelector('#spacingValue').innerText = uiSettings.spacingGap + 'px';
-            modal.querySelector('#cardPadding').value = uiSettings.cardPadding;
-            modal.querySelector('#paddingValue').innerText = uiSettings.cardPadding + 'px';
-            modal.querySelector('#fontSize').value = uiSettings.fontSize;
-            modal.querySelector('#fontValue').innerText = uiSettings.fontSize + 'px';
+            const theme = THEMES[btn.dataset.theme];
+            if (theme) {
+              tempExpenseColor = theme.expense;
+              tempIncomeColor = theme.income;
+              tempCardBgColor = theme.cardBg;
+              tempBgColor = theme.bg;
+              
+              let newExpense = hexToHsl(tempExpenseColor);
+              let newIncome = hexToHsl(tempIncomeColor);
+              let newCardBg = hexToHsl(tempCardBgColor);
+              let newBg = hexToHsl(tempBgColor);
+              
+              expenseHue.value = newExpense.h;
+              expenseSat.value = newExpense.s;
+              expenseLight.value = newExpense.l;
+              incomeHue.value = newIncome.h;
+              incomeSat.value = newIncome.s;
+              incomeLight.value = newIncome.l;
+              cardBgHue.value = newCardBg.h;
+              cardBgSat.value = newCardBg.s;
+              cardBgLight.value = newCardBg.l;
+              bgHue.value = newBg.h;
+              bgSat.value = newBg.s;
+              bgLight.value = newBg.l;
+              
+              expensePreview.style.background = tempExpenseColor;
+              incomePreview.style.background = tempIncomeColor;
+              cardBgPreview.style.background = tempCardBgColor;
+              bgPreview.style.background = tempBgColor;
+            }
           };
         });
         
@@ -2140,7 +2519,7 @@
             inputPadding: 12,
             fontSize: 18,
             expenseColor: '#c2413a',
-            incomeColor: '#1e7b5c',
+            incomeColor: '#2dd4bf',
             spacingGap: 6,
             bgColor: '#f1f5f9',
             cardBg: '#ffffff',
@@ -2153,6 +2532,11 @@
         };
         
         modal.querySelector('#closeSettingsBtn').onclick = () => {
+          // 应用所有临时颜色
+          uiSettings.expenseColor = tempExpenseColor;
+          uiSettings.incomeColor = tempIncomeColor;
+          uiSettings.cardBg = tempCardBgColor;
+          uiSettings.bgColor = tempBgColor;
           saveSettings();
           modal.remove();
           showToast('设置已保存');
@@ -2179,12 +2563,25 @@
           reader.onload = (ev) => {
             try {
               let data = JSON.parse(ev.target.result);
+              
+              // 数据验证
+              if (!validateBackupData(data)) {
+                showToast('文件格式错误或数据损坏');
+                return;
+              }
+              
               if (data.entries) {
-                entries = data.entries.map(e => ({ ...e, timestamp: e.timestamp || Date.now() }));
+                entries = data.entries.map(e => ({ 
+                  ...e, 
+                  timestamp: e.timestamp || Date.now(),
+                  time: e.time || new Date(e.timestamp || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })
+                }));
               }
               if (data.expenseCats) expenseCats = data.expenseCats;
               if (data.incomeCats) incomeCats = data.incomeCats;
               if (data.uiSettings) uiSettings = { ...uiSettings, ...data.uiSettings };
+              
+              rebuildStatsCache();
               save();
               renderCalendar();
               renderEntries();
@@ -2199,12 +2596,29 @@
         input.click();
       }
 
+      // 返回顶部功能
+      function initBackToTop() {
+        const backTopBtn = document.getElementById('floatBackTop');
+        let scrollTimeout;
+        
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 300) {
+            backTopBtn.classList.add('show');
+          } else {
+            backTopBtn.classList.remove('show');
+          }
+        });
+        
+        backTopBtn.onclick = () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+      }
+
       // ==================== 事件绑定 ====================
       function bindEvents() {
-        // 金额输入限制
         document.getElementById('amountInput').addEventListener('input', function(e) {
           let val = this.value;
-          val = val.replace(/[^\d.-]/g, '');
+          val = val.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
           let parts = val.split('.');
           if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
           this.value = val;
@@ -2226,7 +2640,6 @@
           }
         });
         
-        // 日历点击
         document.getElementById('calendarGrid').addEventListener('click', (e) => {
           let day = e.target.closest('.calendar-day');
           if (day && day.dataset.date) {
@@ -2234,47 +2647,57 @@
             let [yy, mm] = selectedDate.split('-');
             currentYear = parseInt(yy);
             currentMonth = parseInt(mm) - 1;
-            displayLimit = 5;
             renderCalendar();
             renderEntries();
           }
         });
         
-        // 月份切换
         document.getElementById('prevMonth').onclick = () => changeMonth(-1);
         document.getElementById('nextMonth').onclick = () => changeMonth(1);
         
-        // 滑动切换月份
-        let calendarCard = document.querySelector('.calendar-card');
+        // 优化触摸滑动：仅限顶部日期区域
+        const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0;
-        calendarCard.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; });
-        calendarCard.addEventListener('touchend', (e) => {
-          let diff = e.changedTouches[0].screenX - touchStartX;
-          if (Math.abs(diff) > 50) {
-            if (diff > 0) changeMonth(-1);
-            else changeMonth(1);
+        let touchStartY = 0;
+        let isSwiping = false;
+        
+        swipeArea.addEventListener('touchstart', (e) => {
+          touchStartX = e.changedTouches[0].screenX;
+          touchStartY = e.changedTouches[0].screenY;
+          isSwiping = true;
+        });
+        
+        swipeArea.addEventListener('touchend', (e) => {
+          if (!isSwiping) return;
+          isSwiping = false;
+          let diffX = e.changedTouches[0].screenX - touchStartX;
+          let diffY = e.changedTouches[0].screenY - touchStartY;
+          
+          // 水平滑动距离大于垂直滑动距离，且超过50px才触发
+          if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+            if (diffX > 0) {
+              changeMonth(-1);
+            } else {
+              changeMonth(1);
+            }
           }
         });
         
-        // 菜单
         document.getElementById('menuButton').onclick = (e) => {
           e.stopPropagation();
+          closeCategoryDropdown();
           let dropdown = document.getElementById('menuDropdown');
           dropdown.classList.toggle('show');
           document.getElementById('menuButton').setAttribute('aria-expanded', dropdown.classList.contains('show'));
         };
         
         document.addEventListener('click', (e) => {
-          if (!e.target.closest('.menu-container')) {
-            document.getElementById('menuDropdown').classList.remove('show');
-            document.getElementById('menuButton').setAttribute('aria-expanded', 'false');
-          }
-          if (!e.target.closest('.category-wrapper')) {
-            document.getElementById('categoryDropdown').classList.remove('show');
-          }
+          const isMenu = e.target.closest('.menu-container');
+          const isCategory = e.target.closest('.category-wrapper');
+          if (!isMenu) closeMenu();
+          if (!isCategory) closeCategoryDropdown();
         });
         
-        // 分类下拉
         document.getElementById('dropdownBtn').onclick = (e) => {
           e.stopPropagation();
           let dropdown = document.getElementById('categoryDropdown');
@@ -2289,7 +2712,6 @@
           renderCategoryDropdown();
         };
         
-        // 事件委托：分类选择
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
           const item = e.target.closest('.category-item');
           if (!item) return;
@@ -2301,12 +2723,12 @@
             addRecord();
           } else {
             document.getElementById('categoryInput').value = selectedCat;
+            document.getElementById('amountInput').focus();
             showToast('请先输入金额');
           }
-          setTimeout(() => document.getElementById('categoryDropdown').classList.remove('show'), 200);
+          closeCategoryDropdown();
         });
         
-        // 事件委托：明细列表
         document.getElementById('entriesList').addEventListener('click', (e) => {
           const editBtn = e.target.closest('.edit-btn');
           const deleteBtn = e.target.closest('.delete-btn');
@@ -2315,32 +2737,41 @@
             editEntry(id);
           } else if (deleteBtn) {
             let id = deleteBtn.getAttribute('data-id');
-            if (confirm('删除记录？')) {
-              entries = entries.filter(e => String(e.id) !== String(id));
-              save();
-              renderCalendar();
-              renderEntries();
-              renderCategoryDropdown();
-              showToast('已删除');
-            }
+            if (!confirm('删除记录？')) return;
+            entries = entries.filter(e => String(e.id) !== String(id));
+            rebuildStatsCache();
+            save();
+            renderCalendar();
+            renderEntries();
+            renderCategoryDropdown();
+            showToast('已删除');
           }
         });
         
-        // 菜单项
-        document.getElementById('viewMoreBtn').onclick = () => showAllModal();
-        document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('searchMenuItem').onclick = () => { showSearch(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('exportMenuItem').onclick = () => { exportBackup(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('importMenuItem').onclick = () => { importBackup(); document.getElementById('menuDropdown').classList.remove('show'); };
-        document.getElementById('creditMenuItem').onclick = () => {
-  window.location.href = 'credit.html';
-};
+        // 修复：查看全部按钮始终显示，点击打开模态框
+        document.getElementById('viewMoreBtn').onclick = () => {
+          showAllEntriesModal();
+        };
+
+        const clearBtn = document.getElementById('clearDataMenuItem');
+        if (clearBtn && !clearBtn.dataset.bound) {
+          clearBtn.dataset.bound = 'true';
+          clearBtn.onclick = () => {
+            clearAllData();
+            closeMenu();
+          };
+        }
+
+        document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
+        document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); closeMenu(); };
+        document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); closeMenu(); };
+        document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
+        document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); closeMenu(); };
+        document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
+        document.getElementById('exportMenuItem').onclick = () => { exportBackup(); closeMenu(); };
+        document.getElementById('importMenuItem').onclick = () => { importBackup(); closeMenu(); };
+        document.getElementById('creditMenuItem').onclick = () => { closeMenu(); window.location.href = 'credit.html'; };
         
-        // 收支类型切换
         document.querySelectorAll('.type-option').forEach(opt => {
           opt.onclick = () => {
             document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
@@ -2373,12 +2804,16 @@
       };
 
       // ==================== 初始化 ====================
-      load();
-      bindEvents();
-      renderCalendar();
-      renderEntries();
-      renderCategoryDropdown();
-      updateInputColor();
+      window.onload = function () {
+        load();
+        rebuildStatsCache();
+        bindEvents();
+        renderCalendar();
+        renderEntries();
+        renderCategoryDropdown();
+        updateInputColor();
+        initBackToTop();
+      };
 
       window.addEventListener('load', () => {
         if (isIOS() && !('standalone' in window.navigator && window.navigator.standalone)) {
@@ -2404,7 +2839,6 @@
       });
     })();
   </script>
-
   <button id="installBtn" style="
     position: fixed;
     bottom: 80px;
@@ -2424,5 +2858,4 @@
     📲 安装App
   </button>
 </body>
-
 </html>
