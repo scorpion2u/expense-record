@@ -1245,39 +1245,39 @@
     </div>
 
     <div class="input-card">
-      <div class="input-header">
-        <div class="type-switch" id="typeSwitch">
-          <div class="type-option expense active" data-type="expense">💸 支出</div>
-          <div class="type-option income" data-type="income">💰 收入</div>
-        </div>
-        <div class="menu-container">
-          <div class="menu-button" id="menuButton" aria-label="菜单" aria-expanded="false">☰</div>
-          <div class="menu-dropdown" id="menuDropdown">
-            <div class="menu-item" id="creditMenuItem">💳 信用卡管家</div>
-            <div class="menu-item" id="settingsMenuItem">🎨 界面设置</div>
-            <div class="menu-item" id="darkModeMenuItem">🌙 暗色模式</div>
-            <div class="menu-item" id="statisticsMenuItem">📊 月度统计</div>
-            <div class="menu-item" id="searchMenuItem">🔍 搜索记录</div>
-            <div class="menu-item" id="manageExpenseCategories">📝 管理支出分类</div>
-            <div class="menu-item" id="manageIncomeCategories">💰 管理收入分类</div>
-            <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
-            <div class="menu-item" id="importMenuItem">📥 导入备份</div>
-            <div class="menu-item" id="clearDataMenuItem">🗑 清空所有数据</div>
-          </div>
-        </div>
-      </div>
-      <div class="input-row">
-        <div class="amount-box">
-          <span id="currencySymbol">RM</span>
-          <input type="text" id="amountInput" placeholder="0.00" inputmode="decimal">
-        </div>
-        <div class="category-wrapper">
-          <input type="text" id="categoryInput" placeholder="输入或选择分类">
-          <button class="dropdown-btn" id="dropdownBtn" aria-label="选择分类">▼</button>
-          <div class="category-dropdown" id="categoryDropdown"></div>
-        </div>
+  <div class="input-header">
+    <div class="type-switch" id="typeSwitch">
+      <div class="type-option expense active" data-type="expense">💸 支出</div>
+      <div class="type-option income" data-type="income">💰 收入</div>
+    </div>
+    <div class="menu-container">
+      <div class="menu-button" id="menuButton" aria-label="菜单" aria-expanded="false">☰</div>
+      <div class="menu-dropdown" id="menuDropdown">
+        <div class="menu-item" id="creditMenuItem">💳 信用卡管家</div>
+        <div class="menu-item" id="settingsMenuItem">🎨 界面设置</div>
+        <div class="menu-item" id="darkModeMenuItem">🌙 暗色模式</div>
+        <div class="menu-item" id="statisticsMenuItem">📊 月度统计</div>
+        <div class="menu-item" id="searchMenuItem">🔍 搜索记录</div>
+        <div class="menu-item" id="manageExpenseCategories">📝 管理支出分类</div>
+        <div class="menu-item" id="manageIncomeCategories">💰 管理收入分类</div>
+        <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
+        <div class="menu-item" id="importMenuItem">📥 导入备份</div>
+        <div class="menu-item" id="clearDataMenuItem">🗑 清空所有数据</div>
       </div>
     </div>
+  </div>
+  <div class="input-row">
+    <div class="amount-box">
+      <span id="currencySymbol">RM</span>
+      <input type="text" id="amountInput" placeholder="0.00" inputmode="decimal" pattern="[0-9]*">
+    </div>
+    <div class="category-wrapper">
+      <input type="text" id="categoryInput" placeholder="输入或选择分类">
+      <button class="dropdown-btn" id="dropdownBtn" aria-label="选择分类">▼</button>
+      <div class="category-dropdown" id="categoryDropdown"></div>
+    </div>
+  </div>
+</div>
 
     <div class="calendar-card">
       <div class="weekdays">
@@ -2051,38 +2051,50 @@
       }
 
       function editEntry(id) {
-        let entry = entries.find(e => e.id === id);
-        if (!entry) return;
-        
-        const modal = createModal('✏️ 编辑记录', `
-          <input type="number" id="editAmount" value="${entry.amount}" step="0.01" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; margin-bottom:10px;">
-          <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0;">
-        `, '<button id="saveEditBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:10px; border-radius:32px;">保存</button>');
-        
-        modal.querySelector('#saveEditBtn').onclick = () => {
-          let newAmount = parseFloat(document.getElementById('editAmount').value);
-          if (!newAmount || newAmount <= 0) {
-            showToast('请输入有效金额');
-            return;
-          }
-          let newCat = document.getElementById('editCategory').value.trim();
-          if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
+  let entry = entries.find(e => e.id === id);
+  if (!entry) return;
+  
+  // 保存原始类型，用于编辑后恢复
+  const originalType = entry.type;
+  
+  const modal = createModal('✏️ 编辑记录', `
+    <input type="number" id="editAmount" value="${entry.amount}" step="0.01" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0; margin-bottom:10px;">
+    <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%; padding:10px; border-radius:28px; border:1px solid #e2e8f0;">
+  `, '<button id="saveEditBtn" style="width:100%; background:var(--expense-color); color:white; border:none; padding:10px; border-radius:32px;">保存</button>');
+  
+  modal.querySelector('#saveEditBtn').onclick = () => {
+    let newAmount = parseFloat(document.getElementById('editAmount').value);
+    if (!newAmount || newAmount <= 0) {
+      showToast('请输入有效金额');
+      return;
+    }
+    let newCat = document.getElementById('editCategory').value.trim();
+    if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
 
-          entry.amount = newAmount;
-          entry.note = newCat;
-          entry.timestamp = Date.now();
-          entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+    entry.amount = newAmount;
+    entry.note = newCat;
+    entry.timestamp = Date.now();
+    entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
 
-          rebuildStatsCache();
-          save();
-          renderCalendar();
-          renderEntries();
-          renderCategoryDropdown();
+    rebuildStatsCache();
+    save();
+    renderCalendar();
+    renderEntries();
+    renderCategoryDropdown();
+    
+    // 如果编辑的记录类型与当前激活的类型不同，切换类型以保持一致
+    if (entry.type !== currentType) {
+      currentType = entry.type;
+      document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+      document.querySelector(`.type-option.${entry.type}`).classList.add('active');
+      renderCategoryDropdown();
+      updateInputColor();
+    }
 
-          modal.remove();
-          showToast('修改成功');
-        };
-      }
+    modal.remove();
+    showToast('修改成功');
+  };
+}
 
       function changeMonth(delta) {
         currentMonth += delta;
@@ -2279,25 +2291,32 @@
           listDiv.innerHTML = currentCats.map((cat, idx) => `<div class="category-list-item"><span>${escapeHtml(cat)}</span><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">删除</button></div>`).join('');
           listDiv.querySelectorAll('.delete-cat-btn').forEach(btn => {
             btn.onclick = () => {
-              let catName = btn.getAttribute('data-cat');
-              if (catName === '其他') {
-                showToast('「其他」分类不可删除');
-                return;
-              }
-              if (confirm(`确定删除「${catName}」？`)) {
-                if (type === 'expense') {
-                  expenseCats = expenseCats.filter(c => c !== catName);
-                  if (expenseCats.length === 0) expenseCats = ['其他'];
-                } else {
-                  incomeCats = incomeCats.filter(c => c !== catName);
-                  if (incomeCats.length === 0) incomeCats = ['其他'];
-                }
-                save();
-                renderCategoryList();
-                renderCategoryDropdown();
-                showToast('已删除');
-              }
-            };
+  let catName = btn.getAttribute('data-cat');
+  if (catName === '其他') {
+    showToast('「其他」分类不可删除');
+    return;
+  }
+  if (confirm(`确定删除「${catName}」？`)) {
+    if (type === 'expense') {
+      expenseCats = expenseCats.filter(c => c !== catName);
+      if (expenseCats.length === 0) expenseCats = ['其他'];
+    } else {
+      incomeCats = incomeCats.filter(c => c !== catName);
+      if (incomeCats.length === 0) incomeCats = ['其他'];
+    }
+    save();
+    
+    // 检查当前输入框是否是被删除的分类
+    const categoryInput = document.getElementById('categoryInput');
+    if (categoryInput.value === catName) {
+      categoryInput.value = '';
+    }
+    
+    renderCategoryList();
+    renderCategoryDropdown();
+    showToast('已删除');
+  }
+};
           });
         }
         
@@ -2643,13 +2662,33 @@
       // ==================== 事件绑定 ====================
       function bindEvents() {
         document.getElementById('amountInput').addEventListener('input', function(e) {
-          let val = this.value;
-          val = val.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1');
-          let parts = val.split('.');
-          if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
-          this.value = val;
-          updateInputColor();
-        });
+  let val = this.value;
+  // 允许以小数点开头
+  if (val === '.') {
+    this.value = '0.';
+    return;
+  }
+  val = val.replace(/[^\d.]/g, '');
+  // 确保只有一个小数点
+  val = val.replace(/(\..*)\./g, '$1');
+  // 如果以0开头且后面还有数字，且不是小数，则移除开头的0
+  if (val.length > 1 && val[0] === '0' && val[1] !== '.') {
+    val = val.replace(/^0+/, '');
+    if (val === '') val = '0';
+  }
+  this.value = val;
+  updateInputColor();
+});
+
+// 添加失焦时的格式化
+document.getElementById('amountInput').addEventListener('blur', function() {
+  let val = parseFloat(this.value);
+  if (!isNaN(val) && val > 0) {
+    this.value = val.toFixed(2);
+  } else if (this.value === '' || this.value === '0') {
+    this.value = '';
+  }
+});
         
         document.getElementById('amountInput').addEventListener('keypress', e => {
           if (e.key === 'Enter') {
@@ -2870,9 +2909,14 @@
           });
         }
 
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/expense-record/sw.js').catch(err => console.log(err));
-        }
+        // 改为立即注册，不等待页面完全加载
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/expense-record/sw.js')
+      .then(reg => console.log('SW registered:', reg))
+      .catch(err => console.error('SW registration failed:', err));
+  });
+}
       });
     })();
   </script>
