@@ -1266,8 +1266,8 @@
         <div class="menu-item" id="searchMenuItem">🔍 搜索记录</div>
         <div class="menu-item" id="manageExpenseCategories">📝 管理支出分类</div>
         <div class="menu-item" id="manageIncomeCategories">💰 管理收入分类</div>
-        <div class="menu-item" id="exportMenuItem">📤 导出备份</div>
-        <div class="menu-item" id="importMenuItem">📥 导入备份</div>
+        <div class="menu-item" id="exportMenuItem">📤 导出备份（可选月份）</div>
+        <div class="menu-item" id="importMenuItem">📥 导入备份（可选月份）</div>
         <div class="menu-item" id="clearDataMenuItem">🗑 清空所有数据</div>
       </div>
     </div>
@@ -1367,39 +1367,6 @@
         darkMode: false
       };
 
-      // ==================== 缓存构建函数 ====================
-      function rebuildStatsCache() {
-        monthStatsCache = {};
-        dateMap = {};
-        monthMap = {};
-
-        for (let e of entries) {
-          if (!dateMap[e.date]) {
-            dateMap[e.date] = [];
-          }
-          dateMap[e.date].push(e);
-
-          let monthKey = e.date.slice(0, 7);
-          if (!monthStatsCache[monthKey]) {
-            monthStatsCache[monthKey] = { expense: 0, income: 0 };
-          }
-          monthStatsCache[monthKey][e.type] += e.amount;
-
-          if (!monthMap[monthKey]) {
-            monthMap[monthKey] = [];
-          }
-          monthMap[monthKey].push(e);
-        }
-
-        for (let date in dateMap) {
-          dateMap[date].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        }
-        
-        for (let month in monthMap) {
-          monthMap[month].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        }
-      }
-
       // ==================== 辅助函数 ====================
       function getLocalDate() {
         let now = new Date();
@@ -1433,7 +1400,7 @@
         setTimeout(() => toast.remove(), 2000);
       }
 
-      // 生成唯一ID（增强版）
+      // 生成唯一ID
       function generateUniqueId() {
         if (crypto.randomUUID && crypto.randomUUID()) {
           return crypto.randomUUID();
@@ -1626,6 +1593,39 @@
         }
       }
 
+      // ==================== 缓存构建函数 ====================
+      function rebuildStatsCache() {
+        monthStatsCache = {};
+        dateMap = {};
+        monthMap = {};
+
+        for (let e of entries) {
+          if (!dateMap[e.date]) {
+            dateMap[e.date] = [];
+          }
+          dateMap[e.date].push(e);
+
+          let monthKey = e.date.slice(0, 7);
+          if (!monthStatsCache[monthKey]) {
+            monthStatsCache[monthKey] = { expense: 0, income: 0 };
+          }
+          monthStatsCache[monthKey][e.type] += e.amount;
+
+          if (!monthMap[monthKey]) {
+            monthMap[monthKey] = [];
+          }
+          monthMap[monthKey].push(e);
+        }
+
+        for (let date in dateMap) {
+          dateMap[date].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+        
+        for (let month in monthMap) {
+          monthMap[month].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+      }
+
       // ==================== 数据管理 ====================
       let isClearing = false;
 
@@ -1755,6 +1755,502 @@
           balance: stats.income - stats.expense
         };
       }
+
+      // ==================== 辅助函数（导出/导入用） ====================
+      function getDateRangeFromEntries(entriesList) {
+        if (!entriesList.length) return '无数据';
+        const dates = entriesList.map(e => e.date).sort();
+        return `${dates[0]} 至 ${dates[dates.length - 1]}`;
+      }
+
+      function calculateTotalByType(entriesList, type) {
+        return entriesList.filter(e => e.type === type).reduce((sum, e) => sum + e.amount, 0);
+      }
+
+      // ==================== 升级后的导出功能（优化版） ====================
+function showExportDialog() {
+  const currentMonthStr = selectedDate.slice(0, 7);
+  const currentYearStr = selectedDate.slice(0, 4);
+  
+  // 计算当前分类统计
+  const currentExpenseCatsCount = expenseCats.length;
+  const currentIncomeCatsCount = incomeCats.length;
+  
+  const modalHtml = `
+    <div class="export-options">
+      <div style="background: rgba(0,0,0,0.05); padding:12px; border-radius:12px; margin-bottom:16px;">
+        <div><strong>📊 当前数据统计：</strong></div>
+        <div>📝 总记录数：${entries.length} 条</div>
+        <div>📂 分类数量：支出 ${currentExpenseCatsCount} 个 / 收入 ${currentIncomeCatsCount} 个</div>
+        <div style="margin-top: 6px; font-size: 12px; color: #666;">
+          💸 支出分类：${expenseCats.slice(0, 5).join(', ')}${expenseCats.length > 5 ? '...' : ''}<br>
+          💰 收入分类：${incomeCats.slice(0, 5).join(', ')}${incomeCats.length > 5 ? '...' : ''}
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">📅 导出范围：</label>
+        <select id="exportRange" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+          <option value="all">全部数据 (${entries.length}条)</option>
+          <option value="current_month">当前月份 (${currentMonthStr})</option>
+          <option value="current_year">当前年份 (${currentYearStr})</option>
+          <option value="custom">自定义日期范围</option>
+        </select>
+      </div>
+      
+      <div id="customDateRange" style="display:none; margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">📅 日期范围：</label>
+        <div style="display:flex; gap:8px; align-items: center;">
+          <input type="date" id="startDate" style="flex:1; padding:10px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+          <span>→</span>
+          <input type="date" id="endDate" style="flex:1; padding:10px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+        </div>
+      </div>
+      
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">💰 收支类型：</label>
+        <select id="exportType" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+          <option value="all">全部</option>
+          <option value="expense">💸 仅支出</option>
+          <option value="income">💰 仅收入</option>
+        </select>
+      </div>
+      
+      <div id="categoryFilterDiv" style="display:none; margin-bottom: 16px;">
+        <label style="display: block; margin-bottom: 8px; font-weight: 500;">📝 分类筛选：</label>
+        <select id="exportCategory" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+          <option value="">全部</option>
+        </select>
+      </div>
+      
+      <div id="exportPreview" style="background: rgba(0,0,0,0.05); padding:12px; border-radius:12px; font-size:12px; margin-top:12px;">
+        💡 提示：导出文件将包含所选范围内的所有记录和完整分类
+      </div>
+    </div>
+  `;
+  
+  const modal = createModal('📤 导出备份', modalHtml, `
+    <button id="confirmExport" style="width:100%; background: var(--expense-color); color:white; border:none; padding:12px; border-radius:28px; margin-top:8px; cursor:pointer;">确认导出</button>
+    <button id="cancelExport" style="width:100%; background: rgba(0,0,0,0.05); border:none; padding:12px; border-radius:28px; margin-top:8px; cursor:pointer;">取消</button>
+  `);
+  
+  const modalEl = document.querySelector('.modal-overlay:last-child');
+  const rangeSelect = modalEl.querySelector('#exportRange');
+  const customRange = modalEl.querySelector('#customDateRange');
+  const typeSelect = modalEl.querySelector('#exportType');
+  const categoryDiv = modalEl.querySelector('#categoryFilterDiv');
+  const categorySelect = modalEl.querySelector('#exportCategory');
+  const previewDiv = modalEl.querySelector('#exportPreview');
+  
+  // 实时预览函数
+  function updatePreview() {
+    const range = rangeSelect.value;
+    const type = typeSelect.value;
+    const category = categorySelect.value;
+    
+    let filteredEntries = [...entries];
+    
+    // 按日期筛选
+    if (range === 'current_month') {
+      filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
+    } else if (range === 'current_year') {
+      filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
+    } else if (range === 'custom') {
+      const startDate = modalEl.querySelector('#startDate')?.value;
+      const endDate = modalEl.querySelector('#endDate')?.value;
+      if (startDate && endDate) {
+        filteredEntries = filteredEntries.filter(e => e.date >= startDate && e.date <= endDate);
+      }
+    }
+    
+    // 按类型筛选
+    if (type !== 'all') {
+      filteredEntries = filteredEntries.filter(e => e.type === type);
+    }
+    
+    // 按分类筛选
+    if (category) {
+      filteredEntries = filteredEntries.filter(e => e.note === category);
+    }
+    
+    // 统计筛选后的数据
+    const recordCount = filteredEntries.length;
+    const totalExpense = calculateTotalByType(filteredEntries, 'expense');
+    const totalIncome = calculateTotalByType(filteredEntries, 'income');
+    
+    // 统计筛选后涉及到的分类
+    const expenseCatsInExport = [...new Set(filteredEntries.filter(e => e.type === 'expense').map(e => e.note))];
+    const incomeCatsInExport = [...new Set(filteredEntries.filter(e => e.type === 'income').map(e => e.note))];
+    
+    if (recordCount === 0) {
+      previewDiv.innerHTML = `
+        <div style="color: #e74c3c;">
+          ⚠️ 当前筛选条件下没有数据可导出
+        </div>
+      `;
+    } else {
+      previewDiv.innerHTML = `
+        <div><strong>📊 导出预览：</strong></div>
+        <div>📝 将导出 ${recordCount} 条记录</div>
+        <div>💰 总支出：RM${totalExpense.toFixed(2)}</div>
+        <div>💵 总收入：RM${totalIncome.toFixed(2)}</div>
+        <div style="margin-top: 6px; font-size: 11px; color: #666;">
+          📂 涉及分类：<br>
+          ${expenseCatsInExport.length > 0 ? `💸 支出(${expenseCatsInExport.length}个): ${expenseCatsInExport.slice(0, 4).join(', ')}${expenseCatsInExport.length > 4 ? '...' : ''}<br>` : ''}
+          ${incomeCatsInExport.length > 0 ? `💰 收入(${incomeCatsInExport.length}个): ${incomeCatsInExport.slice(0, 4).join(', ')}${incomeCatsInExport.length > 4 ? '...' : ''}` : ''}
+          ${expenseCatsInExport.length === 0 && incomeCatsInExport.length === 0 ? '无' : ''}
+        </div>
+        <div style="margin-top: 6px; font-size: 11px; color: #27ae60;">
+          📦 导出文件将包含完整的 ${expenseCats.length + incomeCats.length} 个分类设置
+        </div>
+      `;
+    }
+  }
+  
+  // 范围切换
+  rangeSelect.onchange = () => {
+    customRange.style.display = rangeSelect.value === 'custom' ? 'block' : 'none';
+    updatePreview();
+  };
+  
+  // 类型切换时加载分类
+  const updateCategoryOptions = () => {
+    const type = typeSelect.value;
+    if (type !== 'all') {
+      categoryDiv.style.display = 'block';
+      const cats = type === 'expense' ? expenseCats : incomeCats;
+      categorySelect.innerHTML = '<option value="">全部</option>' + 
+        cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    } else {
+      categoryDiv.style.display = 'none';
+    }
+    updatePreview();
+  };
+  typeSelect.onchange = updateCategoryOptions;
+  categorySelect.onchange = updatePreview;
+  
+  // 自定义日期变化时更新预览
+  const startDateInput = modalEl.querySelector('#startDate');
+  const endDateInput = modalEl.querySelector('#endDate');
+  if (startDateInput) startDateInput.onchange = updatePreview;
+  if (endDateInput) endDateInput.onchange = updatePreview;
+  
+  // 初始更新预览
+  updatePreview();
+  
+  // 确认导出
+  modalEl.querySelector('#confirmExport').onclick = () => {
+    const options = {
+      range: rangeSelect.value,
+      startDate: modalEl.querySelector('#startDate')?.value,
+      endDate: modalEl.querySelector('#endDate')?.value,
+      type: typeSelect.value,
+      category: categorySelect.value
+    };
+    
+    exportToJSON(options);
+    modalEl.remove();
+  };
+  
+  modalEl.querySelector('#cancelExport').onclick = () => modalEl.remove();
+}
+
+function exportToJSON(options) {
+  let filteredEntries = [...entries];
+  
+  // 按日期筛选
+  const currentMonthStr = selectedDate.slice(0, 7);
+  const currentYearStr = selectedDate.slice(0, 4);
+  
+  if (options.range === 'current_month') {
+    filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
+  } else if (options.range === 'current_year') {
+    filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
+  } else if (options.range === 'custom' && options.startDate && options.endDate) {
+    filteredEntries = filteredEntries.filter(e => 
+      e.date >= options.startDate && e.date <= options.endDate
+    );
+  }
+  
+  // 按类型筛选
+  if (options.type !== 'all') {
+    filteredEntries = filteredEntries.filter(e => e.type === options.type);
+  }
+  
+  // 按分类筛选
+  if (options.category) {
+    filteredEntries = filteredEntries.filter(e => e.note === options.category);
+  }
+  
+  if (filteredEntries.length === 0) {
+    showToast('没有符合条件的数据可导出');
+    return;
+  }
+  
+  // 统计导出信息
+  const totalExpense = calculateTotalByType(filteredEntries, 'expense');
+  const totalIncome = calculateTotalByType(filteredEntries, 'income');
+  const expenseCatsInExport = [...new Set(filteredEntries.filter(e => e.type === 'expense').map(e => e.note))];
+  const incomeCatsInExport = [...new Set(filteredEntries.filter(e => e.type === 'income').map(e => e.note))];
+  
+  const backup = {
+    version: '2.0',
+    entries: filteredEntries,
+    expenseCats: expenseCats,
+    incomeCats: incomeCats,
+    uiSettings: uiSettings,
+    exportDate: new Date().toISOString(),
+    exportInfo: {
+      totalRecords: filteredEntries.length,
+      dateRange: getDateRangeFromEntries(filteredEntries),
+      totalExpense: totalExpense,
+      totalIncome: totalIncome,
+      expenseCategories: expenseCatsInExport,
+      incomeCategories: incomeCatsInExport,
+      totalCategories: {
+        expense: expenseCats.length,
+        income: incomeCats.length
+      }
+    }
+  };
+  
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  
+  // 智能文件名
+  let fileName = '记账备份';
+  if (options.range === 'current_month') {
+    fileName += `_${currentMonthStr.replace('-', '年')}月`;
+  } else if (options.range === 'current_year') {
+    fileName += `_${currentYearStr}年`;
+  } else if (options.range === 'custom' && options.startDate && options.endDate) {
+    fileName += `_${options.startDate}_至_${options.endDate}`;
+  }
+  
+  if (options.type === 'expense') fileName += '_仅支出';
+  if (options.type === 'income') fileName += '_仅收入';
+  if (options.category) fileName += `_${options.category}`;
+  
+  fileName += `.json`;
+  
+  a.download = fileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  
+  // 详细的导出完成提示
+  let message = `✅ 导出成功！\n`;
+  message += `📊 共 ${filteredEntries.length} 条记录\n`;
+  message += `💰 支出: RM${totalExpense.toFixed(2)}\n`;
+  message += `💵 收入: RM${totalIncome.toFixed(2)}\n`;
+  message += `📂 涉及 ${expenseCatsInExport.length + incomeCatsInExport.length} 个分类\n`;
+  message += `📦 完整分类已保存 (支出${expenseCats.length}个 / 收入${incomeCats.length}个)`;
+  
+  // 使用多行提示，由于 showToast 不支持换行，改用分段提示
+  showToast(`✅ 导出成功！${filteredEntries.length}条记录，支出RM${totalExpense.toFixed(2)}，收入RM${totalIncome.toFixed(2)}`);
+  
+  // 可选：显示更详细的控制台日志
+  console.log(message);
+}
+
+      // ==================== 升级后的导入功能（优化版） ====================
+function showImportDialog() {
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+  
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // 验证数据
+      if (!data.entries || !Array.isArray(data.entries)) {
+        throw new Error('文件格式错误：缺少 entries 字段');
+      }
+      
+      // 获取文件中的月份列表
+      const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
+      const totalExpense = calculateTotalByType(data.entries, 'expense');
+      const totalIncome = calculateTotalByType(data.entries, 'income');
+      
+      // 统计文件中的分类数量（用于显示）
+      const fileExpenseCats = data.expenseCats ? [...new Set(data.expenseCats)] : [];
+      const fileIncomeCats = data.incomeCats ? [...new Set(data.incomeCats)] : [];
+      
+      const modalHtml = `
+        <div class="import-options">
+          <div style="background: rgba(0,0,0,0.05); padding:12px; border-radius:12px; margin-bottom:16px;">
+            <div><strong>📄 文件：</strong> ${escapeHtml(file.name)}</div>
+            <div><strong>📊 记录数：</strong> ${data.entries.length} 条</div>
+            <div><strong>📅 时间范围：</strong> ${getDateRangeFromEntries(data.entries)}</div>
+            <div><strong>💰 总支出：</strong> RM${totalExpense.toFixed(2)}</div>
+            <div><strong>💵 总收入：</strong> RM${totalIncome.toFixed(2)}</div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.1);">
+              <strong>📂 文件中的分类：</strong><br>
+              💸 支出分类: ${fileExpenseCats.length > 0 ? fileExpenseCats.join(', ') : '无'}<br>
+              💰 收入分类: ${fileIncomeCats.length > 0 ? fileIncomeCats.join(', ') : '无'}
+            </div>
+            <div style="margin-top: 8px; background: rgba(100,108,92,0.1); padding: 6px; border-radius: 8px; font-size: 12px;">
+              <strong>📋 当前已有分类：</strong><br>
+              💸 支出: ${expenseCats.length}个 | 💰 收入: ${incomeCats.length}个
+            </div>
+          </div>
+          
+          <div style="margin-bottom:16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">导入模式：</label>
+            <select id="importMode" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+              <option value="merge">🔄 合并模式（保留现有记录，添加新记录，自动去重）</option>
+              <option value="replace">⚠️ 替换模式（清空所有现有数据）</option>
+            </select>
+          </div>
+          
+          <div style="margin-bottom:16px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">📅 选择要恢复的月份：</label>
+            <select id="monthSelect" style="width:100%; padding:12px; border-radius:28px; border:1px solid #e2e8f0; background: var(--card-bg); color: inherit;">
+              <option value="all">全部月份 (${data.entries.length}条)</option>
+              ${monthsInFile.map(month => {
+                const count = data.entries.filter(e => e.date.startsWith(month)).length;
+                return `<option value="${month}">${month.replace('-', '年')}月 (${count}条)</option>`;
+              }).join('')}
+            </select>
+          </div>
+          
+          <div style="background: #fff3cd; padding:12px; border-radius:12px; font-size:12px; margin-top:12px;">
+            ⚠️ 提示：合并模式会根据记录ID自动去重，相同ID的记录不会重复添加<br>
+            📝 分类会自动合并：新分类会添加到现有分类中，并显示新增数量
+          </div>
+        </div>
+      `;
+      
+      const modal = createModal('📥 导入备份', modalHtml, `
+        <button id="confirmImport" style="width:100%; background: var(--expense-color); color:white; border:none; padding:12px; border-radius:28px; margin-top:8px; cursor:pointer;">确认导入</button>
+        <button id="cancelImport" style="width:100%; background: rgba(0,0,0,0.05); border:none; padding:12px; border-radius:28px; margin-top:8px; cursor:pointer;">取消</button>
+      `);
+      
+      const modalEl = document.querySelector('.modal-overlay:last-child');
+      
+      modalEl.querySelector('#confirmImport').onclick = async () => {
+        const mode = modalEl.querySelector('#importMode').value;
+        const selectedMonth = modalEl.querySelector('#monthSelect').value;
+        
+        // 筛选要导入的记录
+        let entriesToImport = [...data.entries];
+        if (selectedMonth !== 'all') {
+          entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
+        }
+        
+        if (entriesToImport.length === 0) {
+          showToast('没有符合条件的数据可导入');
+          modalEl.remove();
+          return;
+        }
+        
+        let importedCount = 0;
+        let skippedCount = 0;
+        
+        if (mode === 'replace') {
+          // 替换模式：清空现有数据
+          entries = entriesToImport;
+          importedCount = entriesToImport.length;
+          showToast(`✅ 替换完成，共 ${importedCount} 条记录`);
+        } else {
+          // 合并模式：去重后添加
+          const existingIds = new Set(entries.map(e => e.id));
+          for (const entry of entriesToImport) {
+            if (!existingIds.has(entry.id)) {
+              entries.push(entry);
+              importedCount++;
+            } else {
+              skippedCount++;
+            }
+          }
+          showToast(`🔄 合并完成，新增 ${importedCount} 条，跳过 ${skippedCount} 条重复记录`);
+        }
+        
+        // 处理分类导入（自动合并新分类，并记录新增的分类）
+        let newExpenseCats = 0;
+        let newIncomeCats = 0;
+        let newExpenseCatsList = [];
+        let newIncomeCatsList = [];
+        
+        if (data.expenseCats && Array.isArray(data.expenseCats)) {
+          for (const cat of data.expenseCats) {
+            if (!expenseCats.includes(cat)) {
+              expenseCats.push(cat);
+              newExpenseCats++;
+              newExpenseCatsList.push(cat);
+            }
+          }
+        }
+        
+        if (data.incomeCats && Array.isArray(data.incomeCats)) {
+          for (const cat of data.incomeCats) {
+            if (!incomeCats.includes(cat)) {
+              incomeCats.push(cat);
+              newIncomeCats++;
+              newIncomeCatsList.push(cat);
+            }
+          }
+        }
+        
+        // 显示详细的分类新增信息
+        if (newExpenseCats > 0 || newIncomeCats > 0) {
+          let message = '📝 自动添加了';
+          if (newExpenseCats > 0) {
+            message += ` ${newExpenseCats} 个支出分类`;
+            if (newExpenseCats <= 3) {
+              message += ` (${newExpenseCatsList.join(', ')})`;
+            }
+          }
+          if (newIncomeCats > 0) {
+            if (newExpenseCats > 0) message += '，';
+            message += ` ${newIncomeCats} 个收入分类`;
+            if (newIncomeCats <= 3) {
+              message += ` (${newIncomeCatsList.join(', ')})`;
+            }
+          }
+          showToast(message);
+        } else {
+          // 如果文件中有分类但没有新增，也提示一下
+          if ((data.expenseCats && data.expenseCats.length > 0) || (data.incomeCats && data.incomeCats.length > 0)) {
+            showToast(`📝 所有分类已存在，无新增分类`);
+          }
+        }
+        
+        // 重新构建缓存并保存
+        rebuildStatsCache();
+        save();
+        
+        // 刷新界面
+        renderCalendar();
+        renderEntries();
+        renderCategoryDropdown();
+        updateInputColor();
+        
+        modalEl.remove();
+        
+        // 最终汇总提示
+        let finalMessage = `🎉 导入成功！当前共 ${entries.length} 条记录`;
+        if (newExpenseCats > 0 || newIncomeCats > 0) {
+          finalMessage += `，新增 ${newExpenseCats + newIncomeCats} 个分类`;
+        }
+        showToast(finalMessage);
+      };
+      
+      modalEl.querySelector('#cancelImport').onclick = () => modalEl.remove();
+      
+    } catch (error) {
+      console.error('导入错误:', error);
+      showToast('❌ 文件解析失败：' + error.message);
+    }
+  };
+  
+  fileInput.click();
+}
 
       // ==================== 渲染函数 ====================
       function renderTopCards() {
@@ -2008,61 +2504,58 @@
         el.classList.remove('show');
       }
 
-      // 修改后的 addRecord 函数 - 保存后清空输入框并退出键盘
-      // 修改 addRecord 函数中的清空部分
-function addRecord() {
-  if (isAdding) return false;
-  isAdding = true;
+      function addRecord() {
+        if (isAdding) return false;
+        isAdding = true;
 
-  let amountInput = document.getElementById('amountInput').value.trim();
-  let amount = parseFloat(amountInput);
-  if (isNaN(amount) || amount <= 0) {
-    showToast('请输入有效金额');
-    isAdding = false;
-    return false;
-  }
+        let amountInput = document.getElementById('amountInput').value.trim();
+        let amount = parseFloat(amountInput);
+        if (isNaN(amount) || amount <= 0) {
+          showToast('请输入有效金额');
+          isAdding = false;
+          return false;
+        }
 
-  let category = document.getElementById('categoryInput').value.trim();
-  if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
+        let category = document.getElementById('categoryInput').value.trim();
+        if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
 
-  entries.push({
-    id: generateUniqueId(),
-    timestamp: Date.now(),
-    date: selectedDate,
-    time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
-    amount,
-    note: category,
-    type: currentType
-  });
-if (entries.length > 5000) {
-  entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-  entries.shift();
-}
-  rebuildStatsCache();
-  save();
+        entries.push({
+          id: generateUniqueId(),
+          timestamp: Date.now(),
+          date: selectedDate,
+          time: new Date().toLocaleTimeString('zh-CN', { hour12: false }),
+          amount,
+          note: category,
+          type: currentType
+        });
+        
+        if (entries.length > 5000) {
+          entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          entries.shift();
+        }
+        
+        rebuildStatsCache();
+        save();
 
-  // 清空输入框、关闭下拉菜单、退出键盘
-  document.getElementById('amountInput').value = '';
-  document.getElementById('categoryInput').value = '';
-  document.getElementById('amountInput').blur();
-  document.getElementById('categoryInput').blur();
-  
-  // 关键：关闭分类下拉菜单
-  closeCategoryDropdown();
+        document.getElementById('amountInput').value = '';
+        document.getElementById('categoryInput').value = '';
+        document.getElementById('amountInput').blur();
+        document.getElementById('categoryInput').blur();
+        closeCategoryDropdown();
 
-  renderEntries();
-  renderTopCards();
-  renderSelectedDayTotal();
-  renderCalendar();
+        renderEntries();
+        renderTopCards();
+        renderSelectedDayTotal();
+        renderCalendar();
 
-  showToast(currentType === 'expense' ? '支出已记' : '收入已记');
-  
-  setTimeout(() => {
-    isAdding = false;
-  }, 500);
-  
-  return true;
-}
+        showToast(currentType === 'expense' ? '支出已记' : '收入已记');
+        
+        setTimeout(() => {
+          isAdding = false;
+        }, 500);
+        
+        return true;
+      }
 
       function editEntry(id) {
         let entry = entries.find(e => e.id === id);
@@ -2595,58 +3088,6 @@ if (entries.length > 5000) {
         };
       }
 
-      function exportBackup() {
-        let backup = { entries, expenseCats, incomeCats, uiSettings };
-        let blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
-        let a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `记账_${new Date().toISOString().slice(0, 10)}.json`;
-        a.click();
-        showToast('导出成功');
-      }
-
-      function importBackup() {
-        let input = document.createElement('input');
-        input.type = 'file';
-        input.accept = '.json';
-        input.onchange = (e) => {
-          let file = e.target.files[0];
-          let reader = new FileReader();
-          reader.onload = (ev) => {
-            try {
-              let data = JSON.parse(ev.target.result);
-              
-              if (!validateBackupData(data)) {
-                showToast('文件格式错误或数据损坏');
-                return;
-              }
-              
-              if (data.entries) {
-                entries = data.entries.map(e => ({ 
-                  ...e, 
-                  timestamp: e.timestamp || Date.now(),
-                  time: e.time || new Date(e.timestamp || Date.now()).toLocaleTimeString('zh-CN', { hour12: false })
-                }));
-              }
-              if (data.expenseCats) expenseCats = data.expenseCats;
-              if (data.incomeCats) incomeCats = data.incomeCats;
-              if (data.uiSettings) uiSettings = { ...uiSettings, ...data.uiSettings };
-              
-              rebuildStatsCache();
-              save();
-              renderCalendar();
-              renderEntries();
-              renderCategoryDropdown();
-              showToast('导入成功');
-            } catch (e) {
-              showToast('文件格式错误');
-            }
-          };
-          reader.readAsText(file);
-        };
-        input.click();
-      }
-
       function initBackToTop() {
         const backTopBtn = document.getElementById('floatBackTop');
         
@@ -2663,7 +3104,7 @@ if (entries.length > 5000) {
         };
       }
 
-      // ==================== 事件绑定（三种交互模式） ====================
+      // ==================== 事件绑定 ====================
       function bindEvents() {
         // 金额输入格式化
         document.getElementById('amountInput').addEventListener('input', function(e) {
@@ -2691,9 +3132,7 @@ if (entries.length > 5000) {
           }
         });
 
-        // ========== 模式1 & 模式2 & 模式3 交互实现 ==========
-        
-        // 金额框回车：有分类则保存，否则提示选择分类
+        // 金额框回车
         document.getElementById('amountInput').addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -2706,10 +3145,8 @@ if (entries.length > 5000) {
             }
             
             if (category) {
-              // 有分类，直接保存
               addRecord();
             } else {
-              // 无分类，提示用户选择分类
               showToast('请选择或输入分类');
               const catInput = document.getElementById('categoryInput');
               catInput.classList.add('highlight-category');
@@ -2718,7 +3155,7 @@ if (entries.length > 5000) {
           }
         });
         
-        // 分类框回车：有金额则保存，否则跳到金额框
+        // 分类框回车
         document.getElementById('categoryInput').addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
             e.preventDefault();
@@ -2731,10 +3168,8 @@ if (entries.length > 5000) {
             }
             
             if (amount && amount > 0) {
-              // 有金额，直接保存
               addRecord();
             } else {
-              // 无金额，跳到金额框
               document.getElementById('amountInput').focus();
               showToast('请输入金额');
             }
@@ -2811,7 +3246,7 @@ if (entries.length > 5000) {
           renderCategoryDropdown();
         };
         
-        // ========== 模式3：下拉选择分类 ==========
+        // 下拉选择分类
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
           const item = e.target.closest('.category-item');
           if (!item) return;
@@ -2824,10 +3259,8 @@ if (entries.length > 5000) {
           const amount = parseFloat(document.getElementById('amountInput').value);
           
           if (amount && amount > 0) {
-            // 金额已存在，直接保存
             addRecord();
           } else {
-            // 金额为空，跳到金额框
             document.getElementById('amountInput').focus();
             showToast('请输入金额');
           }
@@ -2868,7 +3301,7 @@ if (entries.length > 5000) {
           showAllEntriesModal();
         };
 
-        // 菜单项
+        // 菜单项绑定（升级版）
         const clearBtn = document.getElementById('clearDataMenuItem');
         if (clearBtn && !clearBtn.dataset.bound) {
           clearBtn.dataset.bound = 'true';
@@ -2884,8 +3317,18 @@ if (entries.length > 5000) {
         document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
         document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); closeMenu(); };
         document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
-        document.getElementById('exportMenuItem').onclick = () => { exportBackup(); closeMenu(); };
-        document.getElementById('importMenuItem').onclick = () => { importBackup(); closeMenu(); };
+        
+        // 升级后的导出/导入
+        document.getElementById('exportMenuItem').onclick = () => { 
+          showExportDialog(); 
+          closeMenu(); 
+        };
+        
+        document.getElementById('importMenuItem').onclick = () => { 
+          showImportDialog(); 
+          closeMenu(); 
+        };
+        
         document.getElementById('creditMenuItem').onclick = () => { closeMenu(); window.location.href = 'credit.html'; };
         
         document.querySelectorAll('.type-option').forEach(opt => {
