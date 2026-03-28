@@ -2034,7 +2034,10 @@ function addRecord() {
     note: category,
     type: currentType
   });
-  
+if (entries.length > 5000) {
+  entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  entries.shift();
+}
   rebuildStatsCache();
   save();
 
