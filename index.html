@@ -1564,11 +1564,20 @@ window.addEventListener('beforeinstallprompt', (e) => {
   }
 
   function generateUniqueId() {
-    if (crypto.randomUUID && crypto.randomUUID()) {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
       return crypto.randomUUID();
     }
-    return Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '-' + performance.now();
-  }
+  } catch (e) {}
+
+  return (
+    Date.now() +
+    '-' +
+    Math.random().toString(36).slice(2) +
+    '-' +
+    Math.floor(performance.now() * 1000)
+  );
+}
 
   // ==================== 数据验证 ====================
   function validateEntry(entry) {
