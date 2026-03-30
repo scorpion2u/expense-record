@@ -740,29 +740,7 @@
       display: block;
     }
 
-    .theme-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .theme-btn {
-      flex: 1;
-      min-width: 70px;
-      padding: 8px 10px;
-      border-radius: 28px;
-      border: none;
-      background: #f1f5f9;
-      font-size: 0.7rem;
-      cursor: pointer;
-      transition: all 0.1s;
-    }
-
-    .theme-btn:active {
-      transform: scale(0.96);
-      background: #e2e8f0;
-    }
+    
 
     .reset-btn {
       background: #f1f5f9;
@@ -1070,7 +1048,6 @@
       color: #cbd5e1 !important;
     }
 
-    body.dark-mode .theme-btn,
     body.dark-mode .reset-btn,
     body.dark-mode .close-btn {
       background: rgba(255, 255, 255, 0.1) !important;
@@ -1413,15 +1390,6 @@ body.dark-mode .drag-handle {
   const DEFAULT_EXPENSE = CONSTANTS.DEFAULT_CATS.EXPENSE;
   const DEFAULT_INCOME = CONSTANTS.DEFAULT_CATS.INCOME;
 
-  const THEMES = {
-    '清新柔和': { expense: '#f97316', income: '#10b981', bg: '#fef9e8', cardBg: '#fffaf0' },
-    '专业商务': { expense: '#be123c', income: '#0f766e', bg: '#f1f5f9', cardBg: '#ffffff' },
-    '活力现代': { expense: '#e11d48', income: '#3b82f6', bg: '#f8fafc', cardBg: '#ffffff' },
-    '温暖治愈': { expense: '#d97706', income: '#059669', bg: '#fff7ed', cardBg: '#fffaf0' },
-    '经典原色': { expense: '#c2413a', income: '#1e7b5c', bg: '#f1f5f9', cardBg: '#ffffff' },
-    '暖米风格': { expense: '#c2413a', income: '#1e7b5c', bg: '#faf3e0', cardBg: '#fffaf0' },
-    '冷灰风格': { expense: '#c2413a', income: '#1e7b5c', bg: '#eef2f6', cardBg: '#f8fafc' }
-  };
 
   // ==================== 全局变量 ====================
   let entries = [];
@@ -2634,7 +2602,6 @@ a.click();
     window._tempColors.cardBg = uiSettings.cardBg;
     window._tempColors.bgColor = uiSettings.bgColor;
     const modal = createModal('🎨 界面设置', getSettingsHtml(), '<button id="closeSettingsBtn" class="close-btn">关闭</button>');
-    initThemeButtons(modal);
     initColorSliders(modal);
     initSizeSliders(modal);
     const resetBtn = modal.querySelector('#resetSettingsBtn');
@@ -2647,28 +2614,7 @@ a.click();
     const incomeHsl = hexToHsl(uiSettings.incomeColor);
     const cardBgHsl = hexToHsl(uiSettings.cardBg);
     const bgHsl = hexToHsl(uiSettings.bgColor);
-    return `<div class="settings-item"><label class="settings-label">🎨 一键主题</label><div class="theme-buttons" id="themeButtons">${Object.keys(THEMES).map(name => `<button class="theme-btn" data-theme="${name}">${name}</button>`).join('')}</div></div><div class="settings-item"><label class="settings-label">🎨 支出颜色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="expenseHue" min="0" max="360" step="1" value="${expenseHsl.h}"><div class="color-preview-block" id="expensePreview" style="background:${uiSettings.expenseColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="expenseSat" min="0" max="100" step="1" value="${expenseHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="expenseLight" min="20" max="80" step="1" value="${expenseHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 收入颜色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="incomeHue" min="0" max="360" step="1" value="${incomeHsl.h}"><div class="color-preview-block" id="incomePreview" style="background:${uiSettings.incomeColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="incomeSat" min="0" max="100" step="1" value="${incomeHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="incomeLight" min="20" max="80" step="1" value="${incomeHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 卡片底色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="cardBgHue" min="0" max="360" step="1" value="${cardBgHsl.h}"><div class="color-preview-block" id="cardBgPreview" style="background:${uiSettings.cardBg}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="cardBgSat" min="0" max="100" step="1" value="${cardBgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="cardBgLight" min="20" max="100" step="1" value="${cardBgHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 页面背景色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="bgHue" min="0" max="360" step="1" value="${bgHsl.h}"><div class="color-preview-block" id="bgPreview" style="background:${uiSettings.bgColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="bgSat" min="0" max="100" step="1" value="${bgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="bgLight" min="20" max="100" step="1" value="${bgHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">📏 紧凑度 (卡片间距)</label><input type="range" id="spacingGap" min="6" max="18" step="1" value="${uiSettings.spacingGap}"><div class="settings-value" id="spacingValue">${uiSettings.spacingGap}px</div></div><div class="settings-item"><label class="settings-label">📦 卡片内边距</label><input type="range" id="cardPadding" min="6" max="20" step="1" value="${uiSettings.cardPadding}"><div class="settings-value" id="paddingValue">${uiSettings.cardPadding}px</div></div><div class="settings-item"><label class="settings-label">🔤 字体大小</label><input type="range" id="fontSize" min="12" max="22" step="1" value="${uiSettings.fontSize}"><div class="settings-value" id="fontValue">${uiSettings.fontSize}px</div></div><button class="reset-btn" id="resetSettingsBtn">↺ 恢复默认设置</button>`;
-  }
-
-  function initThemeButtons(modal) {
-    modal.querySelectorAll('#themeButtons .theme-btn').forEach(btn => {
-      btn.onclick = () => {
-        const theme = THEMES[btn.dataset.theme];
-        if (theme) {
-          modal.querySelector('#expensePreview').style.background = theme.expense;
-          modal.querySelector('#incomePreview').style.background = theme.income;
-          modal.querySelector('#cardBgPreview').style.background = theme.cardBg;
-          modal.querySelector('#bgPreview').style.background = theme.bg;
-          const eHsl = hexToHsl(theme.expense), iHsl = hexToHsl(theme.income), cHsl = hexToHsl(theme.cardBg), bHsl = hexToHsl(theme.bg);
-          modal.querySelector('#expenseHue').value = eHsl.h; modal.querySelector('#expenseSat').value = eHsl.s; modal.querySelector('#expenseLight').value = eHsl.l;
-          modal.querySelector('#incomeHue').value = iHsl.h; modal.querySelector('#incomeSat').value = iHsl.s; modal.querySelector('#incomeLight').value = iHsl.l;
-          modal.querySelector('#cardBgHue').value = cHsl.h; modal.querySelector('#cardBgSat').value = cHsl.s; modal.querySelector('#cardBgLight').value = cHsl.l;
-          modal.querySelector('#bgHue').value = bHsl.h; modal.querySelector('#bgSat').value = bHsl.s; modal.querySelector('#bgLight').value = bHsl.l;
-          if (!window._tempColors) window._tempColors = {};
-          window._tempColors.expenseColor = theme.expense; window._tempColors.incomeColor = theme.income; window._tempColors.cardBg = theme.cardBg; window._tempColors.bgColor = theme.bg;
-        }
-      };
-    });
+    return `<div class="settings-item"><label class="settings-label">🎨 支出颜色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="expenseHue" min="0" max="360" step="1" value="${expenseHsl.h}"><div class="color-preview-block" id="expensePreview" style="background:${uiSettings.expenseColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="expenseSat" min="0" max="100" step="1" value="${expenseHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="expenseLight" min="20" max="80" step="1" value="${expenseHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 收入颜色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="incomeHue" min="0" max="360" step="1" value="${incomeHsl.h}"><div class="color-preview-block" id="incomePreview" style="background:${uiSettings.incomeColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="incomeSat" min="0" max="100" step="1" value="${incomeHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="incomeLight" min="20" max="80" step="1" value="${incomeHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 卡片底色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="cardBgHue" min="0" max="360" step="1" value="${cardBgHsl.h}"><div class="color-preview-block" id="cardBgPreview" style="background:${uiSettings.cardBg}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="cardBgSat" min="0" max="100" step="1" value="${cardBgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="cardBgLight" min="20" max="100" step="1" value="${cardBgHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">🎨 页面背景色</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">色相</span><input type="range" id="bgHue" min="0" max="360" step="1" value="${bgHsl.h}"><div class="color-preview-block" id="bgPreview" style="background:${uiSettings.bgColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">饱和度</span><input type="range" id="bgSat" min="0" max="100" step="1" value="${bgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">亮度</span><input type="range" id="bgLight" min="20" max="100" step="1" value="${bgHsl.l}"></div></div></div><div class="settings-item"><label class="settings-label">📏 紧凑度 (卡片间距)</label><input type="range" id="spacingGap" min="6" max="18" step="1" value="${uiSettings.spacingGap}"><div class="settings-value" id="spacingValue">${uiSettings.spacingGap}px</div></div><div class="settings-item"><label class="settings-label">📦 卡片内边距</label><input type="range" id="cardPadding" min="6" max="20" step="1" value="${uiSettings.cardPadding}"><div class="settings-value" id="paddingValue">${uiSettings.cardPadding}px</div></div><div class="settings-item"><label class="settings-label">🔤 字体大小</label><input type="range" id="fontSize" min="12" max="22" step="1" value="${uiSettings.fontSize}"><div class="settings-value" id="fontValue">${uiSettings.fontSize}px</div></div><button class="reset-btn" id="resetSettingsBtn">↺ 恢复默认设置</button>`;
   }
 
   function initColorSliders(modal) {
@@ -2826,7 +2772,22 @@ a.click();
     function clearAllData() {
     if (isClearing) return;
     isClearing = true;
-    const confirmModal = createModal('⚠️ 警告', '<div style="text-align:center;padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>', '<div style="display:flex;gap:12px;"><button id="confirmClearBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确定</button><button id="cancelClearBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">取消</button></div>');
+    const confirmModal = createModal(
+  '⚠️ 警告',
+  '<div style="text-align:center;padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>',
+  `<div style="display:flex;gap:12px;">
+    <button id="confirmClearBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确定</button>
+    <button id="cancelClearBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">取消</button>
+  </div>`
+);
+
+// ✅ 补上这个
+confirmModal.addEventListener('click', (e) => {
+  if (e.target.id === 'cancelClearBtn') {
+    confirmModal.remove();
+    isClearing = false;
+  }
+});
     confirmModal.querySelector('#confirmClearBtn').onclick = () => { 
       confirmModal.remove(); 
       const inputModal = createModal('⚠️ 最终确认', '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;text-align:center;font-size:16px;outline:none;"></div>', '<button id="finalConfirmBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确认清空</button>'); 
