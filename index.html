@@ -1453,6 +1453,116 @@ body.dark-mode .drag-handle {
     darkMode: false
   };
 
+// 监听 PWA 安装提示
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  const installBtn = document.getElementById('installBtn');
+  if (installBtn) installBtn.style.display = 'block';
+});
+
+  // ==================== 模态框管理器 ====================
+  class ModalManager {
+    constructor() {
+      this.currentModal = null;
+    }
+    
+    /**
+     * 创建模态框
+     * @param {string} title - 模态框标题
+     * @param {string} bodyHtml - 主体HTML内容
+     * @param {string} footerHtml - 底部HTML内容（可选）
+     * @returns {HTMLElement} 模态框DOM元素
+     */
+    create(title, bodyHtml, footerHtml = '') {
+      // 如果已有打开的模态框，先关闭
+      if (this.currentModal && document.body.contains(this.currentModal)) {
+        this.close(this.currentModal);
+      }
+      
+      const template = document.getElementById('modalTemplate');
+      if (!template) {
+        console.error('modalTemplate 元素不存在');
+        return null;
+      }
+      
+      const modal = template.content.cloneNode(true).firstElementChild;
+      if (!modal) {
+        console.error('无法创建模态框');
+        return null;
+      }
+      
+      // 设置标题
+      const titleEl = modal.querySelector('.modal-title');
+      if (titleEl) titleEl.textContent = title;
+      
+      // 设置主体内容
+      const bodyEl = modal.querySelector('.modal-body');
+      if (bodyEl) bodyEl.innerHTML = bodyHtml;
+      
+      // 设置底部内容
+      const footer = modal.querySelector('.modal-footer');
+      if (footer) {
+        if (footerHtml) {
+          footer.innerHTML = footerHtml;
+          footer.style.display = 'block';
+        } else {
+          footer.style.display = 'none';
+        }
+      }
+      
+      // 绑定关闭按钮
+      const closeBtn = modal.querySelector('.modal-close');
+      if (closeBtn) {
+        closeBtn.onclick = () => this.close(modal);
+      }
+      
+      // 点击遮罩层关闭
+      modal.onclick = (e) => {
+        if (e.target === modal) this.close(modal);
+      };
+      
+      document.body.appendChild(modal);
+      this.currentModal = modal;
+      return modal;
+    }
+    
+    /**
+     * 关闭模态框
+     * @param {HTMLElement} modal - 要关闭的模态框元素
+     */
+    close(modal) {
+      if (modal && document.body.contains(modal)) {
+        modal.remove();
+        if (this.currentModal === modal) {
+          this.currentModal = null;
+        }
+      }
+    }
+    
+    /**
+     * 关闭当前打开的模态框
+     */
+    closeCurrent() {
+      if (this.currentModal && document.body.contains(this.currentModal)) {
+        this.currentModal.remove();
+        this.currentModal = null;
+      }
+    }
+    
+    /**
+     * 关闭所有模态框
+     */
+    closeAll() {
+      const allModals = document.querySelectorAll('.modal-overlay');
+      allModals.forEach(modal => modal.remove());
+      this.currentModal = null;
+    }
+  }
+  
+  // 创建全局实例
+  const modalManager = new ModalManager();
+
   // ==================== 辅助函数 ====================
   function getLocalDate() {
     let now = new Date();
@@ -1505,22 +1615,7 @@ body.dark-mode .drag-handle {
 
   // ==================== 弹窗管理 ====================
   function createModal(title, bodyHtml, footerHtml = '') {
-    const template = document.getElementById('modalTemplate');
-    const modal = template.content.cloneNode(true).firstElementChild;
-    modal.querySelector('.modal-title').textContent = title;
-    modal.querySelector('.modal-body').innerHTML = bodyHtml;
-    const footer = modal.querySelector('.modal-footer');
-    if (footerHtml) {
-      footer.innerHTML = footerHtml;
-      footer.style.display = 'block';
-    } else {
-      footer.style.display = 'none';
-    }
-    const closeBtn = modal.querySelector('.modal-close');
-    if (closeBtn) closeBtn.onclick = () => modal.remove();
-    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-    document.body.appendChild(modal);
-    return modal;
+    return modalManager.create(title, bodyHtml, footerHtml);
   }
 
   // ==================== HSL 颜色转换 ====================
@@ -1634,7 +1729,8 @@ body.dark-mode .drag-handle {
 
   function removeFromCache(entry) {
     const monthKey = entry.date.slice(0, 7);
-    if (monthStatsCache[monthKey]) monthStatsCache[monthKey][entry.type] -= entry.amount;
+    if (monthStatsCache[monthKey]) monthStatsCache[monthKey][entry.type] = 
+  Math.max(0, monthStatsCache[monthKey][entry.type] - entry.amount);
     if (dateMap[entry.date]) {
       const idx = dateMap[entry.date].findIndex(e => e.id === entry.id);
       if (idx !== -1) dateMap[entry.date].splice(idx, 1);
@@ -1847,7 +1943,6 @@ a.click();
     if (data.expenseCats) for (const cat of data.expenseCats) { if (!expenseCats.includes(cat)) { expenseCats.push(cat); newExpenseCats++; } }
     if (data.incomeCats) for (const cat of data.incomeCats) { if (!incomeCats.includes(cat)) { incomeCats.push(cat); newIncomeCats++; } }
     if (newExpenseCats > 0 || newIncomeCats > 0) showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
-    rebuildStatsCache();
     saveDebounced();
     renderCalendar();
     renderEntries();
@@ -1900,61 +1995,172 @@ a.click();
   }
 
   function renderCalendar() {
-    let year = currentYear, month = currentMonth;
-    let firstDay = new Date(year, month, 1);
-    let startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-    let daysInMonth = new Date(year, month + 1, 0).getDate();
-    let prevMonthDays = new Date(year, month, 0).getDate();
-    let grid = document.getElementById('calendarGrid');
-    let todayStr = getLocalDate();
-    if (grid.children.length !== 42) { grid.innerHTML = ''; for (let i = 0; i < 42; i++) { let dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day'; grid.appendChild(dayDiv); } }
+  const year = currentYear, month = currentMonth;
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  const grid = document.getElementById('calendarGrid');
+  const todayStr = getLocalDate();
+  
+  // 确保格子数量为42
+  if (grid.children.length !== 42) {
+    grid.innerHTML = '';
     for (let i = 0; i < 42; i++) {
-      let dayDiv = grid.children[i];
-      let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
-      if (i < startOffset) {
-        dayNum = prevMonthDays - (startOffset - i) + 1;
-        isCurrentMonth = false;
-        displayYear = month === 0 ? year - 1 : year;
-        displayMonth = month === 0 ? 11 : month - 1;
-        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      } else if (i >= startOffset + daysInMonth) {
-        dayNum = i - (startOffset + daysInMonth) + 1;
-        isCurrentMonth = false;
-        displayYear = month === 11 ? year + 1 : year;
-        displayMonth = month === 11 ? 0 : month + 1;
-        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      } else {
-        dayNum = i - startOffset + 1;
-        isCurrentMonth = true;
-        dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-      }
-      let dayEntries = dateMap[dateStr] || [];
-      let stats = { expense: 0, income: 0 };
-      for (let e of dayEntries) { if (e.type === 'expense') stats.expense += e.amount; else stats.income += e.amount; }
-      dayDiv.classList.toggle('selected', dateStr === selectedDate);
-      dayDiv.classList.toggle('today', dateStr === todayStr);
-      dayDiv.classList.toggle('other-month', !isCurrentMonth);
-      dayDiv.setAttribute('data-date', dateStr);
-      let numDiv = dayDiv.querySelector('.day-number');
-      if (!numDiv) { numDiv = document.createElement('div'); numDiv.className = 'day-number'; dayDiv.appendChild(numDiv); }
-      numDiv.textContent = dayNum;
-      let oldExpense = dayDiv.querySelector('.day-expense'), oldIncome = dayDiv.querySelector('.day-income');
-      if (oldExpense) oldExpense.remove();
-      if (oldIncome) oldIncome.remove();
-      if (isCurrentMonth && stats.expense > 0) { let expenseSpan = document.createElement('div'); expenseSpan.className = 'day-expense'; expenseSpan.textContent = `-${stats.expense.toFixed(0)}`; dayDiv.appendChild(expenseSpan); }
-      if (isCurrentMonth && stats.income > 0) { let incomeSpan = document.createElement('div'); incomeSpan.className = 'day-income'; incomeSpan.textContent = `+${stats.income.toFixed(0)}`; dayDiv.appendChild(incomeSpan); }
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'calendar-day';
+      grid.appendChild(dayDiv);
     }
-    let [y, m, d] = selectedDate.split('-');
-    let dateObj = new Date(y, m - 1, d);
-    let weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-    let label = weekdays[dateObj.getDay()];
-    let today = new Date();
-    if (dateObj.toDateString() === today.toDateString()) label = `今天 · ${label}`;
-    document.getElementById('selectedDateLabel').innerHTML = label;
-    document.getElementById('currentYearMonthDay').innerText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
-    renderTopCards();
-    renderSelectedDayTotal();
   }
+  
+  // 缓存当前月份字符串，避免重复拼接
+  const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const prevMonth = month === 0 ? 11 : month - 1;
+  const prevYear = month === 0 ? year - 1 : year;
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const nextYear = month === 11 ? year + 1 : year;
+  
+  for (let i = 0; i < 42; i++) {
+    const dayDiv = grid.children[i];
+    let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
+    
+    // 计算当前格子的日期信息
+    if (i < startOffset) {
+      // 上个月
+      dayNum = prevMonthDays - (startOffset - i) + 1;
+      isCurrentMonth = false;
+      displayYear = prevYear;
+      displayMonth = prevMonth;
+      dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    } else if (i >= startOffset + daysInMonth) {
+      // 下个月
+      dayNum = i - (startOffset + daysInMonth) + 1;
+      isCurrentMonth = false;
+      displayYear = nextYear;
+      displayMonth = nextMonth;
+      dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    } else {
+      // 当前月
+      dayNum = i - startOffset + 1;
+      isCurrentMonth = true;
+      displayYear = year;
+      displayMonth = month;
+      dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
+    }
+    
+    // 获取当天的收支数据
+    const dayEntries = dateMap[dateStr] || [];
+    let expense = 0, income = 0;
+    for (let e of dayEntries) {
+      if (e.type === 'expense') expense += e.amount;
+      else income += e.amount;
+    }
+    
+    // 优化：批量更新类名，减少重排
+    const classList = dayDiv.classList;
+    const wasSelected = classList.contains('selected');
+    const shouldBeSelected = dateStr === selectedDate;
+    const wasToday = classList.contains('today');
+    const shouldBeToday = dateStr === todayStr;
+    const wasOtherMonth = classList.contains('other-month');
+    const shouldBeOtherMonth = !isCurrentMonth;
+    
+    // 只在需要时修改类名
+    if (wasSelected !== shouldBeSelected) {
+      classList.toggle('selected', shouldBeSelected);
+    }
+    if (wasToday !== shouldBeToday) {
+      classList.toggle('today', shouldBeToday);
+    }
+    if (wasOtherMonth !== shouldBeOtherMonth) {
+      classList.toggle('other-month', shouldBeOtherMonth);
+    }
+    
+    // 设置日期属性
+    dayDiv.setAttribute('data-date', dateStr);
+    
+    // 更新日期数字（始终更新，因为数字可能变化）
+    let numDiv = dayDiv.querySelector('.day-number');
+    if (!numDiv) {
+      numDiv = document.createElement('div');
+      numDiv.className = 'day-number';
+      dayDiv.appendChild(numDiv);
+    }
+    numDiv.textContent = dayNum;
+    
+    // 更新支出和收入显示（先移除旧的，再添加新的）
+    const oldExpense = dayDiv.querySelector('.day-expense');
+    const oldIncome = dayDiv.querySelector('.day-income');
+    if (oldExpense) oldExpense.remove();
+    if (oldIncome) oldIncome.remove();
+    
+    // 只显示当前月份的收支
+    if (isCurrentMonth) {
+      if (expense > 0) {
+        const expenseSpan = document.createElement('div');
+        expenseSpan.className = 'day-expense';
+        expenseSpan.textContent = `-${expense.toFixed(0)}`;
+        dayDiv.appendChild(expenseSpan);
+      }
+      if (income > 0) {
+        const incomeSpan = document.createElement('div');
+        incomeSpan.className = 'day-income';
+        incomeSpan.textContent = `+${income.toFixed(0)}`;
+        dayDiv.appendChild(incomeSpan);
+      }
+    }
+  }
+  
+  // 更新日期显示
+  const [y, m, d] = selectedDate.split('-');
+  const dateObj = new Date(y, m - 1, d);
+  const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  let label = weekdays[dateObj.getDay()];
+  const today = new Date();
+  if (dateObj.toDateString() === today.toDateString()) label = `今天 · ${label}`;
+  document.getElementById('selectedDateLabel').innerHTML = label;
+  document.getElementById('currentYearMonthDay').innerText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  
+  // 更新统计卡片和选中日期总计
+  renderTopCards();
+  renderSelectedDayTotal();
+}
+  
+  function updateSingleDay(dateStr) {
+  const dayEl = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
+  if (!dayEl) return;
+
+  const dayEntries = dateMap[dateStr] || [];
+
+  let expense = 0, income = 0;
+  for (let e of dayEntries) {
+    if (e.type === 'expense') expense += e.amount;
+    else income += e.amount;
+  }
+
+  // 更新金额（先删旧的）
+  const oldExpense = dayEl.querySelector('.day-expense');
+  const oldIncome = dayEl.querySelector('.day-income');
+  if (oldExpense) oldExpense.remove();
+  if (oldIncome) oldIncome.remove();
+
+  // 重新加
+  if (expense > 0) {
+    const el = document.createElement('div');
+    el.className = 'day-expense';
+    el.textContent = `-${expense.toFixed(0)}`;
+    dayEl.appendChild(el);
+  }
+
+  if (income > 0) {
+    const el = document.createElement('div');
+    el.className = 'day-income';
+    el.textContent = `+${income.toFixed(0)}`;
+    dayEl.appendChild(el);
+  }
+  renderSelectedDayTotal();
+  renderTopCards();
+}
 
   function showAllEntriesModal() {
     let dayEntries = dateMap[selectedDate] || [];
@@ -1967,9 +2173,31 @@ a.click();
     }
     const modal = createModal(`📋 全部记录 (${dayEntries.length}条)`, html, '<button id="closeModalBtn" class="close-btn">关闭</button>');
     modal.querySelector('#closeModalBtn').onclick = () => modal.remove();
-    modal.querySelectorAll('.delete-modal').forEach(btn => { btn.onclick = () => { let id = btn.dataset.id; if (confirm('删除记录？')) { entries = entries.filter(e => e.id !== id); rebuildStatsCache(); saveDebounced(); modal.remove(); renderCalendar(); renderEntries(); renderCategoryDropdown(); showToast('已删除'); } }; });
-    modal.querySelectorAll('.edit-modal').forEach(btn => { btn.onclick = () => { let id = btn.dataset.id; modal.remove(); editEntry(id); }; });
-  }
+    modal.querySelectorAll('.delete-modal').forEach(btn => { 
+      btn.onclick = () => { 
+        let id = btn.dataset.id; 
+        // 直接删除，因为已有模态框确认，无需再次确认
+        const entryToDelete = entries.find(e => e.id === id);
+        entries = entries.filter(e => e.id !== id);
+        if (entryToDelete) {
+          removeFromCache(entryToDelete);
+          updateSingleDay(entryToDelete.date);
+        }
+        saveDebounced();
+        renderEntries(); 
+        renderCategoryDropdown(); 
+        showToast('已删除');
+        modal.remove();
+      }; 
+    });
+    modal.querySelectorAll('.edit-modal').forEach(btn => { 
+      btn.onclick = () => { 
+        let id = btn.dataset.id; 
+        modal.remove(); 
+        editEntry(id); 
+      }; 
+    });
+}
 
   function renderEntries() {
     let dayEntries = dateMap[selectedDate] || [];
@@ -2007,30 +2235,75 @@ a.click();
     const currentCats = type === 'expense' ? expenseCats : incomeCats;
     if (currentCats.includes(category)) { callback(true); return; }
     const modal = createModal('➕ 添加新分类', `<div style="text-align:center;padding:8px 0;"><p>是否将 "<strong>${escapeHtml(category)}</strong>" 添加到${type === 'expense' ? '支出' : '收入'}分类？</p><p style="font-size:0.8rem;color:#64748b;margin-top:8px;">添加后可在管理分类中删除</p></div>`, '<div style="display:flex;gap:12px;"><button id="confirmAddCatBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">添加</button><button id="skipAddCatBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">仅本次使用</button></div>');
-    modal.querySelector('#confirmAddCatBtn').onclick = () => { if (type === 'expense') expenseCats.push(category); else incomeCats.push(category); saveDebounced();; renderCategoryDropdown(); showToast(`✅ 已添加分类「${category}」`); modal.remove(); callback(true); };
+    modal.querySelector('#confirmAddCatBtn').onclick = () => { if (type === 'expense') expenseCats.push(category); else incomeCats.push(category); saveDebounced(); renderCategoryDropdown(); showToast(`✅ 已添加分类「${category}」`); modal.remove(); callback(true); };
     modal.querySelector('#skipAddCatBtn').onclick = () => { modal.remove(); callback(true); };
   }
 
   function getValidAmount() { const amountInput = document.getElementById('amountInput').value.trim(); const amount = parseFloat(amountInput); if (isNaN(amount) || amount <= 0) { showToast('请输入有效金额'); return null; } return amount; }
   function getCategory() { let category = document.getElementById('categoryInput').value.trim(); if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入'; return category; }
-  function createNewEntry(amount, category) { return { id: generateUniqueId(), timestamp: Date.now(), date: selectedDate, time: new Date().toLocaleTimeString('zh-CN', { hour12: false }), amount, note: category, type: currentType }; }
-  function saveAndRefresh(entry) { entries.push(entry); addToCache(entry); if (entries.length > CONSTANTS.MAX_ENTRIES) { entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); entries.shift(); } saveDebounced(); document.getElementById('amountInput').value = ''; document.getElementById('categoryInput').value = ''; document.getElementById('amountInput').blur(); document.getElementById('categoryInput').blur(); closeCategoryDropdown(); renderEntries(); renderTopCards(); renderSelectedDayTotal(); renderCalendar(); showToast(currentType === 'expense' ? '支出已记' : '收入已记'); }
-  function handleNewCategory(category, amount, callback) { checkAndAddCategory(category, currentType, (confirmed) => { if (confirmed) { const finalAmount = getValidAmount(); if (finalAmount === null) { callback(false); return; } const finalCategory = document.getElementById('categoryInput').value.trim() || category; const entry = createNewEntry(finalAmount, finalCategory); saveAndRefresh(entry); callback(true); } else { callback(false); } }); }
+  function createNewEntry(amount, category) { return { id: generateUniqueId(), timestamp: Date.now(), date: selectedDate, time: new Date().toTimeString().slice(0,5), amount, note: category, type: currentType }; }
+  
+  function saveAndRefresh(entry) { entries.push(entry); addToCache(entry); if (entries.length > CONSTANTS.MAX_ENTRIES) { entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); entries.shift(); } saveDebounced(); document.getElementById('amountInput').value = ''; document.getElementById('categoryInput').value = ''; document.getElementById('amountInput').blur(); document.getElementById('categoryInput').blur(); closeCategoryDropdown(); updateSingleDay(entry.date);renderEntries();showToast(currentType === 'expense' ? '支出已记' : '收入已记'); }
 
   function addRecord() {
-    if (isAdding) return false;
-    isAdding = true;
-    const amount = getValidAmount();
-    if (amount === null) { isAdding = false; return false; }
-    let category = getCategory();
-    const currentCats = currentType === 'expense' ? expenseCats : incomeCats;
-    const isNewCategory = !currentCats.includes(category) && category !== '其他支出' && category !== '其他收入';
-    if (isNewCategory) { handleNewCategory(category, amount, (success) => { isAdding = false; }); return false; }
-    const entry = createNewEntry(amount, category);
-    saveAndRefresh(entry);
+  if (isAdding) return false;
+  
+  const amount = getValidAmount();
+  if (amount === null) return false;
+  
+  let category = getCategory();
+  const currentCats = currentType === 'expense' ? expenseCats : incomeCats;
+  const isNewCategory = !currentCats.includes(category) && category !== '其他支出' && category !== '其他收入';
+  
+  // 统一设置标志
+  isAdding = true;
+  
+  // 定义保存函数，避免代码重复
+  const saveEntry = (finalCategory) => {
+    const entry = createNewEntry(amount, finalCategory);
+    entries.push(entry);
+    addToCache(entry);
+    
+    if (entries.length > CONSTANTS.MAX_ENTRIES) {
+      entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      entries.shift();
+    }
+    
+    saveDebounced();
+    document.getElementById('amountInput').value = '';
+    document.getElementById('categoryInput').value = '';
+    document.getElementById('amountInput').blur();
+    document.getElementById('categoryInput').blur();
+    closeCategoryDropdown();
+    updateSingleDay(entry.date);
+    renderEntries();
+    showToast(currentType === 'expense' ? '支出已记' : '收入已记');
+    
     setTimeout(() => { isAdding = false; }, 500);
-    return true;
+  };
+  
+  // 处理新分类
+  if (isNewCategory) {
+    checkAndAddCategory(category, currentType, (confirmed) => {
+      if (confirmed) {
+        const finalAmount = getValidAmount();
+        if (finalAmount === null) {
+          isAdding = false;
+          return;
+        }
+        const finalCategory = document.getElementById('categoryInput').value.trim() || category;
+        saveEntry(finalCategory);
+      } else {
+        isAdding = false;
+      }
+    });
+    return false;
   }
+  
+  // 正常添加
+  saveEntry(category);
+  return true;
+}
 
   function editEntry(id) {
     let entry = entries.find(e => e.id === id);
@@ -2042,10 +2315,10 @@ a.click();
       if (!newAmount || newAmount <= 0) { showToast('请输入有效金额'); return; }
       let newCat = document.getElementById('editCategory').value.trim();
       if (!newCat) newCat = entry.type === 'expense' ? '其他支出' : '其他收入';
-      entry.amount = newAmount; entry.note = newCat; entry.timestamp = Date.now(); entry.time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+      entry.amount = newAmount; entry.note = newCat; entry.timestamp = Date.now(); entry.time = new Date().toTimeString().slice(0,5);
       updateCache(oldEntry, entry);
       saveDebounced();
-      renderCalendar(); renderEntries(); renderCategoryDropdown();
+      updateSingleDay(entry.date); renderEntries(); renderCategoryDropdown();
       if (entry.type !== currentType) { currentType = entry.type; document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active')); document.querySelector(`.type-option.${entry.type}`).classList.add('active'); renderCategoryDropdown(); updateInputColor(); }
       modal.remove();
       showToast('修改成功');
@@ -2199,7 +2472,7 @@ a.click();
     } else {
       incomeCats = newList;
     }
-    saveDebounced();;
+    saveDebounced();
     renderCategoryDropdown();
   }
   
@@ -2252,24 +2525,25 @@ a.click();
       
       // 放置
       item.addEventListener('drop', (e) => {
-        e.preventDefault();
-        const targetIndex = parseInt(item.getAttribute('data-index'));
-        if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
-          // 重新排序
-          let currentCats = [...getCurrentCatsList()];
-          const [movedItem] = currentCats.splice(dragStartIndex, 1);
-          currentCats.splice(targetIndex, 0, movedItem);
-          saveCatsList(currentCats);
-          
-          // 重新渲染列表
-          renderCategoryList(container);
-          
-          // 重新绑定删除按钮事件
-          bindDeleteButtons(container);
-        }
-        items.forEach(i => i.classList.remove('drag-over'));
-        dragStartIndex = null;
-      });
+  e.preventDefault();
+  const targetIndex = parseInt(item.getAttribute('data-index'));
+  if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
+    // 获取当前分类列表并重新排序
+    let currentCats = [...getCurrentCatsList()];
+    const [movedItem] = currentCats.splice(dragStartIndex, 1);
+    currentCats.splice(targetIndex, 0, movedItem);
+    saveCatsList(currentCats);
+    
+    // 重新渲染列表（DOM被重建）
+    renderCategoryList(container);
+    
+    // 因为DOM被重建，需要重新绑定删除按钮的事件
+    bindDeleteButtons(container);
+  }
+  // 清理拖拽高亮状态
+  items.forEach(i => i.classList.remove('drag-over'));
+  dragStartIndex = null;
+});
     });
     
     // 使元素可拖拽
@@ -2448,16 +2722,41 @@ a.click();
   // ==================== 事件绑定 ====================
   function bindEvents() {
     document.getElementById('amountInput').addEventListener('input', function(e) {
-      let val = this.value;
-      if (val === '') return;
-      if (val === '.') { this.value = '0.'; return; }
-      let regex = /^\d*\.?\d{0,2}$/;
-      if (!regex.test(val)) this.value = this._lastValid || '';
-      else this._lastValid = val;
-      if ((val.match(/\./g) || []).length > 1) this.value = this._lastValid || '';
-      if (val.length > 1 && val[0] === '0' && val[1] !== '.') this.value = val.replace(/^0+/, '');
-      updateInputColor();
-    });
+  let val = this.value;
+  if (val === '') return;
+  
+  // 处理单独的小数点：转换为 0.
+  if (val === '.') {
+    this.value = '0.';
+    this._lastValid = '0.';
+    updateInputColor();
+    return;
+  }
+  
+  // 允许以0开头但后面必须跟小数点，否则清理前导零
+  // 例如：输入 05 变成 5，输入 0.5 保持不变
+  if (val.length > 1 && val[0] === '0' && val[1] !== '.') {
+    this.value = val.replace(/^0+/, '');
+    updateInputColor();
+    return;
+  }
+  
+  // 验证格式：数字，可选小数点，最多两位小数
+  let regex = /^\d*\.?\d{0,2}$/;
+  if (!regex.test(val)) {
+    // 格式不正确，恢复上一次有效值
+    this.value = this._lastValid || '';
+  } else {
+    this._lastValid = val;
+  }
+  
+  // 限制小数点只能有一个
+  if ((val.match(/\./g) || []).length > 1) {
+    this.value = this._lastValid || '';
+  }
+  
+  updateInputColor();
+});
     document.getElementById('amountInput').addEventListener('focus', function() { this._lastValid = this.value; });
     document.getElementById('amountInput').addEventListener('blur', function() { let val = parseFloat(this.value); if (!isNaN(val) && val > 0) this.value = val.toFixed(2); else if (this.value === '' || this.value === '0') this.value = ''; });
     document.getElementById('amountInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') { e.preventDefault(); const amount = parseFloat(document.getElementById('amountInput').value); const category = document.getElementById('categoryInput').value.trim(); if (!amount || amount <= 0) { showToast('请输入有效金额'); return; } if (category) addRecord(); else { showToast('请选择或输入分类'); const catInput = document.getElementById('categoryInput'); catInput.classList.add('highlight-category'); setTimeout(() => catInput.classList.remove('highlight-category'), 800); } } });
@@ -2475,7 +2774,33 @@ a.click();
     document.getElementById('dropdownBtn').onclick = (e) => { e.stopPropagation(); let dropdown = document.getElementById('categoryDropdown'); dropdown.classList.toggle('show'); renderCategoryDropdown(); };
     document.getElementById('categoryInput').onclick = (e) => { e.stopPropagation(); let dropdown = document.getElementById('categoryDropdown'); dropdown.classList.toggle('show'); renderCategoryDropdown(); };
     document.getElementById('categoryDropdown').addEventListener('click', (e) => { const item = e.target.closest('.category-item'); if (!item) return; e.stopPropagation(); const selectedCat = item.getAttribute('data-cat') || item.innerText; document.getElementById('categoryInput').value = selectedCat; closeCategoryDropdown(); const amount = parseFloat(document.getElementById('amountInput').value); if (amount && amount > 0) addRecord(); else { document.getElementById('amountInput').focus(); showToast('请输入金额'); } });
-    document.getElementById('entriesList').addEventListener('click', (e) => { const editBtn = e.target.closest('.edit-btn'); const deleteBtn = e.target.closest('.delete-btn'); if (editBtn) { let id = editBtn.getAttribute('data-id'); editEntry(id); } else if (deleteBtn) { let id = deleteBtn.getAttribute('data-id'); const modal = createModal('🗑 删除记录', '<div style="text-align:center;padding:8px 0;">确定要删除这条记录吗？<br><br>删除后无法恢复。</div>', '<div style="display:flex;gap:12px;"><button id="confirmDeleteBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">删除</button><button id="cancelDeleteBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">取消</button></div>'); modal.querySelector('#confirmDeleteBtn').onclick = () => { const entryToDelete = entries.find(e => String(e.id) === String(id)); entries = entries.filter(e => String(e.id) !== String(id)); if (entryToDelete) removeFromCache(entryToDelete); saveDebounced(); renderCalendar(); renderEntries(); renderCategoryDropdown(); showToast('已删除'); modal.remove(); }; modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove(); } });
+    document.getElementById('entriesList').addEventListener('click', (e) => {
+  const editBtn = e.target.closest('.edit-btn');
+  const deleteBtn = e.target.closest('.delete-btn');
+  if (editBtn) {
+    let id = editBtn.getAttribute('data-id');
+    editEntry(id);
+  } else if (deleteBtn) {
+    let id = deleteBtn.getAttribute('data-id');
+    const modal = createModal('🗑 删除记录', '<div style="text-align:center;padding:8px 0;">确定要删除这条记录吗？<br><br>删除后无法恢复。</div>', '<div style="display:flex;gap:12px;"><button id="confirmDeleteBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">删除</button><button id="cancelDeleteBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">取消</button></div>');
+    modal.querySelector('#confirmDeleteBtn').onclick = () => {
+      const entryToDelete = entries.find(e => String(e.id) === String(id));
+      entries = entries.filter(e => String(e.id) !== String(id));
+      
+      if (entryToDelete) {
+        removeFromCache(entryToDelete);
+        updateSingleDay(entryToDelete.date);  // 更新日历上该日期的金额显示
+      }
+      saveDebounced();
+      // 刷新当前选中日期的记录列表
+      renderEntries();
+      renderCategoryDropdown();
+      showToast('已删除');
+      modal.remove();
+    };
+    modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove();
+  }
+});
     document.getElementById('viewMoreBtn').onclick = () => { showAllEntriesModal(); };
     const clearBtn = document.getElementById('clearDataMenuItem');
     if (clearBtn && !clearBtn.dataset.bound) { clearBtn.dataset.bound = 'true'; clearBtn.onclick = () => { clearAllData(); closeMenu(); }; }
@@ -2498,16 +2823,63 @@ a.click();
     if (balanceCard) { balanceCard.style.cursor = 'pointer'; balanceCard.onclick = () => { const startDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`; const endDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`; showSearchWithPreset({ type: 'all', startDate, endDate }); }; }
   }
 
-  function clearAllData() {
+    function clearAllData() {
     if (isClearing) return;
     isClearing = true;
     const confirmModal = createModal('⚠️ 警告', '<div style="text-align:center;padding:8px 0;">将删除所有记录，无法恢复！<br><br>是否继续？</div>', '<div style="display:flex;gap:12px;"><button id="confirmClearBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确定</button><button id="cancelClearBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">取消</button></div>');
-    confirmModal.querySelector('#confirmClearBtn').onclick = () => { confirmModal.remove(); const inputModal = createModal('⚠️ 最终确认', '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;text-align:center;font-size:16px;outline:none;"></div>', '<button id="finalConfirmBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确认清空</button>'); inputModal.querySelector('#finalConfirmBtn').onclick = () => { const input = inputModal.querySelector('#deleteConfirmInput').value; if (input !== CONSTANTS.DELETE_CONFIRM_WORD) { showToast('已取消'); inputModal.remove(); } else { entries = []; expenseCats = [...DEFAULT_EXPENSE]; incomeCats = [...DEFAULT_INCOME]; rebuildStatsCache(); const now = new Date(); currentYear = now.getFullYear(); currentMonth = now.getMonth(); selectedDate = getLocalDate(); currentType = 'expense'; document.getElementById('amountInput').value = ''; document.getElementById('categoryInput').value = ''; document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active')); document.querySelector('.type-option.expense').classList.add('active'); updateInputColor(); localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(CAT_EXPENSE_KEY); localStorage.removeItem(CAT_INCOME_KEY); renderCalendar(); renderEntries(); renderCategoryDropdown(); closeCategoryDropdown(); closeMenu(); showToast('数据已清空'); inputModal.remove(); } isClearing = false; }; inputModal.querySelector('.modal-close').onclick = () => { inputModal.remove(); isClearing = false; }; }; confirmModal.querySelector('#cancelClearBtn').onclick = () => { confirmModal.remove(); isClearing = false; }; }
-
+    confirmModal.querySelector('#confirmClearBtn').onclick = () => { 
+      confirmModal.remove(); 
+      const inputModal = createModal('⚠️ 最终确认', '<div style="text-align:center;"><p style="margin-bottom:12px;">请输入 <strong style="color:var(--expense-color);">DELETE</strong> 确认：</p><input type="text" id="deleteConfirmInput" placeholder="DELETE" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;text-align:center;font-size:16px;outline:none;"></div>', '<button id="finalConfirmBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">确认清空</button>'); 
+      inputModal.querySelector('#finalConfirmBtn').onclick = () => {
+        const input = inputModal.querySelector('#deleteConfirmInput').value;
+        if (input !== CONSTANTS.DELETE_CONFIRM_WORD) {
+          showToast('已取消');
+          inputModal.remove();
+          isClearing = false;
+        } else {
+          // 1. 重置所有数据
+          entries = [];
+          expenseCats = [...DEFAULT_EXPENSE];
+          incomeCats = [...DEFAULT_INCOME];
+          
+          // 2. 重建缓存（基于空数据）
+          rebuildStatsCache();
+          
+          // 3. 重置UI状态变量
+          const now = new Date();
+          currentYear = now.getFullYear();
+          currentMonth = now.getMonth();
+          selectedDate = getLocalDate();
+          currentType = 'expense';
+          
+          // 4. 重置输入框UI
+          document.getElementById('amountInput').value = '';
+          document.getElementById('categoryInput').value = '';
+          document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+          document.querySelector('.type-option.expense').classList.add('active');
+          updateInputColor();
+          
+          // 5. 清理localStorage
+          localStorage.removeItem(STORAGE_KEY);
+          localStorage.removeItem(CAT_EXPENSE_KEY);
+          localStorage.removeItem(CAT_INCOME_KEY);
+          
+          // 6. 重新渲染
+          renderCalendar();
+          renderEntries();
+          renderCategoryDropdown();
+          closeCategoryDropdown();
+          closeMenu();
+          showToast('数据已清空');
+          inputModal.remove();
+          isClearing = false;
+        }
+      };
+    };
+  }
   // ==================== 初始化 ====================
   window.onload = function () {
     load();
-    rebuildStatsCache();
     bindEvents();
     renderCalendar();
     renderEntries();
