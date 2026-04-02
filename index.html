@@ -899,6 +899,7 @@
       padding: 10px;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
+      cursor: pointer;
       justify-content: space-between;
     }
 
@@ -1562,6 +1563,35 @@ window.addEventListener('beforeinstallprompt', (e) => {
     container.appendChild(toast);
     setTimeout(() => toast.remove(), duration);
   }
+
+function bindSearchResultClick(container, modal) {
+  container.querySelectorAll('.search-result-item').forEach(item => {
+    item.onclick = () => {
+      const id = item.dataset.id;
+
+      const entry = entries.find(e => String(e.id) === String(id));
+      if (!entry) {
+        console.warn('找不到 entry:', id);
+        return;
+      }
+
+      // 跳转日期
+      selectedDate = entry.date;
+
+      let [y, m] = entry.date.split('-');
+      currentYear = parseInt(y);
+      currentMonth = parseInt(m) - 1;
+
+      renderCalendar();
+      renderEntries();
+
+      // 更安全关闭
+      modalManager.close(modal);
+
+      showToast(`已跳转到 ${entry.date}`);
+    };
+  });
+}
 
   function generateUniqueId() {
   try {
@@ -2359,9 +2389,10 @@ a.click();
       for (let e of results) {
         let sign = e.type === 'expense' ? '-' : '+';
         let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-        html += `<div class="search-result-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e2e8f0;"><div><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${e.date} ${e.time}</div></div><div style="color:${color};font-weight:600;">${sign}RM${e.amount.toFixed(2)}</div></div>`;
+        html += `<div class="search-result-item" data-id="${e.id}" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e2e8f0;"><div><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${e.date} ${e.time}</div></div><div style="color:${color};font-weight:600;">${sign}RM${e.amount.toFixed(2)}</div></div>`;
       }
       resultsDiv.innerHTML = html;
+      bindSearchResultClick(resultsDiv, modal);
     }
     function resetSearch() {
       document.getElementById('searchKeyword').value = '';
@@ -2414,10 +2445,22 @@ a.click();
       for (let e of results) {
         let sign = e.type === 'expense' ? '-' : '+';
         let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-        html += `<div class="search-result-item"><div><div>${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${e.date} ${e.time}</div></div><div style="color:${color};font-weight:600;">${sign}RM${e.amount.toFixed(2)}</div></div>`;
+        html += `<div class="search-result-item" data-id="${e.id}">
+  <div>
+    <div>${escapeHtml(e.note)}</div>
+    <div style="font-size:0.6rem;color:#94a3b8;">
+      ${e.date} ${e.time}
+    </div>
+  </div>
+  <div style="color:${color};font-weight:600;">
+    ${sign}RM${e.amount.toFixed(2)}
+  </div>
+</div>`;
       }
       resultsDiv.innerHTML = html;
+      bindSearchResultClick(resultsDiv, modal);
     }
+    
     function resetSearch() {
       document.getElementById('searchKeyword').value = '';
       let today = new Date();
@@ -2850,6 +2893,7 @@ confirmModal.addEventListener('click', (e) => {
   // ==================== 初始化 ====================
   window.onload = function () {
     load();
+    rebuildStatsCache();
     bindEvents();
     renderCalendar();
     renderEntries();
