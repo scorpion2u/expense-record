@@ -1961,7 +1961,7 @@ a.click();
       try {
         const data = await readBackupFile(file);
         
-        if (data.source !== 'main') {
+        if (data.source !== 'tng') {
   showToast('❌ 只能导入【TNG账本】备份文件');
   return;
 }
