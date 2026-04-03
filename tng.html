@@ -1367,11 +1367,10 @@ body.dark-mode .drag-handle {
   // ==================== 常量定义 ====================
   const CONSTANTS = {
     STORAGE_KEYS: {
-      ENTRIES: 'book_v9_full',
-      EXPENSE_CATS: 'book_expense_cats_full',
-      INCOME_CATS: 'book_income_cats_full',
-      SETTINGS: 'book_ui_settings'
-    },
+      ENTRIES: 'book_v9_tng',
+EXPENSE_CATS: 'book_expense_cats_tng',
+INCOME_CATS: 'book_income_cats_tng',
+SETTINGS: 'book_ui_settings_tng'
     DEFAULT_CATS: {
       EXPENSE: ['🍳 早餐', '🍱 午餐', '🍽️ 晚餐', '🛍️ 购物', '⛽ 打油', '🎬 娱乐', '🏠 居家', '其他'],
       INCOME: ['💳借记卡', '🏦 银行', '💳信用卡', '其他']
@@ -1846,7 +1845,10 @@ function saveDebounced() {
     if (options.type !== 'all') filteredEntries = filteredEntries.filter(e => e.type === options.type);
     if (options.category) filteredEntries = filteredEntries.filter(e => e.note === options.category);
     if (filteredEntries.length === 0) { showToast('没有符合条件的数据可导出'); return; }
-    const backup = { version: '2.0', entries: filteredEntries, expenseCats, incomeCats, uiSettings, exportDate: new Date().toISOString(), exportInfo: { totalRecords: filteredEntries.length, dateRange: getDateRangeFromEntries(filteredEntries), totalExpense: calculateTotalByType(filteredEntries, 'expense'), totalIncome: calculateTotalByType(filteredEntries, 'income') } };
+    const backup = { 
+    version: '2.0',
+    source: 'main',
+    entries: filteredEntries, expenseCats, incomeCats, uiSettings, exportDate: new Date().toISOString(), exportInfo: { totalRecords: filteredEntries.length, dateRange: getDateRangeFromEntries(filteredEntries), totalExpense: calculateTotalByType(filteredEntries, 'expense'), totalIncome: calculateTotalByType(filteredEntries, 'income') } };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1957,6 +1959,12 @@ a.click();
       if (!file) return;
       try {
         const data = await readBackupFile(file);
+        
+        if (data.source && data.source !== 'main') {
+  showToast('⚠️ 这是其他账本的数据');
+  return;
+}
+        
         const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
         const totalExpense = calculateTotalByType(data.entries, 'expense');
         const totalIncome = calculateTotalByType(data.entries, 'income');
