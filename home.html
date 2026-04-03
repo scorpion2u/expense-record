@@ -1,64 +1,95 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<meta name="theme-color" content="#f1f5f9">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>我的账本</title>
+<title>我的记账本</title>
 
 <style>
-  body {
+  html, body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
     background: #f1f5f9;
-    display: flex;
-    justify-content: center;
   }
 
   .container {
     max-width: 420px;
-    width: 100%;
-    padding: 20px;
+    margin: 0 auto;
+    padding: 20px 16px 40px;
   }
 
-  h2 {
-    text-align: center;
-    margin-bottom: 25px;
+  /* 🌈 顶部区域 */
+  .header {
+    padding: 30px 20px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    margin-bottom: 24px;
   }
 
+  .title {
+    font-size: 22px;
+    font-weight: 700;
+  }
+
+  .subtitle {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 6px;
+  }
+
+  /* 💳 卡片 */
   .card {
-  background: white;
-  border-radius: 20px;
-  padding: 18px;
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: all 0.15s ease;
-
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-}
+    background: white;
+    border-radius: 22px;
+    padding: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    transition: 0.2s;
+    cursor: pointer;
+  }
 
   .card:active {
     transform: scale(0.96);
   }
 
+  /* 🟡 图标块 */
   .icon {
-    font-size: 22px;
+    width: 50px;
+    height: 50px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    flex-shrink: 0;
   }
 
-  .main { border-left: 5px solid #f59e0b; }
-  .tng { border-left: 5px solid #3b82f6; }
-  .credit { border-left: 5px solid #ef4444; }
+  .main { background: #f59e0b; }
+  .tng { background: #3b82f6; }
+  .credit { background: #ef4444; }
+
+  .card-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .name {
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  .desc {
+    font-size: 13px;
+    color: #64748b;
+    margin-top: 3px;
+  }
+
 
 </style>
 </head>
@@ -67,22 +98,37 @@
 
 <div class="container">
 
-  <h2>📊 选择账本</h2>
-
-  <div class="card main" onclick="location.href='index.html'">
-    <div class="icon">📘</div>
-    主记账本
+  <!-- 🌈 头部 -->
+  <div class="header">
+    <div class="title">📊 我的记账本</div>
+    <div class="subtitle">轻松记录每一笔收支</div>
   </div>
 
-  <div class="card tng" onclick="location.href='tng.html'">
-    <div class="icon">🪙</div>
-    TNG电子钱包
+  <!-- 💳 卡片 -->
+  <div class="card" onclick="location.href='index.html'">
+    <div class="icon main">📘</div>
+    <div class="card-text">
+      <div class="name">收支记账本</div>
+      <div class="desc">日常收支记录</div>
+    </div>
   </div>
 
-  <div class="card credit" onclick="location.href='credit.html'">
-    <div class="icon">💳</div>
-    信用卡记账本
+  <div class="card" onclick="location.href='tng.html'">
+    <div class="icon tng">🪙</div>
+    <div class="card-text">
+      <div class="name">TNG电子钱包</div>
+      <div class="desc">Touch 'n Go 交易</div>
+    </div>
   </div>
+
+  <div class="card" onclick="location.href='credit.html'">
+    <div class="icon credit">💳</div>
+    <div class="card-text">
+      <div class="name">信用卡记账本</div>
+      <div class="desc">信用卡消费管理</div>
+    </div>
+  </div>
+
 
 </div>
 
