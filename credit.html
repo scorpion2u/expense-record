@@ -1815,7 +1815,7 @@ function saveDebounced() {
     if (filteredEntries.length === 0) { showToast('没有符合条件的数据可导出'); return; }
     const backup = { 
     version: '2.0',
-    source: 'main',
+    source: 'credit',
     entries: filteredEntries, expenseCats, incomeCats, uiSettings, exportDate: new Date().toISOString(), exportInfo: { totalRecords: filteredEntries.length, dateRange: getDateRangeFromEntries(filteredEntries), totalExpense: calculateTotalByType(filteredEntries, 'expense'), totalIncome: calculateTotalByType(filteredEntries, 'income') } };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
