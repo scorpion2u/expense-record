@@ -1963,10 +1963,9 @@ a.click();
     try {
       const data = await readBackupFile(file);
 
-      // 👇 ✅ 加在这里（最正确位置）
-      if (data.source && data.source !== 'main') {
-  showToast('⚠️ 这是其他账本的数据');
-  return; // 🚫 直接不让继续
+      if (data.source !== 'main') {
+  showToast('❌ 只能导入【主账本】备份文件');
+  return;
 }
 
       const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
