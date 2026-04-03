@@ -2810,7 +2810,7 @@ a.click();
     document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
     document.getElementById('exportMenuItem').onclick = () => { showExportDialog(); closeMenu(); };
     document.getElementById('importMenuItem').onclick = () => { showImportDialog(); closeMenu(); };
-    document.getElementById('creditMenuItem').onclick = () => { closeMenu(); window.location.href = 'tng.html'; };
+    document.getElementById('creditMenuItem').onclick = () => { closeMenu(); window.location.href = 'index.html'; };
     document.querySelectorAll('.type-option').forEach(opt => { opt.onclick = () => { document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active')); opt.classList.add('active'); currentType = opt.dataset.type; renderCategoryDropdown(); updateInputColor(); }; });
     // 统计卡片点击
     const incomeCard = document.querySelector('.stat-card.income');
