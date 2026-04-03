@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta name="theme-color" content="#f1f5f9">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的账本</title>
+
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f1f5f9;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    max-width: 420px;
+    width: 100%;
+    padding: 20px;
+  }
+
+  h2 {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: all 0.15s ease;
+  }
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+  .card:active {
+    transform: scale(0.96);
+  }
+
+  .icon {
+    font-size: 22px;
+  }
+
+  .main { border-left: 5px solid #f59e0b; }
+  .tng { border-left: 5px solid #3b82f6; }
+  .credit { border-left: 5px solid #ef4444; }
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h2>📊 选择账本</h2>
+
+  <div class="card main" onclick="location.href='index.html'">
+    <div class="icon">📘</div>
+    主记账本
+  </div>
+
+  <div class="card tng" onclick="location.href='tng.html'">
+    <div class="icon">🪙</div>
+    TNG电子钱包
+  </div>
+
+  <div class="card credit" onclick="location.href='credit.html'">
+    <div class="icon">💳</div>
+    信用卡记账本
+  </div>
+
+</div>
+
+</body>
+</html>
