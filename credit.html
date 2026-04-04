@@ -1811,7 +1811,7 @@ window.exportNote = function() {
   const allEntries = JSON.parse(localStorage.getItem('book_v9_credit')) || [];
 
   if (!allEntries || allEntries.length === 0) {
-    alert("📭 没有记录可以导出");
+    showToastGlobal("📭 没有记录可以导出");
     return;
   }
 
