@@ -1839,7 +1839,7 @@ function saveDebounced() {
   }
 // 将这两个函数放到 IIFE 外部，作为全局函数
 window.exportNote = function() {
-  // 直接从 localStorage 读取，不依赖内部变量
+  // 获取所有记录
   const allEntries = JSON.parse(localStorage.getItem('book_v9_main')) || [];
 
   if (!allEntries || allEntries.length === 0) {
@@ -1847,31 +1847,150 @@ window.exportNote = function() {
     return;
   }
 
-  const grouped = {};
-  allEntries.forEach(item => {
-    const date = item.date || "未知日期";
-    if (!grouped[date]) grouped[date] = [];
-    grouped[date].push(item);
-  });
+  // 获取所有可用的月份（去重排序）
+  const availableMonths = [...new Set(allEntries.map(item => item.date.slice(0, 7)))].sort().reverse();
+  
+  if (availableMonths.length === 0) {
+    alert("📭 没有记录可以导出");
+    return;
+  }
 
-  const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-  let result = "";
+  // 创建月份选择弹窗
+  const modal = document.createElement("div");
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  `;
 
-  sortedDates.forEach(date => {
-    // 将 YYYY-MM-DD 转换为 DD/MM/YYYY
-    const parts = date.split('-');
-    const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-    result += `${formattedDate}\n`;
-    grouped[date].forEach((item, index) => {
-      const amount = Number(item.amount || 0).toFixed(2);
-      const note = item.note || "";
-      const typeSymbol = item.type === "income" ? "+" : "-";
-      result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}\n`;
+  let cardBg = '#ffffff';
+  let darkMode = false;
+  try {
+    const settings = JSON.parse(localStorage.getItem('book_ui_settings_main') || '{}');
+    cardBg = settings.cardBg || '#ffffff';
+    darkMode = settings.darkMode || false;
+  } catch(e) {}
+
+  modal.innerHTML = `
+    <div style="
+      background: ${cardBg};
+      padding: 24px;
+      border-radius: 28px;
+      width: 85%;
+      max-width: 320px;
+      box-shadow: 0 25px 40px rgba(0,0,0,0.25);
+    ">
+      <h3 style="margin-bottom: 16px; font-size: 20px; text-align: center;">📄 导出笔记</h3>
+      <p style="font-size: 14px; color: #64748b; margin-bottom: 16px; text-align: center;">选择要导出的月份</p>
+      
+      <select id="monthSelectForExport" style="
+        width: 100%;
+        padding: 14px;
+        border-radius: 28px;
+        border: 1px solid #e2e8f0;
+        font-size: 16px;
+        background: ${darkMode ? '#1e293b' : '#ffffff'};
+        color: ${darkMode ? '#e2e8f0' : '#1e293b'};
+        margin-bottom: 20px;
+      ">
+        <option value="all">📆 全部月份 (${allEntries.length}条)</option>
+        ${availableMonths.map(month => {
+          const count = allEntries.filter(e => e.date.startsWith(month)).length;
+          const formattedMonth = `${month.slice(5)}/${month.slice(0,4)}`;
+          return `<option value="${month}">📅 ${formattedMonth} (${count}条)</option>`;
+        }).join('')}
+      </select>
+      
+      <div style="display: flex; gap: 12px;">
+        <button id="confirmExportNoteBtn" style="
+          flex: 1;
+          padding: 12px;
+          border: none;
+          border-radius: 40px;
+          background: #10b981;
+          color: white;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+        ">确认导出</button>
+        <button id="cancelExportNoteBtn" style="
+          flex: 1;
+          padding: 12px;
+          border: none;
+          border-radius: 40px;
+          background: #64748b;
+          color: white;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+        ">取消</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // 确认导出
+  modal.querySelector('#confirmExportNoteBtn').onclick = () => {
+    const selectedMonth = modal.querySelector('#monthSelectForExport').value;
+    
+    // 筛选数据
+    let entriesToExport = [...allEntries];
+    if (selectedMonth !== 'all') {
+      entriesToExport = entriesToExport.filter(e => e.date.startsWith(selectedMonth));
+    }
+    
+    if (entriesToExport.length === 0) {
+      showToastGlobal("📭 该月份没有记录");
+      modal.remove();
+      return;
+    }
+    
+    // 按日期分组
+    const grouped = {};
+    entriesToExport.forEach(item => {
+      const date = item.date || "未知日期";
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push(item);
     });
-    result += "\n";
-  });
-
-  window.showExportModal(result);
+    
+    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+    let result = "";
+    
+    sortedDates.forEach(date => {
+      const parts = date.split('-');
+      const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      result += `${formattedDate}\n`;
+      grouped[date].forEach((item, index) => {
+        const amount = Number(item.amount || 0).toFixed(2);
+        const note = item.note || "";
+        const typeSymbol = item.type === "income" ? "+" : "-";
+        result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}\n`;
+      });
+      result += "\n";
+    });
+    
+    modal.remove();
+    window.showExportModal(result);
+  };
+  
+  // 取消
+  modal.querySelector('#cancelExportNoteBtn').onclick = () => {
+    modal.remove();
+  };
+  
+  // 点击遮罩关闭
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
 };
 
 window.showExportModal = function(text) {
