@@ -1313,6 +1313,7 @@ body.dark-mode .drag-handle {
         <div class="menu-item" id="searchMenuItem">🔍 搜索记录</div>
         <div class="menu-item" id="manageExpenseCategories">📝 管理消费分类</div>
         <div class="menu-item" id="manageIncomeCategories">💳 管理还款方式</div>
+        <div class="menu-item" id="exportNoteBtn">📄 导出笔记（以文字分享）</div>
         <div class="menu-item" id="exportMenuItem">📤 导出备份（可选月份）</div>
         <div class="menu-item" id="importMenuItem">📥 导入备份（可选月份）</div>
         <div class="menu-item" id="clearDataMenuItem">🗑 清空所有数据</div>
@@ -1803,6 +1804,195 @@ function saveDebounced() {
   function calculateTotalByType(entriesList, type) {
     return entriesList.filter(e => e.type === type).reduce((sum, e) => sum + e.amount, 0);
   }
+
+// 将这两个函数放到 IIFE 外部，作为全局函数
+window.exportNote = function() {
+  // 直接从 localStorage 读取，不依赖内部变量
+  const allEntries = JSON.parse(localStorage.getItem('book_v9_credit')) || [];
+
+  if (!allEntries || allEntries.length === 0) {
+    alert("📭 没有记录可以导出");
+    return;
+  }
+
+  const grouped = {};
+  allEntries.forEach(item => {
+    const date = item.date || "未知日期";
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(item);
+  });
+
+  const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+  let result = "";
+
+ const formattedDate = date.split('-').reverse().join('/');
+result += `📅 ${formattedDate}\n`;
+    grouped[date].forEach((item, index) => {
+      const amount = Number(item.amount || 0).toFixed(2);
+      const note = item.note || "";
+      const typeSymbol = item.type === "income" ? "+" : "-";
+      result += `${index + 1}）${typeSymbol} RM ${amount}     ${note}\n`;
+    });
+    result += "\n";
+  });
+
+  window.showExportModal(result);
+};
+
+window.showExportModal = function(text) {
+  // 移除已存在的模态框
+  const existingModal = document.querySelector('.export-modal-overlay');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement("div");
+  modal.className = 'export-modal-overlay';
+  modal.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+  `;
+
+  // 获取当前主题颜色（如果可能）
+  let cardBg = '#ffffff';
+  let darkMode = false;
+  try {
+    const settings = JSON.parse(localStorage.getItem('book_ui_settings_credit') || '{}');
+    cardBg = settings.cardBg || '#ffffff';
+    darkMode = settings.darkMode || false;
+  } catch(e) {}
+
+  modal.innerHTML = `
+    <div style="
+      background: ${cardBg};
+      padding: 20px;
+      border-radius: 28px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 25px 40px rgba(0,0,0,0.25);
+      transition: all 0.2s ease;
+    ">
+      <h3 style="margin-bottom: 8px; font-size: 20px; display: flex; align-items: center; gap: 8px;">
+        📄 导出笔记 <span style="font-size: 13px; background: #e2e8f0; padding: 2px 10px; border-radius: 30px;">${text.split('\n').filter(l => l.includes('）')).length} 条记录</span>
+      </h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">✅ 点击下方按钮可一键复制全部内容</p>
+      <textarea id="exportTextArea" style="
+        width: 100%;
+        height: 280px;
+        border-radius: 20px;
+        padding: 14px;
+        font-size: 13px;
+        font-family: 'SF Mono', Monaco, monospace;
+        border: 1px solid #e2e8f0;
+        background: ${darkMode ? '#1e293b' : '#f8fafc'};
+        color: ${darkMode ? '#e2e8f0' : '#1e293b'};
+        resize: vertical;
+        line-height: 1.5;
+      " readonly>${escapeHtmlForExport(text)}</textarea>
+
+      <div style="display: flex; gap: 12px; margin-top: 18px;">
+        <button id="copyExportBtn" style="
+          flex: 1;
+          padding: 12px;
+          border: none;
+          border-radius: 40px;
+          background: #10b981;
+          color: white;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.1s, opacity 0.2s;
+        ">📋 一键复制</button>
+        
+        <button id="closeExportBtn" style="
+          flex: 1;
+          padding: 12px;
+          border: none;
+          border-radius: 40px;
+          background: #64748b;
+          color: white;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.1s;
+        ">关闭</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const copyBtn = modal.querySelector('#copyExportBtn');
+  const textArea = modal.querySelector('#exportTextArea');
+  const originalText = text;
+
+  copyBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(originalText);
+      showToastGlobal("✅ 已复制到剪贴板");
+      copyBtn.textContent = "✓ 复制成功";
+      setTimeout(() => { copyBtn.textContent = "📋 一键复制"; }, 1500);
+    } catch (err) {
+      try {
+        textArea.select();
+        textArea.setSelectionRange(0, 99999);
+        const success = document.execCommand("copy");
+        if (success) {
+          showToastGlobal("✅ 已复制到剪贴板");
+          copyBtn.textContent = "✓ 复制成功";
+          setTimeout(() => { copyBtn.textContent = "📋 一键复制"; }, 1500);
+        } else {
+          showToastGlobal("❌ 复制失败，请手动选择复制");
+        }
+      } catch (e) {
+        showToastGlobal("❌ 复制失败，请手动复制");
+      }
+    }
+  };
+
+  modal.querySelector('#closeExportBtn').onclick = () => {
+    modal.remove();
+  };
+
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.remove();
+  };
+};
+
+// 辅助函数：HTML转义
+function escapeHtmlForExport(str) {
+  if (!str) return '';
+  return str.replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
+}
+
+// 全局提示函数
+function showToastGlobal(msg) {
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    container.setAttribute('aria-live', 'polite');
+    document.body.appendChild(container);
+  }
+  let toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  toast.setAttribute('role', 'status');
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
 
   function exportToJSON(options) {
     let filteredEntries = [...entries];
@@ -2689,6 +2879,12 @@ a.click();
     modal.querySelector('#cancelDeleteBtn').onclick = () => modal.remove();
   }
 });
+
+document.getElementById('exportNoteBtn').onclick = () => {
+  window.exportNote();
+  closeMenu();
+};
+
     document.getElementById('viewMoreBtn').onclick = () => { showAllEntriesModal(); };
     const clearBtn = document.getElementById('clearDataMenuItem');
     if (clearBtn && !clearBtn.dataset.bound) { clearBtn.dataset.bound = 'true'; clearBtn.onclick = () => { clearAllData(); closeMenu(); }; }
