@@ -1964,18 +1964,38 @@ window.exportNote = function() {
     const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
     let result = "";
     
+    // 计算总统计
+    let totalExpense = 0;
+    let totalIncome = 0;
+    
     sortedDates.forEach(date => {
       const parts = date.split('-');
       const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      result += `${formattedDate}\n`;
+      result += `${formattedDate}\n\n`;
+      
       grouped[date].forEach((item, index) => {
         const amount = Number(item.amount || 0).toFixed(2);
         const note = item.note || "";
         const typeSymbol = item.type === "income" ? "+" : "-";
         result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}\n`;
+        
+        // 累加统计
+        if (item.type === "expense") {
+          totalExpense += item.amount;
+        } else {
+          totalIncome += item.amount;
+        }
       });
       result += "\n";
     });
+    
+    // 添加结尾统计
+    const totalBalance = totalIncome - totalExpense;
+    result += `══════════════\n`;
+    result += `总支出:  RM${totalExpense.toFixed(2)}\n`;
+    result += `总收入:  RM${totalIncome.toFixed(2)}\n`;
+    result += `总结余: ${totalBalance >= 0 ? '+' : '-'}RM${Math.abs(totalBalance).toFixed(2)}\n`;
+    result += `══════════════`;
     
     modal.remove();
     window.showExportModal(result);
