@@ -1944,6 +1944,8 @@ a.click();
     if (data.expenseCats) for (const cat of data.expenseCats) { if (!expenseCats.includes(cat)) { expenseCats.push(cat); newExpenseCats++; } }
     if (data.incomeCats) for (const cat of data.incomeCats) { if (!incomeCats.includes(cat)) { incomeCats.push(cat); newIncomeCats++; } }
     if (newExpenseCats > 0 || newIncomeCats > 0) showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
+    rebuildStatsCache();
+    
     saveDebounced();
     renderCalendar();
     renderEntries();
