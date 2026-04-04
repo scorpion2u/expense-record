@@ -2255,14 +2255,6 @@ a.click();
   function closeMenu() { document.getElementById('menuDropdown').classList.remove('show'); document.getElementById('menuButton').setAttribute('aria-expanded', 'false'); }
   function closeCategoryDropdown() { const el = document.getElementById('categoryDropdown'); if (el) el.classList.remove('show'); }
 
-  function checkAndAddCategory(category, type, callback) {
-    const currentCats = type === 'expense' ? expenseCats : incomeCats;
-    if (currentCats.includes(category)) { callback(true); return; }
-    const modal = createModal('➕ 添加新分类', `<div style="text-align:center;padding:8px 0;"><p>是否将 "<strong>${escapeHtml(category)}</strong>" 添加到${type === 'expense' ? '支出' : '收入'}分类？</p><p style="font-size:0.8rem;color:#64748b;margin-top:8px;">添加后可在管理分类中删除</p></div>`, '<div style="display:flex;gap:12px;"><button id="confirmAddCatBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">添加</button><button id="skipAddCatBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">仅本次使用</button></div>');
-    modal.querySelector('#confirmAddCatBtn').onclick = () => { if (type === 'expense') expenseCats.push(category); else incomeCats.push(category); saveDebounced(); renderCategoryDropdown(); showToast(`✅ 已添加分类「${category}」`); modal.remove(); callback(true); };
-    modal.querySelector('#skipAddCatBtn').onclick = () => { modal.remove(); callback(true); };
-  }
-
   function getValidAmount() { const amountInput = document.getElementById('amountInput').value.trim(); const amount = parseFloat(amountInput); if (isNaN(amount) || amount <= 0) { showToast('请输入有效金额'); return null; } return amount; }
   function getCategory() { let category = document.getElementById('categoryInput').value.trim(); if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入'; return category; }
   function createNewEntry(amount, category) { return { id: generateUniqueId(), timestamp: Date.now(), date: selectedDate, time: new Date().toTimeString().slice(0,5), amount, note: category, type: currentType }; }
@@ -2277,7 +2269,6 @@ a.click();
   
   let category = getCategory();
   const currentCats = currentType === 'expense' ? expenseCats : incomeCats;
-  const isNewCategory = !currentCats.includes(category) && category !== '其他支出' && category !== '其他收入';
   
   // 统一设置标志
   isAdding = true;
@@ -2304,25 +2295,7 @@ a.click();
     showToast(currentType === 'expense' ? '支出已记' : '收入已记');
     
     setTimeout(() => { isAdding = false; }, 500);
-  };
-  
-  // 处理新分类
-  if (isNewCategory) {
-    checkAndAddCategory(category, currentType, (confirmed) => {
-      if (confirmed) {
-        const finalAmount = getValidAmount();
-        if (finalAmount === null) {
-          isAdding = false;
-          return;
-        }
-        const finalCategory = document.getElementById('categoryInput').value.trim() || category;
-        saveEntry(finalCategory);
-      } else {
-        isAdding = false;
-      }
-    });
-    return false;
-  }
+  }; 
   
   // 正常添加
   saveEntry(category);
