@@ -39,7 +39,7 @@
     margin-top: 6px;
   }
 
-  /* 💳 卡片 */
+  /* 💳 卡片 - 修复点击复制文字问题 */
   .card {
     background: white;
     border-radius: 22px;
@@ -51,6 +51,13 @@
     box-shadow: 0 6px 18px rgba(0,0,0,0.06);
     transition: 0.2s;
     cursor: pointer;
+    /* 🔧 修复：禁用文字选择 */
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    /* 移除移动端点击时的灰色背景 */
+    -webkit-tap-highlight-color: transparent;
   }
 
   .card:active {
@@ -82,6 +89,7 @@
   .name {
     font-size: 17px;
     font-weight: 600;
+    color: #1e293b;
   }
 
   .desc {
@@ -89,8 +97,6 @@
     color: #64748b;
     margin-top: 3px;
   }
-
-
 </style>
 </head>
 
@@ -105,7 +111,7 @@
   </div>
 
   <!-- 💳 卡片 -->
-  <div class="card" onclick="location.href='main.html'">
+  <div class="card" data-url="main.html">
     <div class="icon main">📘</div>
     <div class="card-text">
       <div class="name">收支记账本</div>
@@ -113,7 +119,7 @@
     </div>
   </div>
 
-  <div class="card" onclick="location.href='tng.html'">
+  <div class="card" data-url="tng.html">
     <div class="icon tng">🪙</div>
     <div class="card-text">
       <div class="name">TNG记账本</div>
@@ -121,7 +127,7 @@
     </div>
   </div>
 
-  <div class="card" onclick="location.href='credit.html'">
+  <div class="card" data-url="credit.html">
     <div class="icon credit">💳</div>
     <div class="card-text">
       <div class="name">信用卡记账本</div>
@@ -129,8 +135,20 @@
     </div>
   </div>
 
-
 </div>
+
+<script>
+  // 🔧 修复：通过 JavaScript 处理点击跳转，避免文字复制问题
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', function(e) {
+      // 获取目标页面地址
+      const url = this.getAttribute('data-url');
+      if (url) {
+        location.href = url;
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
