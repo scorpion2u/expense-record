@@ -1972,7 +1972,7 @@ window.exportNote = function() {
     sortedDates.forEach(date => {
       const parts = date.split('-');
       const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      result += `${formattedDate}\n\n`;
+      result += `${formattedDate}\n`;
       
       grouped[date].forEach((item, index) => {
         const amount = Number(item.amount || 0).toFixed(2);
