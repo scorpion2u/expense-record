@@ -2502,7 +2502,10 @@ a.click();
     for (let e of displayEntries) {
       let sign = e.type === 'expense' ? '-' : '+';
       let cls = e.type === 'expense' ? 'expense' : 'income';
-      html += `<li><div class="entry-info"><div class="entry-note">${escapeHtml(e.note)}</div><div class="entry-time">${e.time}</div></div><div class="entry-actions"><span class="entry-amount ${cls}">${sign}RM${e.amount.toFixed(2)}</span><span class="edit-btn" data-id="${e.id}">✏️</span><span class="delete-btn" data-id="${e.id}">🗑</span></div></li>`;
+      html += `<li><div class="entry-info"><div class="entry-note">${escapeHtml(e.note)}</div><div class="entry-time">${e.time}</div></div><div class="entry-actions"><span class="entry-amount ${cls}">
+  ${sign}RM${e.amount.toFixed(2)}
+  <small style="font-size:10px;opacity:0.6;">${e.payType || ''}</small>
+</span><span class="edit-btn" data-id="${e.id}">✏️</span><span class="delete-btn" data-id="${e.id}">🗑</span></div></li>`;
     }
     ul.innerHTML = html;
     let viewMoreBtn = document.getElementById('viewMoreBtn');
@@ -2521,46 +2524,80 @@ a.click();
 
   function getValidAmount() { const amountInput = document.getElementById('amountInput').value.trim(); const amount = parseFloat(amountInput); if (isNaN(amount) || amount <= 0) { showToast('请输入有效金额'); return null; } return amount; }
   function getCategory() { let category = document.getElementById('categoryInput').value.trim(); if (!category) category = currentType === 'expense' ? '其他消费' : '其他还款'; return category; }
-  function createNewEntry(amount, category) { return { id: generateUniqueId(), timestamp: Date.now(), date: selectedDate, time: new Date().toTimeString().slice(0,5), amount, note: category, type: currentType }; }
+  function createNewEntry(amount, category, payType) {
+  return {
+    id: generateUniqueId(),
+    timestamp: Date.now(),
+    date: selectedDate,
+    time: new Date().toTimeString().slice(0,5),
+    amount,
+    note: category,
+    type: currentType,
+    payType: payType || '现金' // 默认现金
+  };
+}
   
   function saveAndRefresh(entry) { entries.push(entry); addToCache(entry); if (entries.length > CONSTANTS.MAX_ENTRIES) { entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0)); entries.shift(); } saveDebounced(); document.getElementById('amountInput').value = ''; document.getElementById('categoryInput').value = ''; document.getElementById('amountInput').blur(); document.getElementById('categoryInput').blur(); closeCategoryDropdown(); updateSingleDay(entry.date);renderEntries();showToast(currentType === 'expense' ? '消费已记' : '还款已记'); }
 
   function addRecord() {
   if (isAdding) return false;
-  
+
   const amount = getValidAmount();
   if (amount === null) return false;
-  
+
   let category = getCategory();
-  const currentCats = currentType === 'expense' ? expenseCats : incomeCats;
-  
+
   isAdding = true;
-  
-  const saveEntry = (finalCategory) => {
-    const entry = createNewEntry(amount, finalCategory);
+
+  // 👇 这里插入支付方式选择
+  choosePayType((payType) => {
+
+    const entry = createNewEntry(amount, category, payType);
+
     entries.push(entry);
     addToCache(entry);
-    
+
     if (entries.length > CONSTANTS.MAX_ENTRIES) {
       entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
       entries.shift();
     }
-    
+
     saveDebounced();
+
     document.getElementById('amountInput').value = '';
     document.getElementById('categoryInput').value = '';
-    document.getElementById('amountInput').blur();
-    document.getElementById('categoryInput').blur();
-    closeCategoryDropdown();
+
     updateSingleDay(entry.date);
     renderEntries();
-    showToast(currentType === 'expense' ? '消费已记' : '还款已记');
-    
-    setTimeout(() => { isAdding = false; }, 500);
-  };
-  
-  saveEntry(category);
+
+    showToast(`已记账（${payType}）`);
+
+    setTimeout(() => { isAdding = false; }, 300);
+  });
+
   return true;
+}
+
+function choosePayType(callback) {
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="pay-btn" data-type="现金">💵 现金</button>
+      <button class="pay-btn" data-type="TNG">📱 TNG</button>
+      <button class="pay-btn" data-type="信用卡">💳 信用卡</button>
+      <button class="pay-btn" data-type="借记卡">🏧 借记卡</button>
+      <button class="pay-btn" data-type="银行转账">🏦 银行转账</button>
+    </div>
+  `;
+
+  const modal = createModal('选择支付方式', html);
+
+  modal.querySelectorAll('.pay-btn').forEach(btn => {
+    btn.onclick = () => {
+      const type = btn.dataset.type;
+      modal.remove();
+      callback(type);
+    };
+  });
 }
 
   function editEntry(id) {
@@ -2627,7 +2664,11 @@ a.click();
       let results = [...entries];
       if (startDate) results = results.filter(e => e.date >= startDate);
       if (endDate) results = results.filter(e => e.date <= endDate);
-      if (keyword) results = results.filter(e => e.note.toLowerCase().includes(keyword));
+      if (keyword) results = results.filter(e => {
+  const noteMatch = e.note.toLowerCase().includes(keyword);
+  const payMatch = (e.payType || '').toLowerCase().includes(keyword);
+  return noteMatch || payMatch;
+});
       if (!isNaN(minAmount)) results = results.filter(e => e.amount >= minAmount);
       if (!isNaN(maxAmount)) results = results.filter(e => e.amount <= maxAmount);
       if (type !== 'all') results = results.filter(e => e.type === type);
@@ -2683,7 +2724,11 @@ a.click();
       let results = [...entries];
       if (startDate) results = results.filter(e => e.date >= startDate);
       if (endDate) results = results.filter(e => e.date <= endDate);
-      if (keyword) results = results.filter(e => e.note.toLowerCase().includes(keyword));
+      if (keyword) results = results.filter(e => {
+  const noteMatch = e.note.toLowerCase().includes(keyword);
+  const payMatch = (e.payType || '').toLowerCase().includes(keyword);
+  return noteMatch || payMatch;
+});
       if (!isNaN(minAmount)) results = results.filter(e => e.amount >= minAmount);
       if (!isNaN(maxAmount)) results = results.filter(e => e.amount <= maxAmount);
       if (type !== 'all') results = results.filter(e => e.type === type);
@@ -2698,7 +2743,7 @@ a.click();
   <div>
     <div>${escapeHtml(e.note)}</div>
     <div style="font-size:0.6rem;color:#94a3b8;">
-      ${e.date} ${e.time}
+      ${e.date} ${e.time} · ${e.payType || ''}
     </div>
   </div>
   <div style="color:${color};font-weight:600;">
