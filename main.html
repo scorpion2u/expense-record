@@ -1970,25 +1970,26 @@ window.exportNote = function() {
     let totalIncome = 0;
     
     sortedDates.forEach(date => {
-      const parts = date.split('-');
-      const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
-      result += `${formattedDate}\n`;
-      
-      grouped[date].forEach((item, index) => {
-        const amount = Number(item.amount || 0).toFixed(2);
-        const note = item.note || "";
-        const typeSymbol = item.type === "income" ? "+" : "-";
-        result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}\n`;
-        
-        // 累加统计
-        if (item.type === "expense") {
-          totalExpense += item.amount;
-        } else {
-          totalIncome += item.amount;
-        }
-      });
-      result += "\n";
-    });
+  const parts = date.split('-');
+  const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+  result += `${formattedDate}\n`;
+  
+  grouped[date].forEach((item, index) => {
+    const amount = Number(item.amount || 0).toFixed(2);
+    const note = item.note || "";
+    const typeSymbol = item.type === "income" ? "+" : "-";
+    const pay = item.payType ? `(${item.payType})` : '';
+
+    result += `${index + 1}）${typeSymbol} RM ${amount}   ${note} ${pay}\n`;
+
+    if (item.type === "expense") {
+      totalExpense += item.amount;
+    } else {
+      totalIncome += item.amount;
+    }
+  });
+
+});
     
     // 添加结尾统计
     const totalBalance = totalIncome - totalExpense;
@@ -2575,7 +2576,7 @@ a.click();
       let cls = e.type === 'expense' ? 'expense' : 'income';
       html += `<li><div class="entry-info"><div class="entry-note">${escapeHtml(e.note)}</div><div class="entry-time">${e.time}</div></div><div class="entry-actions"><span class="entry-amount ${cls}">
   ${sign}RM${e.amount.toFixed(2)}
-  <small style="font-size:10px;opacity:0.6;">${e.payType || ''}</small>
+  <small style="opacity:0.6;">( ${e.payType} )</small>
 </span><span class="edit-btn" data-id="${e.id}">✏️</span><span class="delete-btn" data-id="${e.id}">🗑</span></div></li>`;
     }
     ul.innerHTML = html;
@@ -2654,10 +2655,10 @@ function choosePayType(callback) {
   const html = `
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
       
-      ${createPayBtn('💵','现金支出')}
-      ${createPayBtn('📱','TNG支出')}
-      ${createPayBtn('💳','信用卡支出')}
-      ${createPayBtn('🏧','借记卡支出')}
+      ${createPayBtn('💵','现金')}
+      ${createPayBtn('📱','TNG')}
+      ${createPayBtn('💳','信用卡')}
+      ${createPayBtn('🏧','借记卡')}
 
     </div>
   `;
