@@ -2153,7 +2153,11 @@ function showToastGlobal(msg) {
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    let fileName = '信用卡记账备份';
+    
+    const now = new Date();
+  const exportDateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+    
+    let fileName = `信用卡账本备份_${exportDateStr}`;
     if (options.range === 'current_month') fileName += `_${currentMonthStr.replace('-', '年')}月`;
     else if (options.range === 'current_year') fileName += `_${currentYearStr}年`;
     else if (options.range === 'custom' && options.startDate && options.endDate) fileName += `_${options.startDate}_至_${options.endDate}`;
