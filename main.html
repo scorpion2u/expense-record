@@ -2652,24 +2652,59 @@ a.click();
 
 function choosePayType(callback) {
   const html = `
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <button class="pay-btn" data-type="现金">💵 现金</button>
-      <button class="pay-btn" data-type="TNG">📱 TNG</button>
-      <button class="pay-btn" data-type="信用卡">💳 信用卡</button>
-      <button class="pay-btn" data-type="借记卡">🏧 借记卡</button>
-      <button class="pay-btn" data-type="银行转账">🏦 银行转账</button>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+      
+      ${createPayBtn('💵','现金支出')}
+      ${createPayBtn('📱','TNG支出')}
+      ${createPayBtn('💳','信用卡支出')}
+      ${createPayBtn('🏧','借记卡支出')}
+
     </div>
   `;
 
-  const modal = createModal('选择支付方式', html);
+  const modal = createModal('选择支出方式', html);
 
-  modal.querySelectorAll('.pay-btn').forEach(btn => {
+  modal.querySelectorAll('.pay-card').forEach(btn => {
     btn.onclick = () => {
       const type = btn.dataset.type;
       modal.remove();
       callback(type);
     };
   });
+}
+
+// 👇 新增这个函数
+function createPayBtn(icon, text) {
+  return `
+    <div class="pay-card" data-type="${text}" style="
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px 16px;
+      border-radius:18px;
+      background:rgba(0,0,0,0.04);
+      cursor:pointer;
+      transition:all 0.15s;
+      border:1px solid rgba(0,0,0,0.05);
+    ">
+      <div style="
+        font-size:18px;
+        width:36px;
+        height:36px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        border-radius:12px;
+        background:rgba(0,0,0,0.06);
+      ">
+        ${icon}
+      </div>
+
+      <div style="font-size:15px;font-weight:500;">
+        ${text}
+      </div>
+    </div>
+  `;
 }
 
   function editEntry(id) {
