@@ -2793,7 +2793,82 @@ function getPayTypeStats(list) {
     let stats = getMonthStats(currentYear, currentMonth);
     let key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
     let monthEntries = monthMap[key] || [];
-    let html = `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📌 本月汇总</div>${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 本月共 ${monthEntries.length} 笔记录</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📭 本月暂无记录</div>`}<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);"><div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>💸 支出</span><span style="color:var(--expense-color);font-weight:bold;">RM${stats.expense.toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>💰 收入</span><span style="color:var(--income-color);font-weight:bold;">RM${stats.income.toFixed(2)}</span></div><div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>🧾 结余</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}RM${Math.abs(stats.balance).toFixed(2)}</span></div></div>`;
+    let payStats = getPayTypeStats(monthEntries);
+    let html = `
+<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📌 本月汇总</div>
+
+${monthEntries.length > 0
+  ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 本月共 ${monthEntries.length} 笔记录</div>`
+  : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📭 本月暂无记录</div>`
+}
+
+<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
+  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+    <span>💸 支出</span>
+    <span style="color:var(--expense-color);font-weight:bold;">RM${stats.expense.toFixed(2)}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+    <span>💰 收入</span>
+    <span style="color:var(--income-color);font-weight:bold;">RM${stats.income.toFixed(2)}</span>
+  </div>
+  <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);">
+    <span>🧾 结余</span>
+    <span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">
+      ${stats.balance >= 0 ? '+' : '-'}RM${Math.abs(stats.balance).toFixed(2)}
+    </span>
+  </div>
+</div>
+
+<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">💳 支付方式统计</div>
+
+<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+
+  <!-- TNG -->
+  <div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:20px;text-align:center;">🪙</span>
+      <span>TNG</span>
+    </div>
+    <div style="text-align:right;font-variant-numeric:tabular-nums;">
+      RM${payStats['TNG'].toFixed(2)}
+    </div>
+  </div>
+
+  <!-- 现金 -->
+  <div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:20px;text-align:center;">💵</span>
+      <span>现金</span>
+    </div>
+    <div style="text-align:right;font-variant-numeric:tabular-nums;">
+      RM${payStats['现金'].toFixed(2)}
+    </div>
+  </div>
+
+  <!-- 信用卡 -->
+  <div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:20px;text-align:center;">💳</span>
+      <span>信用卡</span>
+    </div>
+    <div style="text-align:right;font-variant-numeric:tabular-nums;">
+      RM${payStats['信用卡'].toFixed(2)}
+    </div>
+  </div>
+
+  <!-- 借记卡 -->
+  <div style="display:grid;grid-template-columns:120px 1fr;align-items:center;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="width:20px;text-align:center;">🏧</span>
+      <span>借记卡</span>
+    </div>
+    <div style="text-align:right;font-variant-numeric:tabular-nums;">
+      RM${payStats['借记卡'].toFixed(2)}
+    </div>
+  </div>
+
+</div>
+`;
     const modal = createModal(`📊 ${currentYear}年${currentMonth + 1}月 统计`, html, '<button id="closeStatsBtn" class="close-btn">关闭</button>');
     modal.querySelector('#closeStatsBtn').onclick = () => modal.remove();
   }
