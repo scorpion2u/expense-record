@@ -1963,24 +1963,35 @@ window.exportNote = function() {
     });
     
     const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
-    let result = "";
-    
-    // 计算总统计
-    let totalExpense = 0;
-    let totalIncome = 0;
-    
-    sortedDates.forEach(date => {
+    let result = '';
+let totalExpense = 0;
+let totalIncome = 0;
+
+let lastMonth = '';
+
+sortedDates.forEach(date => {
   const parts = date.split('-');
+  const year = parts[0];
+  const month = parts[1];
+
+  const currentMonthKey = `${year}-${month}`;
+
+  // ✅ 月份标题（只显示 月）
+  if (currentMonthKey !== lastMonth) {
+    result += `\n【${parseInt(month)}月】\n`;
+    lastMonth = currentMonthKey;
+  }
+
   const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
   result += `${formattedDate}\n`;
-  
+
   grouped[date].forEach((item, index) => {
     const amount = Number(item.amount || 0).toFixed(2);
     const note = item.note || "";
     const typeSymbol = item.type === "income" ? "+" : "-";
-    const pay = item.payType ? `(${item.payType})` : '';
+    const pay = item.payType ? `（${item.payType}）` : '';
 
-    result += `${index + 1}）${typeSymbol} RM ${amount}   ${note} ${pay}\n`;
+    result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}${pay}\n`;
 
     if (item.type === "expense") {
       totalExpense += item.amount;
@@ -1990,15 +2001,27 @@ window.exportNote = function() {
   });
 
 });
-    
-    // 添加结尾统计
-    const totalBalance = totalIncome - totalExpense;
-    result += `══════════════\n`;
-    result += `总支出:  RM${totalExpense.toFixed(2)}\n`;
-    result += `总收入:  RM${totalIncome.toFixed(2)}\n`;
-    result += `总结余: ${totalBalance >= 0 ? '+' : '-'}RM${Math.abs(totalBalance).toFixed(2)}\n`;
+
+
+// ===== 总结 =====
+const totalBalance = totalIncome - totalExpense;
+
+result += `══════════════\n`;
+result += `总支出:  RM${totalExpense.toFixed(2)}\n`;
+result += `总收入:  RM${totalIncome.toFixed(2)}\n`;
+result += `总结余: ${totalBalance >= 0 ? '+' : '-'}RM${Math.abs(totalBalance).toFixed(2)}\n`;
+result += `══════════════\n`;
+
+
+// ===== 支付方式统计 =====
+const stats = getPayTypeStats(entriesToExport);
+
+result += `--支付方式统计--\n`;
+result += `现金: RM${stats['现金'].toFixed(2)}\n`;
+result += `TNG: RM${stats['TNG'].toFixed(2)}\n`;
+result += `信用卡: RM${stats['信用卡'].toFixed(2)}\n`;
+result += `借记卡: RM${stats['借记卡'].toFixed(2)}\n`;
     result += `══════════════`;
-    
     modal.remove();
     window.showExportModal(result);
   };
@@ -2706,6 +2729,23 @@ function createPayBtn(icon, text) {
       </div>
     </div>
   `;
+}
+
+function getPayTypeStats(list) {
+  const stats = {
+    现金: 0,
+    TNG: 0,
+    信用卡: 0,
+    借记卡: 0,
+  };
+
+  list.forEach(e => {
+    const type = e.payType || '现金';
+    if (!stats[type]) stats[type] = 0;
+    stats[type] += Number(e.amount || 0);
+  });
+
+  return stats;
 }
 
   function editEntry(id) {
