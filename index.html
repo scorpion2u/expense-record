@@ -2015,11 +2015,11 @@ sortedDates.forEach(date => {
 // ===== 总结 =====
 const totalBalance = totalIncome - totalExpense;
 
-result += `\n══════════════\n`;
+result += `\n═══════════\n`;
 result += `总支出:  RM${totalExpense.toFixed(2)}\n`;
 result += `总收入:  RM${totalIncome.toFixed(2)}\n`;
 result += `总结余: ${totalBalance >= 0 ? '+' : '-'}RM${Math.abs(totalBalance).toFixed(2)}\n`;
-result += `══════════════\n`;
+result += `═══════════\n`;
 
 
 // ===== 支付方式统计 =====
@@ -2030,7 +2030,7 @@ result += `TNG: RM${stats['TNG'].toFixed(2)}\n`;
 result += `现金: RM${stats['现金'].toFixed(2)}\n`;
 result += `信用卡: RM${stats['信用卡'].toFixed(2)}\n`;
 result += `借记卡: RM${stats['借记卡'].toFixed(2)}\n`;
-    result += `══════════════`;
+    result += `═══════════`;
     modal.remove();
     window.showExportModal(result);
   };
