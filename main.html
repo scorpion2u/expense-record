@@ -2017,8 +2017,8 @@ result += `══════════════\n`;
 const stats = getPayTypeStats(entriesToExport);
 
 result += `--支付方式统计--\n`;
-result += `现金: RM${stats['现金'].toFixed(2)}\n`;
 result += `TNG: RM${stats['TNG'].toFixed(2)}\n`;
+result += `现金: RM${stats['现金'].toFixed(2)}\n`;
 result += `信用卡: RM${stats['信用卡'].toFixed(2)}\n`;
 result += `借记卡: RM${stats['借记卡'].toFixed(2)}\n`;
     result += `══════════════`;
@@ -2629,7 +2629,7 @@ a.click();
     amount,
     note: category,
     type: currentType,
-    payType: payType || '现金' // 默认现金
+    payType: payType || 'TNG' // 默认TNG
   };
 }
   
@@ -2678,8 +2678,8 @@ function choosePayType(callback) {
   const html = `
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
       
-      ${createPayBtn('💵','现金')}
-      ${createPayBtn('📱','TNG')}
+      ${createPayBtn('💵','TNG')}
+      ${createPayBtn('📱','现金')}
       ${createPayBtn('💳','信用卡')}
       ${createPayBtn('🏧','借记卡')}
 
@@ -2733,14 +2733,14 @@ function createPayBtn(icon, text) {
 
 function getPayTypeStats(list) {
   const stats = {
-    现金: 0,
     TNG: 0,
+    现金: 0,
     信用卡: 0,
     借记卡: 0,
   };
 
   list.forEach(e => {
-    const type = e.payType || '现金';
+    const type = e.payType || 'TNG';
     if (!stats[type]) stats[type] = 0;
     stats[type] += Number(e.amount || 0);
   });
