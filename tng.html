@@ -3119,7 +3119,7 @@ document.getElementById('exportNoteBtn').onclick = () => {
     document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
     document.getElementById('exportMenuItem').onclick = () => { showExportDialog(); closeMenu(); };
     document.getElementById('importMenuItem').onclick = () => { showImportDialog(); closeMenu(); };
-    document.getElementById('creditMenuItem1').onclick = () => { closeMenu(); window.location.href = 'main.html'; };
+    document.getElementById('creditMenuItem1').onclick = () => { closeMenu(); window.location.href = 'index.html'; };
     document.getElementById('creditMenuItem2').onclick = () => { closeMenu(); window.location.href = 'credit.html'; };
     document.querySelectorAll('.type-option').forEach(opt => { opt.onclick = () => { document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active')); opt.classList.add('active'); currentType = opt.dataset.type; renderCategoryDropdown(); updateInputColor(); }; });
     // 统计卡片点击
