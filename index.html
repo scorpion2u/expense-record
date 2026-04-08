@@ -2913,7 +2913,17 @@ ${monthEntries.length > 0
       for (let e of results) {
         let sign = e.type === 'expense' ? '-' : '+';
         let color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-        html += `<div class="search-result-item" data-id="${e.id}" style="display:flex;justify-content:space-between;align-items:center;padding:10px;border-bottom:1px solid #e2e8f0;"><div><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${e.date} ${e.time}</div></div><div style="color:${color};font-weight:600;">${sign}RM${e.amount.toFixed(2)}</div></div>`;
+        html += `<div class="search-result-item" data-id="${e.id}">
+  <div>
+    <div>${escapeHtml(e.note)}</div>
+    <div style="font-size:0.6rem;color:#94a3b8;">
+      ${e.date} ${e.time} · ${e.payType || 'TNG'}
+    </div>
+  </div>
+  <div style="color:${color};font-weight:600;">
+    ${sign}RM${e.amount.toFixed(2)}
+  </div>
+</div>`;
       }
       resultsDiv.innerHTML = html;
       bindSearchResultClick(resultsDiv, modal);
@@ -2977,7 +2987,7 @@ ${monthEntries.length > 0
   <div>
     <div>${escapeHtml(e.note)}</div>
     <div style="font-size:0.6rem;color:#94a3b8;">
-      ${e.date} ${e.time} · ${e.payType || ''}
+      ${e.date} ${e.time} · ${e.payType || 'TNG'}
     </div>
   </div>
   <div style="color:${color};font-weight:600;">
