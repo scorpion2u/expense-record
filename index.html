@@ -2653,6 +2653,9 @@ a.click();
   let category = getCategory();
 
   isAdding = true;
+  
+  document.getElementById('amountInput').blur();
+document.getElementById('categoryInput').blur();
 
   // 👇 这里插入支付方式选择
   choosePayType((payType) => {
