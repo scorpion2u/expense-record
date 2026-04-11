@@ -2449,7 +2449,7 @@ function showPaxSelectionModal(amount, category) {
             grouped[date].push(item);
           });
 
-          const sortedDates = Object.keys(grouped).sort((a, b) => new Date(b) - new Date(a));
+          const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
           let result = '';
           let totalExpense = 0;
           let totalIncome = 0;
