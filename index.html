@@ -2391,7 +2391,7 @@ function showPaxSelectionModal(amount, category) {
       }
 
       // ==================== 导出笔记功能 ====================
-      function exportNote() {
+            function exportNote() {
         const allEntries = entries;
         if (!allEntries || allEntries.length === 0) {
           showToast('📭 没有记录可以导出');
@@ -2449,7 +2449,9 @@ function showPaxSelectionModal(amount, category) {
             grouped[date].push(item);
           });
 
+          // 【修改1】日期从旧到新排序（升序）
           const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
+          
           let result = '';
           let totalExpense = 0;
           let totalIncome = 0;
@@ -2469,7 +2471,10 @@ function showPaxSelectionModal(amount, category) {
             const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
             result += `\n${formattedDate}\n`;
 
-            grouped[date].forEach((item, index) => {
+            // 【修改2】同一天内的记录按时间从早到晚排序（升序）
+            const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            
+            sortedDayEntries.forEach((item, index) => {
               const amount = Number(item.amount || 0).toFixed(2);
               const note = item.note || '';
               const typeSymbol = item.type === 'income' ? '+' : '-';
@@ -3298,7 +3303,7 @@ function showPaxSelectionModal(amount, category) {
         };
       }
 
-      function showExportDialog() {
+            function showExportDialog() {
         const currentMonthStr = selectedDate.slice(0, 7);
         const currentYearStr = selectedDate.slice(0, 4);
 
@@ -3335,6 +3340,14 @@ function showPaxSelectionModal(amount, category) {
 
         modal.querySelector('#confirmExport').onclick = () => {
           let filteredEntries = [...entries];
+          
+          // 【修改3】先按日期从旧到新排序，同一天按时间从早到晚排序
+          filteredEntries.sort((a, b) => {
+            const dateCompare = a.date.localeCompare(b.date);
+            if (dateCompare !== 0) return dateCompare;
+            return (a.time || '').localeCompare(b.time || '');
+          });
+          
           const range = rangeSelect.value;
           if (range === 'current_month') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
           else if (range === 'current_year') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
