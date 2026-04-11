@@ -1198,6 +1198,123 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+    
+    /* 份数选择弹窗样式 */
+.pax-modal-content {
+  max-width: 320px;
+}
+
+.pax-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.pax-option {
+  width: 70px;
+  height: 70px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 2px solid transparent;
+}
+
+.pax-option:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.pax-option.selected {
+  border-color: var(--expense-color);
+  background: rgba(194, 65, 58, 0.1);
+}
+
+.pax-number {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pax-label {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.pax-option.selected .pax-number {
+  color: var(--expense-color);
+}
+
+.pax-option.selected .pax-label {
+  color: var(--expense-color);
+}
+
+body.dark-mode .pax-option {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .pax-option:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .pax-option.selected {
+  background: rgba(194, 65, 58, 0.2);
+}
+
+body.dark-mode .pax-number {
+  color: #e2e8f0;
+}
+
+body.dark-mode .pax-label {
+  color: #94a3b8;
+}
+
+.pax-confirm-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 32px;
+  background: var(--expense-color);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: all 0.15s ease;
+}
+
+.pax-confirm-btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
+}
+
+.pax-skip-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 32px;
+  background: transparent;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pax-skip-btn:active {
+  opacity: 0.7;
+}
+
+body.dark-mode .pax-skip-btn {
+  color: #94a3b8;
+}
   </style>
 </head>
 <body>
@@ -1311,8 +1428,8 @@
         },
         PAYMENT_TYPES: ['TNG', '现金', '信用卡', '借记卡'],
         DEFAULT_CATS: {
-          EXPENSE: ['早餐 ~ 一人份', '早餐 ~ 两人份', '午餐 ~ 一人份', '午餐 ~ 两人份', '晚餐 ~ 一人份', '晚餐 ~ 两人份', '购物', '打油', '娱乐', '居家'],
-          INCOME: ['工资', '兼职', '理财', '红包', '其他']
+          EXPENSE: ['早餐', '午餐', '晚餐', '打油', '购物', '娱乐', '居家'],
+          INCOME: ['薪水', '银行', 'TNG', '借记卡', '信用卡']
         },
         DELETE_CONFIRM_WORD: 'DELETE',
         MAX_ENTRIES: 5000,
@@ -1986,46 +2103,183 @@
           };
         });
       }
+      
+      // 份数选择弹窗
+function showPaxSelectionModal(amount, category) {
+  const modalHtml = `
+    <div class="pax-options">
+      ${[1, 2, 3, 4, 5].map(pax => `
+        <div class="pax-option" data-pax="${pax}">
+          <span class="pax-number">${pax}</span>
+          <span class="pax-label">人份</span>
+        </div>
+      `).join('')}
+    </div>
+    <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>确定 · 1 人份</button>
+    <button class="pax-skip-btn" id="paxSkipBtn">跳过，不记录份数</button>
+  `;
+  
+  const modal = modalManager.create(
+    `🍽️ 选择份数 · ${category}`,
+    modalHtml
+  );
+  
+  if (!modal) return;
+  
+  // 添加份数弹窗专属样式类
+  modal.querySelector('.modal-content').classList.add('pax-modal-content');
+  
+  let selectedPax = 1;
+  const paxOptions = modal.querySelectorAll('.pax-option');
+  const confirmBtn = modal.querySelector('#paxConfirmBtn');
+  
+  // 默认选中1人份
+  paxOptions[0].classList.add('selected');
+  
+  paxOptions.forEach(option => {
+    option.onclick = () => {
+      paxOptions.forEach(o => o.classList.remove('selected'));
+      option.classList.add('selected');
+      selectedPax = parseInt(option.dataset.pax);
+      confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
+      confirmBtn.disabled = false;
+    };
+  });
+  
+  confirmBtn.onclick = () => {
+    modalManager.close(modal);
+    
+    isAdding = true;
+    document.getElementById('amountInput').blur();
+    document.getElementById('categoryInput').blur();
+    
+    choosePayType((payType) => {
+      // 创建带份数的记录
+      const entry = createNewEntry(amount, category, payType);
+      // 在备注中添加份数信息
+      entry.note = `${category} (${selectedPax}人份)`;
+      
+      entries.push(entry);
+      addToCache(entry);
+      
+      if (entries.length > CONSTANTS.MAX_ENTRIES) {
+        entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        entries.shift();
+        rebuildStatsCache();
+      }
+      
+      saveDebounced();
+      
+      document.getElementById('amountInput').value = '';
+      document.getElementById('categoryInput').value = '';
+      
+      updateSingleDay(entry.date);
+      renderEntries();
+      
+      showToast(`已记账 · ${category} ${selectedPax}人份 (${payType})`);
+      
+      setTimeout(() => { isAdding = false; }, 300);
+    });
+  };
+  
+  modal.querySelector('#paxSkipBtn').onclick = () => {
+    modalManager.close(modal);
+    
+    isAdding = true;
+    document.getElementById('amountInput').blur();
+    document.getElementById('categoryInput').blur();
+    
+    choosePayType((payType) => {
+      const entry = createNewEntry(amount, category, payType);
+      
+      entries.push(entry);
+      addToCache(entry);
+      
+      if (entries.length > CONSTANTS.MAX_ENTRIES) {
+        entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        entries.shift();
+        rebuildStatsCache();
+      }
+      
+      saveDebounced();
+      
+      document.getElementById('amountInput').value = '';
+      document.getElementById('categoryInput').value = '';
+      
+      updateSingleDay(entry.date);
+      renderEntries();
+      
+      showToast(`已记账 · ${category} (${payType})`);
+      
+      setTimeout(() => { isAdding = false; }, 300);
+    });
+  };
+  
+  // 键盘支持
+  modal.addEventListener('keydown', (e) => {
+    if (e.key >= '1' && e.key <= '5') {
+      const pax = parseInt(e.key);
+      paxOptions.forEach(o => o.classList.remove('selected'));
+      paxOptions[pax - 1].classList.add('selected');
+      selectedPax = pax;
+      confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
+      confirmBtn.disabled = false;
+    } else if (e.key === 'Enter' && !confirmBtn.disabled) {
+      confirmBtn.click();
+    } else if (e.key === 'Escape') {
+      modalManager.close(modal);
+    }
+  });
+}
 
       function addRecord() {
-        if (isAdding) return false;
+  if (isAdding) return false;
 
-        const amount = getValidAmount();
-        if (amount === null) return false;
+  const amount = getValidAmount();
+  if (amount === null) return false;
 
-        const category = getCategory();
-        isAdding = true;
+  const category = getCategory();
+  
+  // 检查是否是餐饮分类（早餐、午餐、晚餐）
+  const mealCategories = ['早餐', '午餐', '晚餐'];
+  if (currentType === 'expense' && mealCategories.includes(category)) {
+    // 显示份数选择弹窗
+    showPaxSelectionModal(amount, category);
+    return true;
+  }
+  
+  isAdding = true;
 
-        document.getElementById('amountInput').blur();
-        document.getElementById('categoryInput').blur();
+  document.getElementById('amountInput').blur();
+  document.getElementById('categoryInput').blur();
 
-        choosePayType((payType) => {
-          const entry = createNewEntry(amount, category, payType);
+  choosePayType((payType) => {
+    const entry = createNewEntry(amount, category, payType);
 
-          entries.push(entry);
-          addToCache(entry);
+    entries.push(entry);
+    addToCache(entry);
 
-          if (entries.length > CONSTANTS.MAX_ENTRIES) {
-            entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            entries.shift();
-            rebuildStatsCache();
-          }
+    if (entries.length > CONSTANTS.MAX_ENTRIES) {
+      entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+      entries.shift();
+      rebuildStatsCache();
+    }
 
-          saveDebounced();
+    saveDebounced();
 
-          document.getElementById('amountInput').value = '';
-          document.getElementById('categoryInput').value = '';
+    document.getElementById('amountInput').value = '';
+    document.getElementById('categoryInput').value = '';
 
-          updateSingleDay(entry.date);
-          renderEntries();
+    updateSingleDay(entry.date);
+    renderEntries();
 
-          showToast(`已记账（${payType}）`);
+    showToast(`已记账（${payType}）`);
 
-          setTimeout(() => { isAdding = false; }, 300);
-        });
+    setTimeout(() => { isAdding = false; }, 300);
+  });
 
-        return true;
-      }
+  return true;
+}
 
       function editEntry(id) {
         const entry = entries.find(e => String(e.id) === String(id));
@@ -2741,15 +2995,22 @@
         // 分类输入
         const categoryInput = document.getElementById('categoryInput');
         categoryInput.addEventListener('keypress', (e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            const category = categoryInput.value.trim();
-            const amount = parseFloat(amountInput.value);
-            if (!category) { showToast('请输入分类'); return; }
-            if (amount && amount > 0) addRecord();
-            else { amountInput.focus(); showToast('请输入金额'); }
-          }
-        });
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const category = categoryInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+    if (!category) { 
+      showToast('请输入分类'); 
+      return; 
+    }
+    if (amount && amount > 0) {
+      addRecord();
+    } else { 
+      amountInput.focus(); 
+      showToast('请输入金额'); 
+    }
+  }
+});
 
         // 日历点击
         document.getElementById('calendarGrid').addEventListener('click', (e) => {
@@ -2834,16 +3095,25 @@
         };
 
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
-          const item = e.target.closest('.category-item');
-          if (!item) return;
-          e.stopPropagation();
-          const selectedCat = item.getAttribute('data-cat') || item.innerText;
-          categoryInput.value = selectedCat;
-          closeCategoryDropdown();
-          const amount = parseFloat(amountInput.value);
-          if (amount && amount > 0) addRecord();
-          else { amountInput.focus(); showToast('请输入金额'); }
-        });
+  const item = e.target.closest('.category-item');
+  if (!item) return;
+  e.stopPropagation();
+  const selectedCat = item.getAttribute('data-cat') || item.innerText;
+  categoryInput.value = selectedCat;
+  closeCategoryDropdown();
+  
+  // 检查是否是餐饮分类，如果是则等待用户按回车或手动触发
+  const mealCategories = ['早餐', '午餐', '晚餐'];
+  const amount = parseFloat(amountInput.value);
+  
+  if (amount && amount > 0) {
+    // 如果是餐饮分类，addRecord 会自动弹出份数选择
+    addRecord();
+  } else {
+    amountInput.focus();
+    showToast('请输入金额');
+  }
+});
 
         // 记录列表操作
         document.getElementById('entriesList').addEventListener('click', (e) => {
