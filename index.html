@@ -2135,6 +2135,7 @@ function showPaxSelectionModal(amount, category) {
   
   // 默认选中1人份
   paxOptions[0].classList.add('selected');
+  confirmBtn.disabled = false;
   
   paxOptions.forEach(option => {
     option.onclick = () => {
