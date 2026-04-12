@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-<link rel="manifest" href="/expense-record/manifest.json">
-<meta name="theme-color" content="#c2413a">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="记账本">
-<link rel="apple-touch-icon" href="/expense-record/icon-192.png">
+  <link rel="manifest" href="/expense-record/manifest.json">
+  <meta name="theme-color" content="#c2413a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="记账本">
+  <link rel="apple-touch-icon" href="/expense-record/icon-192.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>收支记账本</title>
@@ -17,7 +17,6 @@
       padding: 0;
       -webkit-tap-highlight-color: transparent;
     }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       padding: 10px 10px;
@@ -25,7 +24,6 @@
       justify-content: center;
       transition: background 0.2s ease, color 0.2s ease;
     }
-
     :root {
       --card-radius: 24px;
       --card-padding: 16px;
@@ -38,18 +36,15 @@
       --bg-color: #f1f5f9;
       --card-bg: #ffffff;
     }
-
     body {
       font-size: var(--font-size-base);
       background: var(--bg-color);
     }
-
     .container {
       max-width: 500px;
       width: 100%;
       margin: 0 auto;
     }
-
     body,
     .stat-card,
     .input-card,
@@ -61,13 +56,11 @@
     .calendar-day {
       transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
     }
-
     .stats-row {
       display: flex;
       gap: var(--spacing-gap);
       margin-bottom: calc(var(--spacing-gap) + 2px);
     }
-
     .stat-card {
       flex: 1;
       background: var(--card-bg);
@@ -78,7 +71,6 @@
       border: 1px solid rgba(0, 0, 0, 0.05);
       cursor: pointer;
     }
-
     .stat-label {
       font-size: calc(var(--font-size-base) * 0.65);
       font-weight: 500;
@@ -89,30 +81,24 @@
       gap: 3px;
       margin-bottom: 4px;
     }
-
     .stat-number {
       font-size: calc(var(--font-size-base) * 1.1);
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
-
     .stat-card.income .stat-number {
       color: var(--income-color);
     }
-
     .stat-card.expense .stat-number {
       color: var(--expense-color);
     }
-
     .stat-card.balance .stat-number.positive {
       color: var(--income-color);
     }
-
     .stat-card.balance .stat-number.negative {
       color: var(--expense-color);
     }
-
     .date-header,
     .input-card,
     .calendar-card,
@@ -122,20 +108,17 @@
       border: 1px solid rgba(0, 0, 0, 0.05);
       margin-bottom: var(--spacing-gap);
     }
-
     .date-header {
       padding: calc(var(--card-padding) - 2px) var(--card-padding);
       cursor: pointer;
       user-select: none;
     }
-
     .calendar-nav {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       margin-bottom: 6px;
     }
-
     .nav-btn {
       background: rgba(0, 0, 0, 0.05);
       border: none;
@@ -147,18 +130,15 @@
       color: #334155;
       transition: transform 0.1s ease;
     }
-
     .nav-btn:active {
       background: rgba(0, 0, 0, 0.1);
       transform: scale(0.96);
     }
-
     #currentYearMonthDay {
       font-weight: 600;
       font-size: calc(var(--font-size-base) * 1);
       color: #0f172a;
     }
-
     .selected-row {
       display: flex;
       justify-content: space-between;
@@ -167,7 +147,6 @@
       flex-wrap: wrap;
       gap: 6px;
     }
-
     .selected-label {
       font-size: calc(var(--font-size-base) * 0.75);
       color: #475569;
@@ -175,31 +154,25 @@
       padding: 3px 10px;
       border-radius: 24px;
     }
-
     .selected-amount {
       font-size: calc(var(--font-size-base) * 1.2);
       font-weight: 700;
     }
-
     .selected-amount.positive {
       color: var(--income-color);
     }
-
     .selected-amount.negative {
       color: var(--expense-color);
     }
-
     .input-card {
       padding: var(--card-padding);
     }
-
     .input-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: calc(var(--card-padding) - 4px);
     }
-
     .type-switch {
       display: flex;
       background: rgba(0, 0, 0, 0.05);
@@ -207,7 +180,6 @@
       padding: 2px;
       gap: 3px;
     }
-
     .type-option {
       padding: 5px 14px;
       border-radius: 28px;
@@ -217,21 +189,17 @@
       color: #5b6e8c;
       transition: all 0.2s;
     }
-
     .type-option.expense.active {
       background: var(--card-bg);
       color: var(--expense-color);
     }
-
     .type-option.income.active {
       background: var(--card-bg);
       color: var(--income-color);
     }
-
     .menu-container {
       position: relative;
     }
-
     .menu-button {
       width: 44px;
       height: 44px;
@@ -244,13 +212,11 @@
       font-size: 1.2rem;
       cursor: pointer;
       transition: transform 0.1s,background 0.1s;
-      }
-
+    }
     .menu-button:active {
       transform: scale(0.95);
       background: rgba(0, 0, 0, 0.06);
-      }
-
+    }
     .menu-dropdown {
       position: absolute;
       top: 48px;
@@ -265,11 +231,9 @@
       max-height: 400px;
       overflow-y: auto;
     }
-
     .menu-dropdown.show {
       display: block;
     }
-
     .menu-item {
       padding: 12px 14px;
       font-size: calc(var(--font-size-base) * 0.85);
@@ -278,17 +242,14 @@
       color: #1e293b;
       transition: background 0.1s;
     }
-
     .menu-item:active {
       background: rgba(0, 0, 0, 0.03);
     }
-
     .input-row {
       display: flex;
       gap: 10px;
       align-items: center;
     }
-
     .amount-box {
       flex: 1;
       background: rgba(0, 0, 0, 0.03);
@@ -298,14 +259,12 @@
       padding: 2px 14px;
       transition: all 0.2s ease;
     }
-
     .amount-box span {
       font-weight: 500;
       margin-right: 4px;
       font-size: calc(var(--font-size-base) * 0.85);
       transition: color 0.2s ease;
     }
-
     .amount-box input {
       flex: 1;
       border: none;
@@ -316,21 +275,17 @@
       width: 100%;
       color: #1e293b;
     }
-
     .amount-box input::placeholder {
       color: #9ca3af;
     }
-
     .amount-box:focus-within {
       box-shadow: 0 0 0 2px var(--focus-color);
       background: rgba(0, 0, 0, 0.05);
     }
-
     .category-wrapper:focus-within {
       box-shadow: 0 0 0 2px var(--focus-color);
       background: rgba(0, 0, 0, 0.05);
     }
-
     .category-wrapper {
       flex: 1;
       position: relative;
@@ -342,7 +297,6 @@
       gap: 4px;
       transition: all 0.2s ease;
     }
-
     #categoryInput {
       flex: 1;
       border: none;
@@ -354,11 +308,9 @@
       color: #1e293b;
       cursor: pointer;
     }
-
     #categoryInput::placeholder {
       color: #9ca3af;
     }
-
     .dropdown-btn {
       background: transparent;
       border: none;
@@ -367,7 +319,6 @@
       cursor: pointer;
       padding: 0 2px;
     }
-
     .category-dropdown {
       position: absolute;
       top: calc(100% + 5px);
@@ -382,11 +333,9 @@
       overflow-y: auto;
       border: 1px solid rgba(0, 0, 0, 0.1);
     }
-
     .category-dropdown.show {
       display: block;
     }
-
     .category-item {
       padding: 12px 14px;
       cursor: pointer;
@@ -394,19 +343,15 @@
       font-size: calc(var(--font-size-base) * 0.85);
       transition: background 0.1s;
     }
-
     .category-item:last-child {
       border-bottom: none;
     }
-
     .category-item:active {
       background: rgba(0, 0, 0, 0.05);
     }
-
     .calendar-card {
       padding: calc(var(--card-padding) - 2px) calc(var(--card-padding) - 2px) calc(var(--card-padding) - 4px);
     }
-
     .weekdays {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
@@ -416,17 +361,14 @@
       font-weight: 500;
       color: #6c7a8e;
     }
-
     .weekdays span:last-child {
       color: var(--expense-color);
     }
-
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 3px;
     }
-
     .calendar-day {
       min-height: 50px;
       display: flex;
@@ -441,28 +383,23 @@
       transition: all 0.1s ease;
       padding: 4px 0;
     }
-
     .calendar-day:active {
       transform: scale(0.96);
     }
-
     .calendar-day.other-month {
       opacity: 0.4;
     }
-
     .calendar-day.today {
       background: rgba(194, 65, 58, 0.1);
       border-color: var(--expense-color);
       animation: breath 2s ease-in-out infinite;
     }
-
     .calendar-day.selected:not(.today) {
       border: 2px solid #3b82f6;
       background: rgba(59, 130, 246, 0.1);
       box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
       animation: none;
     }
-
     @keyframes breath {
       0% {
         border-color: var(--expense-color);
@@ -480,41 +417,34 @@
         box-shadow: 0 0 0px 0px rgba(194, 65, 58, 0.2);
       }
     }
-
     .day-number {
       font-weight: 500;
     }
-
     .day-expense {
       font-size: calc(var(--font-size-base) * 0.5);
       color: var(--expense-color);
       margin-top: 1px;
     }
-
     .day-income {
       font-size: calc(var(--font-size-base) * 0.5);
       color: var(--income-color);
       margin-top: 1px;
     }
-
     .list-card {
       padding: calc(var(--card-padding) - 2px) var(--card-padding);
       margin-bottom: 8px;
     }
-
     .entries-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
     }
-
     .entries-header h4 {
       font-size: calc(var(--font-size-base) * 0.9);
       font-weight: 600;
       color: #1e293b;
     }
-
     .view-more-btn {
       background: none;
       border: none;
@@ -524,15 +454,12 @@
       padding: 8px 12px;
       transition: opacity 0.2s;
     }
-
     .view-more-btn:active {
       opacity: 0.6;
     }
-
     .entries-list {
       list-style: none;
     }
-
     .entries-list li {
       background: rgba(0, 0, 0, 0.02);
       border-radius: 16px;
@@ -544,46 +471,37 @@
       border: 1px solid rgba(0, 0, 0, 0.05);
       transition: all 0.1s;
     }
-
     .entries-list li:active {
       transform: scale(0.98);
     }
-
     .entry-info {
       flex: 1;
     }
-
     .entry-note {
       font-weight: 500;
       font-size: calc(var(--font-size-base) * 0.85);
       color: #1e293b;
     }
-
     .entry-time {
       font-size: calc(var(--font-size-base) * 0.6);
       color: #8b9ab0;
       margin-top: 2px;
     }
-
     .entry-actions {
       display: flex;
       gap: 12px;
       align-items: center;
     }
-
     .entry-amount {
       font-weight: 700;
       font-size: calc(var(--font-size-base) * 0.85);
     }
-
     .entry-amount.expense {
       color: var(--expense-color);
     }
-
     .entry-amount.income {
       color: var(--income-color);
     }
-
     .edit-btn,
     .delete-btn {
       cursor: pointer;
@@ -592,20 +510,17 @@
       transition: opacity 0.1s;
       padding: 4px;
     }
-
     .edit-btn:active,
     .delete-btn:active {
       opacity: 1;
       transform: scale(0.95);
     }
-
     .empty-state {
       text-align: center;
       color: #a0b3cc;
       padding: 20px;
       font-size: calc(var(--font-size-base) * 0.8);
     }
-
     .toast-container {
       position: fixed;
       bottom: 20px;
@@ -614,7 +529,6 @@
       z-index: 1100;
       pointer-events: none;
     }
-
     .toast {
       background: #1e293b;
       color: white;
@@ -624,7 +538,6 @@
       animation: fadeInOut 2s ease;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-
     @keyframes fadeInOut {
       0% {
         opacity: 0;
@@ -643,7 +556,6 @@
         transform: translateY(-10px);
       }
     }
-
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -657,7 +569,6 @@
       z-index: 1000;
       animation: fadeIn 0.2s ease;
     }
-
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -666,7 +577,6 @@
         opacity: 1;
       }
     }
-
     .modal-content {
       background: white;
       border-radius: 28px;
@@ -679,7 +589,6 @@
       animation: slideUp 0.2s ease;
       box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
@@ -687,13 +596,11 @@
       padding: 16px 20px;
       border-bottom: 1px solid #e2e8f0;
     }
-
     .modal-title {
       font-size: 1.2rem;
       font-weight: 600;
       margin: 0;
     }
-
     .modal-close {
       background: none;
       border: none;
@@ -703,22 +610,18 @@
       border-radius: 20px;
       color: #64748b;
     }
-
     .modal-close:hover {
       background: #f1f5f9;
     }
-
     .modal-body {
       flex: 1;
       overflow-y: auto;
       padding: 16px 20px;
     }
-
     .modal-footer {
       padding: 12px 20px;
       border-top: 1px solid #e2e8f0;
     }
-
     @keyframes slideUp {
       from {
         opacity: 0;
@@ -729,29 +632,24 @@
         transform: translateY(0);
       }
     }
-
     .settings-item {
       margin-bottom: 20px;
       border-bottom: 1px solid #f0f0f0;
       padding-bottom: 16px;
     }
-
     .settings-item:last-child {
       border-bottom: none;
     }
-
     .settings-label {
-  font-size: calc(var(--font-size-base) * 0.75);
-  font-weight: 500;
-  color: #64748b;
-}
-
-.settings-value {
-  font-size: calc(var(--font-size-base) * 0.7);
-  color: #94a3b8;
-  margin-top: 4px;
-}
-
+      font-size: calc(var(--font-size-base) * 0.75);
+      font-weight: 500;
+      color: #64748b;
+    }
+    .settings-value {
+      font-size: calc(var(--font-size-base) * 0.7);
+      color: #94a3b8;
+      margin-top: 4px;
+    }
     .reset-btn {
       background: #f1f5f9;
       border: none;
@@ -764,7 +662,6 @@
       color: #c2413a;
       transition: all 0.1s;
     }
-
     .close-btn {
       width: 100%;
       background: #f1f5f9;
@@ -775,17 +672,14 @@
       font-size: 0.85rem;
       transition: all 0.1s;
     }
-
     .close-btn:active,
     .reset-btn:active {
       background: #e2e8f0;
       transform: scale(0.98);
     }
-
     .hsl-group {
       margin-top: 8px;
     }
-
     .hsl-row {
       display: flex;
       align-items: center;
@@ -793,14 +687,12 @@
       width: 100%;
       margin-top: 6px;
     }
-
     .hsl-sub-label {
       width: 42px;
       font-size: 0.7rem;
       color: #6c7a8e;
       flex-shrink: 0;
     }
-
     .color-preview-block {
       width: 42px;
       height: 36px;
@@ -808,7 +700,6 @@
       border: 1px solid #ddd;
       flex-shrink: 0;
     }
-
     .hsl-row input[type="range"],
     .settings-item input[type="range"] {
       flex: 1 1 auto;
@@ -821,7 +712,6 @@
       background: linear-gradient(to right, #e5e7eb, #cbd5e1);
       outline: none;
     }
-
     .hsl-row input[type="range"]::-webkit-slider-thumb,
     .settings-item input[type="range"]::-webkit-slider-thumb {
       appearance: none;
@@ -833,12 +723,10 @@
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     }
-
     .hsl-row input[type="range"]:active::-webkit-slider-thumb,
     .settings-item input[type="range"]:active::-webkit-slider-thumb {
       transform: scale(1.1);
     }
-
     .edit-cat-btn,
     .delete-cat-btn {
       border: none;
@@ -847,23 +735,19 @@
       font-size: 0.75rem;
       font-weight: 500;
     }
-
     .edit-cat-btn {
       background: rgba(59, 130, 246, 0.1);
       color: #3b82f6;
     }
-
     .delete-cat-btn {
       background: rgba(239, 68, 68, 0.1);
       color: #ef4444;
     }
-
     .add-cat-input {
       display: flex;
       gap: 8px;
       margin-top: 14px;
     }
-
     .add-cat-input input {
       flex: 1;
       padding: 8px;
@@ -872,7 +756,6 @@
       outline: none;
       font-size: 0.85rem;
     }
-
     .add-cat-input button {
       background: var(--income-color);
       color: white;
@@ -882,7 +765,6 @@
       cursor: pointer;
       font-size: 0.8rem;
     }
-
     .search-result-item {
       padding: 10px;
       border-bottom: 1px solid #e2e8f0;
@@ -890,7 +772,6 @@
       cursor: pointer;
       justify-content: space-between;
     }
-
     .pay-card {
       display: flex;
       align-items: center;
@@ -902,12 +783,10 @@
       transition: all 0.15s;
       border: 1px solid rgba(0, 0, 0, 0.05);
     }
-
     .pay-card:active {
       background: rgba(0, 0, 0, 0.08);
       transform: scale(0.98);
     }
-
     @media (max-width: 380px) {
       .calendar-day {
         min-height: 40px;
@@ -918,13 +797,11 @@
         font-size: calc(var(--font-size-base) * 0.45);
       }
     }
-
     /* 深色模式样式 */
     body.dark-mode {
       --bg-color: #0f172a;
       --card-bg: #1e293b;
     }
-
     body.dark-mode .stat-card,
     body.dark-mode .input-card,
     body.dark-mode .calendar-card,
@@ -933,165 +810,129 @@
       border-color: rgba(255, 255, 255, 0.15);
       background: var(--card-bg);
     }
-
     body.dark-mode .stat-label {
       color: #94a3b8;
     }
-
     body.dark-mode .stat-number {
       color: #f1f5f9;
     }
-
     body.dark-mode .stat-card.income .stat-number {
       color: var(--income-color);
     }
-
     body.dark-mode .stat-card.expense .stat-number {
       color: var(--expense-color);
     }
-
     body.dark-mode .selected-label {
       background: rgba(255, 255, 255, 0.15);
       color: #cbd5e1;
     }
-
     body.dark-mode .entries-header h4 {
       color: #f1f5f9;
     }
-
     body.dark-mode .entries-list li {
       background: rgba(255, 255, 255, 0.08);
       border-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .entry-note {
       color: #f1f5f9;
     }
-
     body.dark-mode .entry-time {
       color: #94a3b8;
     }
-
     body.dark-mode .amount-box,
     body.dark-mode .category-wrapper {
       background: rgba(255, 255, 255, 0.08);
     }
-
     body.dark-mode .amount-box input,
     body.dark-mode #categoryInput {
       color: #f1f5f9;
     }
-
     body.dark-mode .category-dropdown {
       background: #1e293b;
       border-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .category-item {
       color: #e2e8f0;
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .menu-button {
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.15);
-    color: #e2e8f0;
+      color: #e2e8f0;
     }
-    
     body.dark-mode .menu-button:active {
-    background: rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.12);
     }
-
     body.dark-mode .menu-dropdown {
       background: #1e293b;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .menu-item {
       color: #e2e8f0 !important;
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .nav-btn {
       background: rgba(255, 255, 255, 0.12);
       color: #e2e8f0;
     }
-
     body.dark-mode .type-switch {
       background: rgba(255, 255, 255, 0.12);
     }
-
     body.dark-mode .type-option {
       color: #94a3b8;
     }
-
     body.dark-mode .weekdays {
       color: #94a3b8;
     }
-
     body.dark-mode #currentYearMonthDay {
       color: #f1f5f9;
     }
-
     body.dark-mode .calendar-day {
       background: rgba(255, 255, 255, 0.06);
       border-color: rgba(255, 255, 255, 0.1);
       color: #e2e8f0;
     }
-
     body.dark-mode .modal-content {
       background: #1e293b;
       color: #f1f5f9;
     }
-
     body.dark-mode .modal-header {
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .modal-close {
       color: #94a3b8;
     }
-
     body.dark-mode .settings-item {
       border-bottom-color: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .settings-label {
       color: #cbd5e1 !important;
     }
-
     body.dark-mode .reset-btn,
     body.dark-mode .close-btn {
       background: rgba(255, 255, 255, 0.1) !important;
       color: #e2e8f0 !important;
     }
-
     body.dark-mode .hsl-row input[type="range"],
     body.dark-mode .settings-item input[type="range"] {
       background: linear-gradient(to right, #334155, #475569);
     }
-
     body.dark-mode .hsl-row input[type="range"]::-webkit-slider-thumb {
       background: #1e293b;
       border: 2px solid #64748b;
     }
-
     .selected-amount {
       color: #1e293b;
     }
-
     body.dark-mode .selected-amount {
       color: #e2e8f0;
     }
-
     .selected-amount.positive {
       color: var(--income-color) !important;
     }
-
     .selected-amount.negative {
       color: var(--expense-color) !important;
     }
-
     .float-back-top {
       position: fixed;
       bottom: 80px;
@@ -1110,15 +951,12 @@
       font-size: 20px;
       transition: transform 0.2s;
     }
-
     .float-back-top:active {
       transform: scale(0.95);
     }
-
     .float-back-top.show {
       display: flex;
     }
-
     button:focus-visible,
     input:focus-visible,
     select:focus-visible,
@@ -1128,19 +966,16 @@
       position: relative;
       z-index: 1;
     }
-
     button:focus,
     input:focus,
     select:focus {
       outline: none;
     }
-
     .modal-content button:focus-visible,
     .modal-content input:focus-visible {
       outline: 2px solid var(--expense-color);
       outline-offset: 2px;
     }
-
     .category-list-item {
       display: flex;
       justify-content: space-between;
@@ -1152,20 +987,16 @@
       user-select: none;
       transition: background 0.1s ease;
     }
-
     .category-list-item:active {
       cursor: grabbing;
     }
-
     .category-list-item.dragging {
       opacity: 0.5;
       background: rgba(0, 0, 0, 0.05);
     }
-
     .category-list-item.drag-over {
       border-top: 2px solid var(--expense-color);
     }
-
     .drag-handle {
       cursor: grab;
       margin-right: 10px;
@@ -1173,28 +1004,22 @@
       font-size: 1rem;
       user-select: none;
     }
-
     .drag-handle:active {
       cursor: grabbing;
     }
-
     body.dark-mode .category-list-item.dragging {
       background: rgba(255, 255, 255, 0.1);
     }
-
     body.dark-mode .category-list-item.drag-over {
       border-top-color: var(--expense-color);
     }
-
     body.dark-mode .drag-handle {
       color: #64748b;
     }
-
     .highlight-category {
       background-color: #fef3c7 !important;
       transition: background-color 0.3s;
     }
-
     .loading-spinner {
       display: inline-block;
       width: 20px;
@@ -1204,127 +1029,107 @@
       border-top-color: #fff;
       animation: spin 0.8s linear infinite;
     }
-
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    
     /* 份数选择弹窗样式 */
-.pax-modal-content {
-  max-width: 320px;
-}
-
-.pax-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  justify-content: center;
-  padding: 8px 0;
-}
-
-.pax-option {
-  width: 70px;
-  height: 70px;
-  border-radius: 20px;
-  background: rgba(0, 0, 0, 0.04);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  border: 2px solid transparent;
-}
-
-.pax-option:hover {
-  background: rgba(0, 0, 0, 0.08);
-}
-
-.pax-option.selected {
-  border-color: var(--expense-color);
-  background: rgba(194, 65, 58, 0.1);
-}
-
-.pax-number {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.pax-label {
-  font-size: 12px;
-  color: #64748b;
-  margin-top: 2px;
-}
-
-.pax-option.selected .pax-number {
-  color: var(--expense-color);
-}
-
-.pax-option.selected .pax-label {
-  color: var(--expense-color);
-}
-
-body.dark-mode .pax-option {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode .pax-option:hover {
-  background: rgba(255, 255, 255, 0.12);
-}
-
-body.dark-mode .pax-option.selected {
-  background: rgba(194, 65, 58, 0.2);
-}
-
-body.dark-mode .pax-number {
-  color: #e2e8f0;
-}
-
-body.dark-mode .pax-label {
-  color: #94a3b8;
-}
-
-.pax-confirm-btn {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 32px;
-  background: var(--expense-color);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 16px;
-  transition: all 0.15s ease;
-}
-
-.pax-confirm-btn:active {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-.pax-skip-btn {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 32px;
-  background: transparent;
-  color: #64748b;
-  font-size: 14px;
-  cursor: pointer;
-  margin-top: 8px;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.pax-skip-btn:active {
-  opacity: 0.7;
-}
-
-body.dark-mode .pax-skip-btn {
-  color: #94a3b8;
-}
+    .pax-modal-content {
+      max-width: 320px;
+    }
+    .pax-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: center;
+      padding: 8px 0;
+    }
+    .pax-option {
+      width: 70px;
+      height: 70px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 2px solid transparent;
+    }
+    .pax-option:hover {
+      background: rgba(0, 0, 0, 0.08);
+    }
+    .pax-option.selected {
+      border-color: var(--expense-color);
+      background: rgba(194, 65, 58, 0.1);
+    }
+    .pax-number {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+    .pax-label {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+    .pax-option.selected .pax-number {
+      color: var(--expense-color);
+    }
+    .pax-option.selected .pax-label {
+      color: var(--expense-color);
+    }
+    body.dark-mode .pax-option {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    body.dark-mode .pax-option:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+    body.dark-mode .pax-option.selected {
+      background: rgba(194, 65, 58, 0.2);
+    }
+    body.dark-mode .pax-number {
+      color: #e2e8f0;
+    }
+    body.dark-mode .pax-label {
+      color: #94a3b8;
+    }
+    .pax-confirm-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 32px;
+      background: var(--expense-color);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: all 0.15s ease;
+    }
+    .pax-confirm-btn:active {
+      transform: scale(0.98);
+      opacity: 0.9;
+    }
+    .pax-skip-btn {
+      width: 100%;
+      padding: 10px;
+      border: none;
+      border-radius: 32px;
+      background: transparent;
+      color: #64748b;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 8px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .pax-skip-btn:active {
+      opacity: 0.7;
+    }
+    body.dark-mode .pax-skip-btn {
+      color: #94a3b8;
+    }
   </style>
 </head>
 <body>
@@ -1365,7 +1170,7 @@ body.dark-mode .pax-skip-btn {
         <div class="menu-container">
           <button class="menu-button" id="menuButton" aria-label="菜单" aria-expanded="false" aria-haspopup="true">☰</button>
           <div class="menu-dropdown" id="menuDropdown" role="menu">
-          <div class="menu-item" id="installAppBtn" role="menuitem">📱 安装应用</div>
+            <div class="menu-item" id="installAppBtn" role="menuitem">📱 安装应用</div>
             <div class="menu-item" id="settingsMenuItem" role="menuitem">🎨 界面设置</div>
             <div class="menu-item" id="darkModeMenuItem" role="menuitem">🌙 暗色模式</div>
             <div class="menu-item" id="statisticsMenuItem" role="menuitem">📊 月度统计</div>
@@ -1460,6 +1265,7 @@ body.dark-mode .pax-skip-btn {
       let applyTimeout = null;
       let isClearing = false;
       let saveTimer = null;
+      let deferredPrompt = null;
 
       let uiSettings = {
         cardRadius: 24,
@@ -1599,6 +1405,46 @@ body.dark-mode .pax-skip-btn {
       }
 
       const modalManager = new ModalManager();
+
+      // ==================== 检测浏览器类型 ====================
+      function detectBrowser() {
+        const ua = navigator.userAgent;
+        
+        if (/Edg/.test(ua)) return 'edge';
+        if (/Chrome/.test(ua) && /Google Inc/.test(navigator.vendor)) return 'chrome';
+        if (/SamsungBrowser/.test(ua)) return 'samsung';
+        if (/Firefox/.test(ua)) return 'firefox';
+        if (/Safari/.test(ua) && !/Chrome/.test(ua)) return 'safari';
+        if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+        
+        return 'other';
+      }
+
+      // ==================== 检查是否在 PWA 模式 ====================
+      function isRunningAsPWA() {
+        if (window.matchMedia('(display-mode: standalone)').matches) return true;
+        if (window.navigator.standalone === true) return true;
+        if (window.matchMedia('(display-mode: fullscreen)').matches) return true;
+        if (window.matchMedia('(display-mode: minimal-ui)').matches) return true;
+        return false;
+      }
+
+      // ==================== 更新安装菜单文本 ====================
+      function updateInstallMenuText() {
+        const installBtn = document.getElementById('installAppBtn');
+        if (!installBtn) return;
+        
+        if (isRunningAsPWA()) {
+          installBtn.innerHTML = '✅ 已安装应用';
+          installBtn.style.opacity = '0.6';
+        } else if (localStorage.getItem('pwa_installed') === 'true') {
+          installBtn.innerHTML = '📱 已安装（查找应用）';
+          installBtn.style.opacity = '0.8';
+        } else {
+          installBtn.innerHTML = '📲 安装应用';
+          installBtn.style.opacity = '1';
+        }
+      }
 
       // ==================== HSL 颜色转换 ====================
       function hslToHex(h, s, l) {
@@ -2112,184 +1958,177 @@ body.dark-mode .pax-skip-btn {
           };
         });
       }
-      
+
       // 份数选择弹窗
-function showPaxSelectionModal(amount, category) {
-  const modalHtml = `
-    <div class="pax-options">
-      ${[1, 2, 3, 4, 5].map(pax => `
-        <div class="pax-option" data-pax="${pax}">
-          <span class="pax-number">${pax}</span>
-          <span class="pax-label">人份</span>
-        </div>
-      `).join('')}
-    </div>
-    <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>确定 · 1 人份</button>
-    <button class="pax-skip-btn" id="paxSkipBtn">跳过，不记录份数</button>
-  `;
-  
-  const modal = modalManager.create(
-    `🍽️ 选择份数 · ${category}`,
-    modalHtml
-  );
-  
-  if (!modal) return;
-  
-  // 添加份数弹窗专属样式类
-  modal.querySelector('.modal-content').classList.add('pax-modal-content');
-  
-  let selectedPax = 1;
-  const paxOptions = modal.querySelectorAll('.pax-option');
-  const confirmBtn = modal.querySelector('#paxConfirmBtn');
-  
-  // 默认选中1人份
-  paxOptions[0].classList.add('selected');
-  confirmBtn.disabled = false;
-  
-  paxOptions.forEach(option => {
-    option.onclick = () => {
-      paxOptions.forEach(o => o.classList.remove('selected'));
-      option.classList.add('selected');
-      selectedPax = parseInt(option.dataset.pax);
-      confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
-      confirmBtn.disabled = false;
-    };
-  });
-  
-  confirmBtn.onclick = () => {
-    modalManager.close(modal);
-    
-    isAdding = true;
-    document.getElementById('amountInput').blur();
-    document.getElementById('categoryInput').blur();
-    
-    choosePayType((payType) => {
-      // 创建带份数的记录
-      const entry = createNewEntry(amount, category, payType);
-      // 在备注中添加份数信息
-      entry.note = `${category} (${selectedPax}人份)`;
-      
-      entries.push(entry);
-      addToCache(entry);
-      
-      if (entries.length > CONSTANTS.MAX_ENTRIES) {
-        entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        entries.shift();
-        rebuildStatsCache();
+      function showPaxSelectionModal(amount, category) {
+        const modalHtml = `
+          <div class="pax-options">
+            ${[1, 2, 3, 4, 5].map(pax => `
+              <div class="pax-option" data-pax="${pax}">
+                <span class="pax-number">${pax}</span>
+                <span class="pax-label">人份</span>
+              </div>
+            `).join('')}
+          </div>
+          <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>确定 · 1 人份</button>
+          <button class="pax-skip-btn" id="paxSkipBtn">跳过，不记录份数</button>
+        `;
+        
+        const modal = modalManager.create(
+          `🍽️ 选择份数 · ${category}`,
+          modalHtml
+        );
+        
+        if (!modal) return;
+        
+        modal.querySelector('.modal-content').classList.add('pax-modal-content');
+        
+        let selectedPax = 1;
+        const paxOptions = modal.querySelectorAll('.pax-option');
+        const confirmBtn = modal.querySelector('#paxConfirmBtn');
+        
+        paxOptions[0].classList.add('selected');
+        confirmBtn.disabled = false;
+        
+        paxOptions.forEach(option => {
+          option.onclick = () => {
+            paxOptions.forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            selectedPax = parseInt(option.dataset.pax);
+            confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
+            confirmBtn.disabled = false;
+          };
+        });
+        
+        confirmBtn.onclick = () => {
+          modalManager.close(modal);
+          
+          isAdding = true;
+          document.getElementById('amountInput').blur();
+          document.getElementById('categoryInput').blur();
+          
+          choosePayType((payType) => {
+            const entry = createNewEntry(amount, category, payType);
+            entry.note = `${category} (${selectedPax}人份)`;
+            
+            entries.push(entry);
+            addToCache(entry);
+            
+            if (entries.length > CONSTANTS.MAX_ENTRIES) {
+              entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+              entries.shift();
+              rebuildStatsCache();
+            }
+            
+            saveDebounced();
+            
+            document.getElementById('amountInput').value = '';
+            document.getElementById('categoryInput').value = '';
+            
+            updateSingleDay(entry.date);
+            renderEntries();
+            
+            showToast(`已记账 · ${category} ${selectedPax}人份 (${payType})`);
+            
+            setTimeout(() => { isAdding = false; }, 300);
+          });
+        };
+        
+        modal.querySelector('#paxSkipBtn').onclick = () => {
+          modalManager.close(modal);
+          
+          isAdding = true;
+          document.getElementById('amountInput').blur();
+          document.getElementById('categoryInput').blur();
+          
+          choosePayType((payType) => {
+            const entry = createNewEntry(amount, category, payType);
+            
+            entries.push(entry);
+            addToCache(entry);
+            
+            if (entries.length > CONSTANTS.MAX_ENTRIES) {
+              entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+              entries.shift();
+              rebuildStatsCache();
+            }
+            
+            saveDebounced();
+            
+            document.getElementById('amountInput').value = '';
+            document.getElementById('categoryInput').value = '';
+            
+            updateSingleDay(entry.date);
+            renderEntries();
+            
+            showToast(`已记账 · ${category} (${payType})`);
+            
+            setTimeout(() => { isAdding = false; }, 300);
+          });
+        };
+        
+        modal.addEventListener('keydown', (e) => {
+          if (e.key >= '1' && e.key <= '5') {
+            const pax = parseInt(e.key);
+            paxOptions.forEach(o => o.classList.remove('selected'));
+            paxOptions[pax - 1].classList.add('selected');
+            selectedPax = pax;
+            confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
+            confirmBtn.disabled = false;
+          } else if (e.key === 'Enter' && !confirmBtn.disabled) {
+            confirmBtn.click();
+          } else if (e.key === 'Escape') {
+            modalManager.close(modal);
+          }
+        });
       }
-      
-      saveDebounced();
-      
-      document.getElementById('amountInput').value = '';
-      document.getElementById('categoryInput').value = '';
-      
-      updateSingleDay(entry.date);
-      renderEntries();
-      
-      showToast(`已记账 · ${category} ${selectedPax}人份 (${payType})`);
-      
-      setTimeout(() => { isAdding = false; }, 300);
-    });
-  };
-  
-  modal.querySelector('#paxSkipBtn').onclick = () => {
-    modalManager.close(modal);
-    
-    isAdding = true;
-    document.getElementById('amountInput').blur();
-    document.getElementById('categoryInput').blur();
-    
-    choosePayType((payType) => {
-      const entry = createNewEntry(amount, category, payType);
-      
-      entries.push(entry);
-      addToCache(entry);
-      
-      if (entries.length > CONSTANTS.MAX_ENTRIES) {
-        entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        entries.shift();
-        rebuildStatsCache();
-      }
-      
-      saveDebounced();
-      
-      document.getElementById('amountInput').value = '';
-      document.getElementById('categoryInput').value = '';
-      
-      updateSingleDay(entry.date);
-      renderEntries();
-      
-      showToast(`已记账 · ${category} (${payType})`);
-      
-      setTimeout(() => { isAdding = false; }, 300);
-    });
-  };
-  
-  // 键盘支持
-  modal.addEventListener('keydown', (e) => {
-    if (e.key >= '1' && e.key <= '5') {
-      const pax = parseInt(e.key);
-      paxOptions.forEach(o => o.classList.remove('selected'));
-      paxOptions[pax - 1].classList.add('selected');
-      selectedPax = pax;
-      confirmBtn.textContent = `确定 · ${selectedPax} 人份`;
-      confirmBtn.disabled = false;
-    } else if (e.key === 'Enter' && !confirmBtn.disabled) {
-      confirmBtn.click();
-    } else if (e.key === 'Escape') {
-      modalManager.close(modal);
-    }
-  });
-}
 
       function addRecord() {
-  if (isAdding) return false;
+        if (isAdding) return false;
 
-  const amount = getValidAmount();
-  if (amount === null) return false;
+        const amount = getValidAmount();
+        if (amount === null) return false;
 
-  const category = getCategory();
-  
-  // 检查是否是餐饮分类（早餐、午餐、晚餐）
-  const mealCategories = ['早餐', '午餐', '晚餐'];
-  if (currentType === 'expense' && mealCategories.includes(category)) {
-    // 显示份数选择弹窗
-    showPaxSelectionModal(amount, category);
-    return true;
-  }
-  
-  isAdding = true;
+        const category = getCategory();
+        
+        const mealCategories = ['早餐', '午餐', '晚餐'];
+        if (currentType === 'expense' && mealCategories.includes(category)) {
+          showPaxSelectionModal(amount, category);
+          return true;
+        }
+        
+        isAdding = true;
 
-  document.getElementById('amountInput').blur();
-  document.getElementById('categoryInput').blur();
+        document.getElementById('amountInput').blur();
+        document.getElementById('categoryInput').blur();
 
-  choosePayType((payType) => {
-    const entry = createNewEntry(amount, category, payType);
+        choosePayType((payType) => {
+          const entry = createNewEntry(amount, category, payType);
 
-    entries.push(entry);
-    addToCache(entry);
+          entries.push(entry);
+          addToCache(entry);
 
-    if (entries.length > CONSTANTS.MAX_ENTRIES) {
-      entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-      entries.shift();
-      rebuildStatsCache();
-    }
+          if (entries.length > CONSTANTS.MAX_ENTRIES) {
+            entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            entries.shift();
+            rebuildStatsCache();
+          }
 
-    saveDebounced();
+          saveDebounced();
 
-    document.getElementById('amountInput').value = '';
-    document.getElementById('categoryInput').value = '';
+          document.getElementById('amountInput').value = '';
+          document.getElementById('categoryInput').value = '';
 
-    updateSingleDay(entry.date);
-    renderEntries();
+          updateSingleDay(entry.date);
+          renderEntries();
 
-    showToast(`已记账（${payType}）`);
+          showToast(`已记账（${payType}）`);
 
-    setTimeout(() => { isAdding = false; }, 300);
-  });
+          setTimeout(() => { isAdding = false; }, 300);
+        });
 
-  return true;
-}
+        return true;
+      }
 
       function editEntry(id) {
         const entry = entries.find(e => String(e.id) === String(id));
@@ -2400,7 +2239,7 @@ function showPaxSelectionModal(amount, category) {
       }
 
       // ==================== 导出笔记功能 ====================
-            function exportNote() {
+      function exportNote() {
         const allEntries = entries;
         if (!allEntries || allEntries.length === 0) {
           showToast('📭 没有记录可以导出');
@@ -2458,7 +2297,6 @@ function showPaxSelectionModal(amount, category) {
             grouped[date].push(item);
           });
 
-          // 【修改1】日期从旧到新排序（升序）
           const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
           
           let result = '';
@@ -2480,7 +2318,6 @@ function showPaxSelectionModal(amount, category) {
             const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
             result += `\n${formattedDate}\n`;
 
-            // 【修改2】同一天内的记录按时间从早到晚排序（升序）
             const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             
             sortedDayEntries.forEach((item, index) => {
@@ -2970,7 +2807,6 @@ function showPaxSelectionModal(amount, category) {
 
       // ==================== 事件绑定 ====================
       function bindEvents() {
-        // 金额输入
         const amountInput = document.getElementById('amountInput');
         amountInput.addEventListener('input', function() {
           let val = this.value;
@@ -3007,27 +2843,25 @@ function showPaxSelectionModal(amount, category) {
           }
         });
 
-        // 分类输入
         const categoryInput = document.getElementById('categoryInput');
         categoryInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    const category = categoryInput.value.trim();
-    const amount = parseFloat(amountInput.value);
-    if (!category) { 
-      showToast('请输入分类'); 
-      return; 
-    }
-    if (amount && amount > 0) {
-      addRecord();
-    } else { 
-      amountInput.focus(); 
-      showToast('请输入金额'); 
-    }
-  }
-});
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const category = categoryInput.value.trim();
+            const amount = parseFloat(amountInput.value);
+            if (!category) {
+              showToast('请输入分类');
+              return;
+            }
+            if (amount && amount > 0) {
+              addRecord();
+            } else {
+              amountInput.focus();
+              showToast('请输入金额');
+            }
+          }
+        });
 
-        // 日历点击
         document.getElementById('calendarGrid').addEventListener('click', (e) => {
           const day = e.target.closest('.calendar-day');
           if (day && day.dataset.date) {
@@ -3040,7 +2874,6 @@ function showPaxSelectionModal(amount, category) {
           }
         });
 
-        // 日历键盘
         document.getElementById('calendarGrid').addEventListener('keydown', (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -3056,11 +2889,9 @@ function showPaxSelectionModal(amount, category) {
           }
         });
 
-        // 月份切换
         document.getElementById('prevMonth').onclick = () => changeMonth(-1);
         document.getElementById('nextMonth').onclick = () => changeMonth(1);
 
-        // 滑动切换月份
         const swipeArea = document.getElementById('swipeArea');
         let touchStartX = 0, touchStartY = 0, isSwiping = false;
         swipeArea.addEventListener('touchstart', (e) => {
@@ -3080,7 +2911,6 @@ function showPaxSelectionModal(amount, category) {
           }
         });
 
-        // 菜单
         document.getElementById('menuButton').onclick = (e) => {
           e.stopPropagation();
           closeCategoryDropdown();
@@ -3094,7 +2924,6 @@ function showPaxSelectionModal(amount, category) {
           if (!e.target.closest('.category-wrapper')) closeCategoryDropdown();
         });
 
-        // 分类下拉
         document.getElementById('dropdownBtn').onclick = (e) => {
           e.stopPropagation();
           const dropdown = document.getElementById('categoryDropdown');
@@ -3110,27 +2939,22 @@ function showPaxSelectionModal(amount, category) {
         };
 
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
-  const item = e.target.closest('.category-item');
-  if (!item) return;
-  e.stopPropagation();
-  const selectedCat = item.getAttribute('data-cat') || item.innerText;
-  categoryInput.value = selectedCat;
-  closeCategoryDropdown();
-  
-  // 检查是否是餐饮分类，如果是则等待用户按回车或手动触发
-  const mealCategories = ['早餐', '午餐', '晚餐'];
-  const amount = parseFloat(amountInput.value);
-  
-  if (amount && amount > 0) {
-    // 如果是餐饮分类，addRecord 会自动弹出份数选择
-    addRecord();
-  } else {
-    amountInput.focus();
-    showToast('请输入金额');
-  }
-});
+          const item = e.target.closest('.category-item');
+          if (!item) return;
+          e.stopPropagation();
+          const selectedCat = item.getAttribute('data-cat') || item.innerText;
+          categoryInput.value = selectedCat;
+          closeCategoryDropdown();
 
-        // 记录列表操作
+          const amount = parseFloat(amountInput.value);
+          if (amount && amount > 0) {
+            addRecord();
+          } else {
+            amountInput.focus();
+            showToast('请输入金额');
+          }
+        });
+
         document.getElementById('entriesList').addEventListener('click', (e) => {
           const editBtn = e.target.closest('.edit-btn');
           const deleteBtn = e.target.closest('.delete-btn');
@@ -3173,14 +2997,14 @@ function showPaxSelectionModal(amount, category) {
 
         document.getElementById('viewMoreBtn').onclick = () => showAllEntriesModal();
 
-        // 菜单项
         document.getElementById('exportNoteBtn').onclick = () => { exportNote(); closeMenu(); };
-        document.getElementById('installAppBtn').onclick = () => {
-    if (window.installPWA) window.installPWA();
-    closeMenu();
-};
-        document.
-       getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
+        
+        document.getElementById('installAppBtn').onclick = () => { 
+          if (window.installPWA) window.installPWA(); 
+          closeMenu(); 
+        };
+        
+        document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
         document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); closeMenu(); };
         document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); closeMenu(); };
         document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
@@ -3190,7 +3014,6 @@ function showPaxSelectionModal(amount, category) {
         document.getElementById('importMenuItem').onclick = () => { showImportDialog(); closeMenu(); };
         document.getElementById('clearDataMenuItem').onclick = () => { clearAllData(); closeMenu(); };
 
-        // 类型切换
         document.querySelectorAll('.type-option').forEach(opt => {
           opt.onclick = () => {
             document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
@@ -3201,7 +3024,6 @@ function showPaxSelectionModal(amount, category) {
           };
         });
 
-        // 统计卡片点击
         document.querySelector('.stat-card.income').onclick = () => {
           showSearch({ type: 'income', startDate: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`, endDate: `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${new Date(currentYear, currentMonth + 1, 0).getDate()}` });
         };
@@ -3240,7 +3062,6 @@ function showPaxSelectionModal(amount, category) {
         const modal = modalManager.create('🎨 界面设置', html, '<button id="closeSettingsBtn" class="close-btn">关闭</button>');
         if (!modal) return;
 
-        // 颜色滑块
         const updateExpense = () => {
           const c = hslToHex(parseInt(modal.querySelector('#expenseHue').value), parseInt(modal.querySelector('#expenseSat').value), parseInt(modal.querySelector('#expenseLight').value));
           modal.querySelector('#expensePreview').style.background = c;
@@ -3277,7 +3098,6 @@ function showPaxSelectionModal(amount, category) {
         modal.querySelector('#bgSat').oninput = updateBg;
         modal.querySelector('#bgLight').oninput = updateBg;
 
-        // 尺寸滑块
         modal.querySelector('#spacingGap').oninput = function() {
           uiSettings.spacingGap = parseInt(this.value);
           modal.querySelector('#spacingValue').innerText = uiSettings.spacingGap + 'px';
@@ -3315,7 +3135,7 @@ function showPaxSelectionModal(amount, category) {
         };
       }
 
-            function showExportDialog() {
+      function showExportDialog() {
         const currentMonthStr = selectedDate.slice(0, 7);
         const currentYearStr = selectedDate.slice(0, 4);
 
@@ -3353,7 +3173,6 @@ function showPaxSelectionModal(amount, category) {
         modal.querySelector('#confirmExport').onclick = () => {
           let filteredEntries = [...entries];
           
-          // 【修改3】先按日期从旧到新排序，同一天按时间从早到晚排序
           filteredEntries.sort((a, b) => {
             const dateCompare = a.date.localeCompare(b.date);
             if (dateCompare !== 0) return dateCompare;
@@ -3566,74 +3385,180 @@ function showPaxSelectionModal(amount, category) {
         renderCategoryDropdown();
         updateInputColor();
         initBackToTop();
+        
+        updateInstallMenuText();
+        
+        const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+        if (standaloneQuery.addEventListener) {
+          standaloneQuery.addEventListener('change', (e) => {
+            updateInstallMenuText();
+          });
+        }
+        
+        const fullscreenQuery = window.matchMedia('(display-mode: fullscreen)');
+        if (fullscreenQuery.addEventListener) {
+          fullscreenQuery.addEventListener('change', (e) => {
+            updateInstallMenuText();
+          });
+        }
+        
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            updateInstallMenuText();
+          }
+        });
       };
     })();
   </script>
+  
   <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      try {
-        const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
-          scope: '/expense-record/'
-        });
-        console.log('✅ Service Worker 注册成功', reg.scope);
-
-        // ⭐ 8.1 自动更新：每小时检查一次
-        setInterval(() => {
-          reg.update();
-          console.log('🔄 正在检查更新...');
-        }, 60 * 60 * 1000);
-
-        // 可选：监听更新发现
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              showToast('🔄 发现新版本，刷新页面后生效');
-            }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', async () => {
+        try {
+          const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
+            scope: '/expense-record/'
           });
-        });
+          console.log('✅ Service Worker 注册成功', reg.scope);
+          
+          setInterval(() => {
+            reg.update();
+            console.log('🔄 正在检查更新...');
+          }, 60 * 60 * 1000);
 
-      } catch (err) {
-        console.log('❌ Service Worker 注册失败', err);
-      }
-    });
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('🔄 发现新版本，刷新页面后生效');
+              }
+            });
+          });
+        } catch (err) {
+          console.log('❌ Service Worker 注册失败', err);
+        }
+      });
 
-    // 📡 8.2 离线/在线状态提示
-    window.addEventListener('offline', () => {
-      showToast('📴 当前处于离线模式，数据将保存至本地');
-    });
+      window.addEventListener('offline', () => {
+        showToast('📴 当前处于离线模式，数据将保存至本地');
+      });
 
-    window.addEventListener('online', () => {
-      showToast('🌐 网络已恢复');
-    });
+      window.addEventListener('online', () => {
+        showToast('🌐 网络已恢复');
+      });
 
-    // 📲 8.4 安装提示 (PWA)
-    let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      
-      // 可以在这里显示一个安装按钮，为了不破坏现有UI，我们简单显示一个Toast
-      // 或者你可以把菜单里的某个按钮做成“安装应用”
-      console.log('📲 应用可安装');
-      // showToast('📲 可安装到桌面 (菜单中点击安装)');
-    });
+      let deferredPrompt;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        console.log('📲 应用可安装');
+      });
 
-    // 将安装方法挂载到全局，方便菜单调用
-    window.installPWA = async () => {
-      if (!deferredPrompt) {
-        showToast('📲 应用已安装或暂不支持安装');
-        return;
-      }
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        showToast('✅ 已添加到桌面');
-      }
-      deferredPrompt = null;
-    };
-  }
-</script>
+      window.installPWA = async () => {
+        if (isRunningAsPWA()) {
+          const modal = modalManager.create(
+            '✅ 已安装',
+            `<div style="text-align:center;padding:20px 0;">
+              <div style="font-size:48px;margin-bottom:16px;">📱</div>
+              <div style="font-size:16px;font-weight:500;margin-bottom:8px;">您正在使用已安装的应用</div>
+              <div style="font-size:14px;color:#64748b;">当前已在独立应用模式下运行</div>
+            </div>`,
+            '<button class="close-btn" id="closeInstalledModal">知道了</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstalledModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
+        
+        const hasInstalledBefore = localStorage.getItem('pwa_installed') === 'true';
+        
+        if (!deferredPrompt) {
+          const browser = detectBrowser();
+          let instructions = '';
+          let title = '📲 安装应用';
+          
+          if (hasInstalledBefore) {
+            instructions = `
+              <div style="text-align:center;padding:20px 0;">
+                <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+                <div style="font-size:15px;font-weight:500;margin-bottom:12px;">应用似乎已安装</div>
+                <div style="font-size:13px;color:#64748b;margin-bottom:20px;">
+                  请从设备桌面查找「记账本」图标打开<br>
+                  如找不到，可尝试以下方法重新添加
+                </div>
+              </div>
+            `;
+          }
+          
+          if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击浏览器右上角菜单 ⋮</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>选择「添加到主屏幕」或「安装应用」</span>
+                </div>
+              </div>
+            `;
+          } else if (browser === 'ios' || browser === 'safari') {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 iOS 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击 Safari 底部的分享按钮 <span style="font-size:18px;">⎙</span></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>滑动找到「添加到主屏幕」</span>
+                </div>
+              </div>
+            `;
+          } else {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="color:#64748b;">当前浏览器可能不支持 PWA 安装</div>
+                <div style="margin-top:8px;">建议使用 Chrome、Edge 或 Safari 浏览器</div>
+              </div>
+            `;
+          }
+          
+          const modal = modalManager.create(
+            title,
+            instructions,
+            '<button class="close-btn" id="closeInstallModal">关闭</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstallModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
+
+        try {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          
+          if (outcome === 'accepted') {
+            localStorage.setItem('pwa_installed', 'true');
+            showToast('✅ 已添加到桌面');
+            localStorage.setItem('pwa_install_date', new Date().toISOString());
+          } else {
+            showToast('已取消安装');
+          }
+          
+          deferredPrompt = null;
+        } catch (error) {
+          console.error('安装失败:', error);
+          showToast('安装失败，请稍后重试');
+        }
+      };
+    }
+  </script>
 </body>
 </html>
