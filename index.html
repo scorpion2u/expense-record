@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <link rel="manifest" href="/expense-record/manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#c2413a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="记账本">
-  <link rel="apple-touch-icon" href="/expense-record/icon-192.png">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>收支记账本</title>
@@ -3485,32 +3485,44 @@
         backTopBtn.onclick = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
       }
 
-      // ==================== Service Worker 初始化 ====================
+            // ==================== Service Worker 初始化 ====================
       function initServiceWorker() {
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', async () => {
-            try {
-              const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
-                scope: '/expense-record/'
-              });
-              console.log('✅ Service Worker 注册成功', reg.scope);
-              
-              setInterval(() => {
-                reg.update();
-                console.log('🔄 正在检查更新...');
-              }, 60 * 60 * 1000);
+            // 可能的 scope 列表，按优先级排序
+            const possibleScopes = [
+              location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1), // 当前目录
+              '/expense-record/',
+              '/',
+            ].filter((v, i, a) => a.indexOf(v) === i); // 去重
+            
+            for (const scope of possibleScopes) {
+              try {
+                const reg = await navigator.serviceWorker.register(scope + 'sw.js', { scope });
+                console.log('✅ Service Worker 注册成功，scope:', reg.scope);
+                
+                // 每小时检查更新
+                setInterval(() => {
+                  reg.update();
+                  console.log('🔄 正在检查更新...');
+                }, 60 * 60 * 1000);
 
-              reg.addEventListener('updatefound', () => {
-                const newWorker = reg.installing;
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    showToast('🔄 发现新版本，刷新页面后生效');
-                  }
+                reg.addEventListener('updatefound', () => {
+                  const newWorker = reg.installing;
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      showToast('🔄 发现新版本，刷新页面后生效');
+                    }
+                  });
                 });
-              });
-            } catch (err) {
-              console.log('❌ Service Worker 注册失败', err);
+                
+                return; // 成功就退出
+              } catch (err) {
+                console.log(`❌ 尝试 scope ${scope} 失败:`, err);
+              }
             }
+            
+            console.warn('⚠️ 所有路径都注册失败，离线功能不可用');
           });
         }
 
