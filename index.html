@@ -1130,6 +1130,118 @@
     body.dark-mode .pax-skip-btn {
       color: #94a3b8;
     }
+
+    /* 自定义选择器样式 */
+    .custom-select {
+      position: relative;
+      width: 100%;
+    }
+
+    .custom-select-trigger {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 28px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      background: var(--card-bg);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.15s;
+    }
+
+    .custom-select-trigger:active {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .custom-select-trigger .arrow {
+      font-size: 12px;
+      color: #64748b;
+      transition: transform 0.2s;
+    }
+
+    .custom-select.open .custom-select-trigger .arrow {
+      transform: rotate(180deg);
+    }
+
+    .custom-select-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      background: var(--card-bg);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      z-index: 1010;
+      max-height: 280px;
+      overflow-y: auto;
+      display: none;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .custom-select.open .custom-select-dropdown {
+      display: block;
+    }
+
+    .custom-select-option {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 15px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      transition: background 0.1s;
+    }
+
+    .custom-select-option:last-child {
+      border-bottom: none;
+    }
+
+    .custom-select-option:hover,
+    .custom-select-option:active {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    .custom-select-option.selected {
+      background: rgba(194, 65, 58, 0.1);
+      color: var(--expense-color);
+      font-weight: 500;
+    }
+
+    body.dark-mode .custom-select-trigger {
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    body.dark-mode .custom-select-dropdown {
+      background: #1e293b;
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .custom-select-option {
+      border-bottom-color: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+    }
+
+    body.dark-mode .custom-select-option:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.dark-mode .custom-select-option.selected {
+      background: rgba(194, 65, 58, 0.2);
+    }
+
+    .select-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1005;
+      display: none;
+    }
+
+    .select-overlay.show {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -1799,6 +1911,115 @@
         return stats;
       }
 
+      // ==================== 自定义选择器 ====================
+      function createCustomSelect(container, options, defaultValue, onChange) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'custom-select';
+        
+        const trigger = document.createElement('div');
+        trigger.className = 'custom-select-trigger';
+        
+        const selectedText = document.createElement('span');
+        selectedText.className = 'selected-text';
+        
+        const arrow = document.createElement('span');
+        arrow.className = 'arrow';
+        arrow.innerHTML = '▼';
+        
+        trigger.appendChild(selectedText);
+        trigger.appendChild(arrow);
+        
+        const dropdown = document.createElement('div');
+        dropdown.className = 'custom-select-dropdown';
+        
+        const defaultOption = options.find(opt => opt.value === defaultValue);
+        selectedText.textContent = defaultOption ? defaultOption.label : options[0]?.label || '';
+        
+        options.forEach(opt => {
+          const optionDiv = document.createElement('div');
+          optionDiv.className = 'custom-select-option' + (opt.value === defaultValue ? ' selected' : '');
+          optionDiv.textContent = opt.label;
+          optionDiv.dataset.value = opt.value;
+          
+          optionDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+            optionDiv.classList.add('selected');
+            selectedText.textContent = opt.label;
+            
+            wrapper.classList.remove('open');
+            document.querySelectorAll('.select-overlay').forEach(o => o.remove());
+            
+            if (onChange) onChange(opt.value);
+          });
+          
+          dropdown.appendChild(optionDiv);
+        });
+        
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(dropdown);
+        
+        const overlay = document.createElement('div');
+        overlay.className = 'select-overlay';
+        
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          
+          document.querySelectorAll('.custom-select.open').forEach(s => {
+            if (s !== wrapper) s.classList.remove('open');
+          });
+          document.querySelectorAll('.select-overlay').forEach(o => o.remove());
+          
+          const isOpen = wrapper.classList.contains('open');
+          
+          if (!isOpen) {
+            wrapper.classList.add('open');
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.classList.add('show'), 10);
+            
+            const selected = dropdown.querySelector('.custom-select-option.selected');
+            if (selected) {
+              selected.scrollIntoView({ block: 'center' });
+            }
+          } else {
+            wrapper.classList.remove('open');
+            overlay.remove();
+          }
+        });
+        
+        overlay.addEventListener('click', () => {
+          wrapper.classList.remove('open');
+          overlay.remove();
+        });
+        
+        document.addEventListener('click', (e) => {
+          if (!wrapper.contains(e.target)) {
+            wrapper.classList.remove('open');
+            overlay.remove();
+          }
+        });
+        
+        container.innerHTML = '';
+        container.appendChild(wrapper);
+        
+        return {
+          getValue: () => {
+            const selected = dropdown.querySelector('.custom-select-option.selected');
+            return selected ? selected.dataset.value : '';
+          },
+          setValue: (value) => {
+            const option = dropdown.querySelector(`.custom-select-option[data-value="${value}"]`);
+            if (option) {
+              dropdown.querySelectorAll('.custom-select-option').forEach(o => o.classList.remove('selected'));
+              option.classList.add('selected');
+              selectedText.textContent = option.textContent;
+              if (onChange) onChange(value);
+            }
+          }
+        };
+      }
+
       // ==================== 渲染函数 ====================
       function renderTopCards() {
         const stats = getMonthStats(currentYear, currentMonth);
@@ -2370,14 +2591,7 @@
           <div style="background:${uiSettings.cardBg};padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
             <h3 style="margin-bottom:16px;font-size:20px;text-align:center;">📄 导出笔记</h3>
             <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">选择要导出的月份</p>
-            <select id="monthSelectForExport" style="width:100%;padding:14px;border-radius:28px;border:1px solid #e2e8f0;font-size:16px;background:${uiSettings.darkMode ? '#1e293b' : '#ffffff'};color:${uiSettings.darkMode ? '#e2e8f0' : '#1e293b'};margin-bottom:20px;">
-              <option value="all">📆 全部月份 (${allEntries.length}条)</option>
-              ${availableMonths.map(month => {
-                const count = allEntries.filter(e => e.date.startsWith(month)).length;
-                const formattedMonth = `${month.slice(5)}/${month.slice(0, 4)}`;
-                return `<option value="${month}">📅 ${formattedMonth} (${count}条)</option>`;
-              }).join('')}
-            </select>
+            <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
             <div style="display:flex;gap:12px;">
               <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#10b981;color:white;font-size:15px;font-weight:600;cursor:pointer;">确认导出</button>
               <button id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
@@ -2387,8 +2601,20 @@
 
         document.body.appendChild(modal);
 
+        const options = [
+          { value: 'all', label: `📆 全部月份 (${allEntries.length}条)` },
+          ...availableMonths.map(month => {
+            const count = allEntries.filter(e => e.date.startsWith(month)).length;
+            const formattedMonth = `${month.split('-')[1]}/${month.split('-')[0]}`;
+            return { value: month, label: `📅 ${formattedMonth} (${count}条)` };
+          })
+        ];
+
+        const container = modal.querySelector('#noteMonthContainer');
+        const monthSelect = createCustomSelect(container, options, 'all', () => {});
+
         modal.querySelector('#confirmExportNoteBtn').onclick = () => {
-          const selectedMonth = modal.querySelector('#monthSelectForExport').value;
+          const selectedMonth = monthSelect.getValue();
           let entriesToExport = [...allEntries];
           if (selectedMonth !== 'all') {
             entriesToExport = entriesToExport.filter(e => e.date.startsWith(selectedMonth));
@@ -2915,6 +3141,350 @@
         };
       }
 
+      // ==================== 导出备份弹窗 ====================
+      function showExportDialog() {
+        const currentMonthStr = selectedDate.slice(0, 7);
+        const currentYearStr = selectedDate.slice(0, 4);
+        const monthDisplay = `${currentMonthStr.split('-')[1]}/${currentMonthStr.split('-')[0]}`;
+
+        const html = `
+          <div class="export-options">
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;font-weight:500;">📅 导出范围：</label>
+              <div id="exportRangeContainer"></div>
+            </div>
+            <div id="customDateRange" style="display:none;margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;font-weight:500;">📅 日期范围：</label>
+              <div style="display:flex;gap:8px;">
+                <input type="date" id="startDate" style="flex:1;padding:10px;border-radius:28px;">
+                <span>→</span>
+                <input type="date" id="endDate" style="flex:1;padding:10px;border-radius:28px;">
+              </div>
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;font-weight:500;">💰 收支类型：</label>
+              <div id="exportTypeContainer"></div>
+            </div>
+            <div id="categoryFilterDiv" style="display:none;margin-bottom:16px;">
+              <label style="display:block;margin-bottom:8px;font-weight:500;">📝 分类筛选：</label>
+              <div id="exportCategoryContainer"></div>
+            </div>
+            <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;font-size:12px;">💡 提示：导出文件可按月份/类型筛选</div>
+          </div>
+        `;
+
+        const modal = modalManager.create('📤 导出备份', html, '<button id="confirmExport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导出</button><button id="cancelExport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>');
+        if (!modal) return;
+
+        const customRange = modal.querySelector('#customDateRange');
+        const categoryDiv = modal.querySelector('#categoryFilterDiv');
+        
+        const rangeOptions = [
+          { value: 'all', label: `全部数据 (${entries.length}条)` },
+          { value: 'current_month', label: `当前月份 (${monthDisplay})` },
+          { value: 'current_year', label: `当前年份 (${currentYearStr})` },
+          { value: 'custom', label: '自定义日期范围' }
+        ];
+        
+        let currentRange = 'current_month';
+        
+        const rangeSelect = createCustomSelect(
+          modal.querySelector('#exportRangeContainer'),
+          rangeOptions,
+          currentRange,
+          (value) => {
+            currentRange = value;
+            customRange.style.display = value === 'custom' ? 'block' : 'none';
+          }
+        );
+        
+        const typeOptions = [
+          { value: 'all', label: '全部' },
+          { value: 'expense', label: '💸 仅支出' },
+          { value: 'income', label: '💰 仅收入' }
+        ];
+        
+        let currentTypeExport = 'all';
+        let categorySelect = null;
+        
+        const typeSelect = createCustomSelect(
+          modal.querySelector('#exportTypeContainer'),
+          typeOptions,
+          currentTypeExport,
+          (value) => {
+            currentTypeExport = value;
+            if (value !== 'all') {
+              categoryDiv.style.display = 'block';
+              const cats = value === 'expense' ? expenseCats : incomeCats;
+              const catOptions = [
+                { value: '', label: '全部' },
+                ...cats.map(c => ({ value: c, label: c }))
+              ];
+              
+              const container = modal.querySelector('#exportCategoryContainer');
+              container.innerHTML = '';
+              categorySelect = createCustomSelect(container, catOptions, '', () => {});
+            } else {
+              categoryDiv.style.display = 'none';
+            }
+          }
+        );
+
+        modal.querySelector('#confirmExport').onclick = () => {
+          let filteredEntries = [...entries];
+          
+          filteredEntries.sort((a, b) => {
+            const dateCompare = a.date.localeCompare(b.date);
+            if (dateCompare !== 0) return dateCompare;
+            return (a.time || '').localeCompare(b.time || '');
+          });
+          
+          const range = rangeSelect.getValue();
+          if (range === 'current_month') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
+          else if (range === 'current_year') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
+          else if (range === 'custom') {
+            const start = modal.querySelector('#startDate')?.value;
+            const end = modal.querySelector('#endDate')?.value;
+            if (start && end) filteredEntries = filteredEntries.filter(e => e.date >= start && e.date <= end);
+          }
+
+          const type = typeSelect.getValue();
+          if (type !== 'all') filteredEntries = filteredEntries.filter(e => e.type === type);
+
+          const category = categorySelect ? categorySelect.getValue() : '';
+          if (category) filteredEntries = filteredEntries.filter(e => e.note === category);
+
+          if (filteredEntries.length === 0) {
+            showToast('没有符合条件的数据可导出');
+            return;
+          }
+
+          const backup = {
+            version: '2.0',
+            source: 'main',
+            entries: filteredEntries,
+            expenseCats,
+            incomeCats,
+            uiSettings,
+            exportDate: new Date().toISOString(),
+            exportInfo: {
+              totalRecords: filteredEntries.length,
+              dateRange: getDateRangeFromEntries(filteredEntries),
+              totalExpense: calculateTotalByType(filteredEntries, 'expense'),
+              totalIncome: calculateTotalByType(filteredEntries, 'income')
+            }
+          };
+
+          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+
+          const formatDateDMY = (dateStr) => {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+          };
+
+          let fileName;
+          const monthNames = ['01月', '02月', '03月', '04月', '05月', '06月', '07月', '08月', '09月', '10月', '11月', '12月'];
+
+          if (range === 'current_month') {
+            const monthIndex = parseInt(currentMonthStr.split('-')[1]) - 1;
+            const year = currentMonthStr.split('-')[0];
+            fileName = `记帐本备份_${monthNames[monthIndex]}${year}年`;
+          } else if (range === 'current_year') {
+            fileName = `记帐本备份_${currentYearStr}年`;
+          } else if (range === 'custom') {
+            const start = modal.querySelector('#startDate')?.value || '';
+            const end = modal.querySelector('#endDate')?.value || '';
+            fileName = `记帐本备份_${formatDateDMY(start)}至${formatDateDMY(end)}`;
+          } else {
+            const now = new Date();
+            const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+            fileName = `记帐本备份_全部_${dateStr}`;
+          }
+
+          if (type === 'expense') fileName += '_仅支出';
+          if (type === 'income') fileName += '_仅收入';
+
+          fileName += '.json';
+
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(a.href);
+          showToast(`✅ 导出成功！共 ${filteredEntries.length} 条记录`);
+          modalManager.close(modal);
+        };
+
+        modal.querySelector('#cancelExport').onclick = () => modalManager.close(modal);
+      }
+
+      // ==================== 导入备份弹窗 ====================
+      function showImportDialog() {
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = '.json';
+        fileInput.onchange = async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+
+            if (!data.entries || !Array.isArray(data.entries)) throw new Error('文件格式错误：缺少 entries 字段');
+            if (data.source !== 'main') {
+              showToast('❌ 只能导入【记帐本】备份文件');
+              return;
+            }
+
+            let validEntries = [];
+            let invalidCount = 0;
+            for (const entry of data.entries) {
+              if (validateEntry(entry)) validEntries.push(entry);
+              else invalidCount++;
+            }
+            if (invalidCount > 0) showToast(`⚠️ 发现 ${invalidCount} 条无效记录，已自动跳过`);
+            if (validEntries.length === 0) throw new Error('文件中没有有效记录可导入');
+
+            data.entries = validEntries;
+
+            const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
+            const totalExpense = calculateTotalByType(data.entries, 'expense');
+            const totalIncome = calculateTotalByType(data.entries, 'income');
+
+            const modalHtml = `
+              <div class="import-options">
+                <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
+                  <div><strong>📄 文件：</strong> ${escapeHtml(file.name)}</div>
+                  <div><strong>📊 记录数：</strong> ${data.entries.length} 条</div>
+                  <div><strong>📅 时间范围：</strong> ${getDateRangeFromEntries(data.entries)}</div>
+                  <div><strong>💰 总支出：</strong> RM${totalExpense.toFixed(2)}</div>
+                  <div><strong>💵 总收入：</strong> RM${totalIncome.toFixed(2)}</div>
+                </div>
+                <div style="margin-bottom:16px;">
+                  <label style="display:block;margin-bottom:8px;font-weight:500;">导入模式：</label>
+                  <div id="importModeContainer"></div>
+                </div>
+                <div style="margin-bottom:16px;">
+                  <label style="display:block;margin-bottom:8px;font-weight:500;">📅 选择要恢复的月份：</label>
+                  <div id="importMonthContainer"></div>
+                </div>
+                <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">⚠️ 提示：合并模式会根据记录ID自动去重</div>
+              </div>
+            `;
+
+            const modal = modalManager.create(
+              '📥 导入备份',
+              modalHtml,
+              `<button id="confirmImport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导入</button><button id="cancelImport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>`
+            );
+
+            if (modal) {
+              const modeOptions = [
+                { value: 'merge', label: '🔄 合并模式（保留现有记录，自动去重）' },
+                { value: 'replace', label: '⚠️ 替换模式（清空所有现有数据）' }
+              ];
+              
+              const modeSelect = createCustomSelect(
+                modal.querySelector('#importModeContainer'),
+                modeOptions,
+                'merge',
+                () => {}
+              );
+
+              const monthOptions = [
+                { value: 'all', label: `全部月份 (${data.entries.length}条)` },
+                ...monthsInFile.map(month => {
+                  const count = data.entries.filter(e => e.date.startsWith(month)).length;
+                  const formatted = `${month.split('-')[1]}/${month.split('-')[0]}`;
+                  return { value: month, label: `${formatted} (${count}条)` };
+                })
+              ];
+              
+              const monthSelect = createCustomSelect(
+                modal.querySelector('#importMonthContainer'),
+                monthOptions,
+                'all',
+                () => {}
+              );
+
+              modal.querySelector('#confirmImport').onclick = () => {
+                const mode = modeSelect.getValue();
+                const selectedMonth = monthSelect.getValue();
+
+                let entriesToImport = [...data.entries];
+                if (selectedMonth !== 'all') {
+                  entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
+                }
+
+                if (entriesToImport.length === 0) {
+                  showToast('没有符合条件的数据可导入');
+                  modalManager.close(modal);
+                  return;
+                }
+
+                let importedCount = 0, skippedCount = 0;
+
+                if (mode === 'replace') {
+                  entries = entriesToImport;
+                  importedCount = entriesToImport.length;
+                  showToast(`✅ 替换完成，共 ${importedCount} 条记录`);
+                } else {
+                  const existingIds = new Set(entries.map(e => e.id));
+                  for (const entry of entriesToImport) {
+                    if (!existingIds.has(entry.id)) {
+                      entries.push(entry);
+                      importedCount++;
+                    } else {
+                      skippedCount++;
+                    }
+                  }
+                  showToast(`🔄 合并完成，新增 ${importedCount} 条${skippedCount > 0 ? `，跳过 ${skippedCount} 条重复` : ''}`);
+                }
+
+                let newExpenseCats = 0, newIncomeCats = 0;
+                if (data.expenseCats) {
+                  for (const cat of data.expenseCats) {
+                    if (!expenseCats.includes(cat)) {
+                      expenseCats.push(cat);
+                      newExpenseCats++;
+                    }
+                  }
+                }
+                if (data.incomeCats) {
+                  for (const cat of data.incomeCats) {
+                    if (!incomeCats.includes(cat)) {
+                      incomeCats.push(cat);
+                      newIncomeCats++;
+                    }
+                  }
+                }
+
+                if (newExpenseCats > 0 || newIncomeCats > 0) {
+                  showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
+                }
+
+                rebuildStatsCache();
+                saveDebounced();
+                renderCalendar();
+                renderEntries();
+                renderCategoryDropdown();
+                updateInputColor();
+                showToast(`🎉 导入成功！当前共 ${entries.length} 条记录`);
+                modalManager.close(modal);
+              };
+
+              modal.querySelector('#cancelImport').onclick = () => modalManager.close(modal);
+            }
+          } catch (error) {
+            showToast('❌ 文件解析失败：' + error.message);
+          }
+        };
+        fileInput.click();
+      }
+
       // ==================== 事件绑定 ====================
       function bindEvents() {
         const amountInput = document.getElementById('amountInput');
@@ -3245,237 +3815,6 @@
         };
       }
 
-      function showExportDialog() {
-        const currentMonthStr = selectedDate.slice(0, 7);
-        const currentYearStr = selectedDate.slice(0, 4);
-
-        const html = `
-          <div class="export-options">
-            <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">📅 导出范围：</label><select id="exportRange" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;"><option value="all">全部数据 (${entries.length}条)</option><option value="current_month">当前月份 (${currentMonthStr})</option><option value="current_year">当前年份 (${currentYearStr})</option><option value="custom">自定义日期范围</option></select></div>
-            <div id="customDateRange" style="display:none;margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">📅 日期范围：</label><div style="display:flex;gap:8px;"><input type="date" id="startDate" style="flex:1;padding:10px;border-radius:28px;"><span>→</span><input type="date" id="endDate" style="flex:1;padding:10px;border-radius:28px;"></div></div>
-            <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">💰 收支类型：</label><select id="exportType" style="width:100%;padding:12px;border-radius:28px;"><option value="all">全部</option><option value="expense">💸 仅支出</option><option value="income">💰 仅收入</option></select></div>
-            <div id="categoryFilterDiv" style="display:none;margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">📝 分类筛选：</label><select id="exportCategory" style="width:100%;padding:12px;border-radius:28px;"><option value="">全部</option></select></div>
-            <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;font-size:12px;">💡 提示：导出文件可按月份/类型筛选</div>
-          </div>
-        `;
-
-        const modal = modalManager.create('📤 导出备份', html, '<button id="confirmExport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导出</button><button id="cancelExport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>');
-        if (!modal) return;
-
-        const rangeSelect = modal.querySelector('#exportRange');
-        const customRange = modal.querySelector('#customDateRange');
-        const typeSelect = modal.querySelector('#exportType');
-        const categoryDiv = modal.querySelector('#categoryFilterDiv');
-        const categorySelect = modal.querySelector('#exportCategory');
-
-        rangeSelect.onchange = () => { customRange.style.display = rangeSelect.value === 'custom' ? 'block' : 'none'; };
-        typeSelect.onchange = () => {
-          const type = typeSelect.value;
-          if (type !== 'all') {
-            categoryDiv.style.display = 'block';
-            const cats = type === 'expense' ? expenseCats : incomeCats;
-            categorySelect.innerHTML = '<option value="">全部</option>' + cats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
-          } else {
-            categoryDiv.style.display = 'none';
-          }
-        };
-
-        modal.querySelector('#confirmExport').onclick = () => {
-          let filteredEntries = [...entries];
-          
-          filteredEntries.sort((a, b) => {
-            const dateCompare = a.date.localeCompare(b.date);
-            if (dateCompare !== 0) return dateCompare;
-            return (a.time || '').localeCompare(b.time || '');
-          });
-          
-          const range = rangeSelect.value;
-          if (range === 'current_month') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
-          else if (range === 'current_year') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
-          else if (range === 'custom') {
-            const start = modal.querySelector('#startDate')?.value;
-            const end = modal.querySelector('#endDate')?.value;
-            if (start && end) filteredEntries = filteredEntries.filter(e => e.date >= start && e.date <= end);
-          }
-
-          const type = typeSelect.value;
-          if (type !== 'all') filteredEntries = filteredEntries.filter(e => e.type === type);
-
-          const category = categorySelect.value;
-          if (category) filteredEntries = filteredEntries.filter(e => e.note === category);
-
-          if (filteredEntries.length === 0) {
-            showToast('没有符合条件的数据可导出');
-            return;
-          }
-
-          const backup = {
-            version: '2.0',
-            source: 'main',
-            entries: filteredEntries,
-            expenseCats,
-            incomeCats,
-            uiSettings,
-            exportDate: new Date().toISOString(),
-            exportInfo: {
-              totalRecords: filteredEntries.length,
-              dateRange: getDateRangeFromEntries(filteredEntries),
-              totalExpense: calculateTotalByType(filteredEntries, 'expense'),
-              totalIncome: calculateTotalByType(filteredEntries, 'income')
-            }
-          };
-
-          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-
-          const now = new Date();
-          const exportDateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
-          let fileName = `主账本备份_${exportDateStr}`;
-          if (range === 'current_month') fileName += `_${currentMonthStr.replace('-', '年')}月`;
-          else if (range === 'current_year') fileName += `_${currentYearStr}年`;
-          if (type === 'expense') fileName += '_仅支出';
-          if (type === 'income') fileName += '_仅收入';
-          fileName += '.json';
-
-          a.download = fileName;
-          a.click();
-          URL.revokeObjectURL(a.href);
-          showToast(`✅ 导出成功！共 ${filteredEntries.length} 条记录`);
-          modalManager.close(modal);
-        };
-
-        modal.querySelector('#cancelExport').onclick = () => modalManager.close(modal);
-      }
-
-      function showImportDialog() {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.json';
-        fileInput.onchange = async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-
-          try {
-            const text = await file.text();
-            const data = JSON.parse(text);
-
-            if (!data.entries || !Array.isArray(data.entries)) throw new Error('文件格式错误：缺少 entries 字段');
-            if (data.source !== 'main') {
-              showToast('❌ 只能导入【主账本】备份文件');
-              return;
-            }
-
-            let validEntries = [];
-            let invalidCount = 0;
-            for (const entry of data.entries) {
-              if (validateEntry(entry)) validEntries.push(entry);
-              else invalidCount++;
-            }
-            if (invalidCount > 0) showToast(`⚠️ 发现 ${invalidCount} 条无效记录，已自动跳过`);
-            if (validEntries.length === 0) throw new Error('文件中没有有效记录可导入');
-
-            data.entries = validEntries;
-
-            const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
-            const totalExpense = calculateTotalByType(data.entries, 'expense');
-            const totalIncome = calculateTotalByType(data.entries, 'income');
-
-            const modalHtml = `
-              <div class="import-options">
-                <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
-                  <div><strong>📄 文件：</strong> ${escapeHtml(file.name)}</div>
-                  <div><strong>📊 记录数：</strong> ${data.entries.length} 条</div>
-                  <div><strong>📅 时间范围：</strong> ${getDateRangeFromEntries(data.entries)}</div>
-                  <div><strong>💰 总支出：</strong> RM${totalExpense.toFixed(2)}</div>
-                  <div><strong>💵 总收入：</strong> RM${totalIncome.toFixed(2)}</div>
-                </div>
-                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">导入模式：</label><select id="importMode" style="width:100%;padding:12px;border-radius:28px;"><option value="merge">🔄 合并模式（保留现有记录，自动去重）</option><option value="replace">⚠️ 替换模式（清空所有现有数据）</option></select></div>
-                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">📅 选择要恢复的月份：</label><select id="monthSelect" style="width:100%;padding:12px;border-radius:28px;"><option value="all">全部月份 (${data.entries.length}条)</option>${monthsInFile.map(month => { const count = data.entries.filter(e => e.date.startsWith(month)).length; return `<option value="${month}">${month.replace('-', '年')}月 (${count}条)</option>`; }).join('')}</select></div>
-                <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">⚠️ 提示：合并模式会根据记录ID自动去重</div>
-              </div>
-            `;
-
-            const modal = modalManager.create(
-              '📥 导入备份',
-              modalHtml,
-              `<button id="confirmImport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导入</button><button id="cancelImport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>`
-            );
-
-            if (modal) {
-              modal.querySelector('#confirmImport').onclick = () => {
-                const mode = modal.querySelector('#importMode').value;
-                const selectedMonth = modal.querySelector('#monthSelect').value;
-
-                let entriesToImport = [...data.entries];
-                if (selectedMonth !== 'all') entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
-
-                if (entriesToImport.length === 0) {
-                  showToast('没有符合条件的数据可导入');
-                  modalManager.close(modal);
-                  return;
-                }
-
-                let importedCount = 0, skippedCount = 0;
-
-                if (mode === 'replace') {
-                  entries = entriesToImport;
-                  importedCount = entriesToImport.length;
-                  showToast(`✅ 替换完成，共 ${importedCount} 条记录`);
-                } else {
-                  const existingIds = new Set(entries.map(e => e.id));
-                  for (const entry of entriesToImport) {
-                    if (!existingIds.has(entry.id)) {
-                      entries.push(entry);
-                      importedCount++;
-                    } else {
-                      skippedCount++;
-                    }
-                  }
-                  showToast(`🔄 合并完成，新增 ${importedCount} 条${skippedCount > 0 ? `，跳过 ${skippedCount} 条重复` : ''}`);
-                }
-
-                let newExpenseCats = 0, newIncomeCats = 0;
-                if (data.expenseCats) {
-                  for (const cat of data.expenseCats) {
-                    if (!expenseCats.includes(cat)) {
-                      expenseCats.push(cat);
-                      newExpenseCats++;
-                    }
-                  }
-                }
-                if (data.incomeCats) {
-                  for (const cat of data.incomeCats) {
-                    if (!incomeCats.includes(cat)) {
-                      incomeCats.push(cat);
-                      newIncomeCats++;
-                    }
-                  }
-                }
-
-                if (newExpenseCats > 0 || newIncomeCats > 0) {
-                  showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
-                }
-
-                rebuildStatsCache();
-                saveDebounced();
-                renderCalendar();
-                renderEntries();
-                renderCategoryDropdown();
-                updateInputColor();
-                showToast(`🎉 导入成功！当前共 ${entries.length} 条记录`);
-                modalManager.close(modal);
-              };
-
-              modal.querySelector('#cancelImport').onclick = () => modalManager.close(modal);
-            }
-          } catch (error) {
-            showToast('❌ 文件解析失败：' + error.message);
-          }
-        };
-        fileInput.click();
-      }
-
       function initBackToTop() {
         const backTopBtn = document.getElementById('floatBackTop');
         window.addEventListener('scroll', () => {
@@ -3485,23 +3824,21 @@
         backTopBtn.onclick = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
       }
 
-            // ==================== Service Worker 初始化 ====================
+      // ==================== Service Worker 初始化 ====================
       function initServiceWorker() {
         if ('serviceWorker' in navigator) {
           window.addEventListener('load', async () => {
-            // 可能的 scope 列表，按优先级排序
             const possibleScopes = [
-              location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1), // 当前目录
+              location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1),
               '/expense-record/',
               '/',
-            ].filter((v, i, a) => a.indexOf(v) === i); // 去重
+            ].filter((v, i, a) => a.indexOf(v) === i);
             
             for (const scope of possibleScopes) {
               try {
                 const reg = await navigator.serviceWorker.register(scope + 'sw.js', { scope });
                 console.log('✅ Service Worker 注册成功，scope:', reg.scope);
                 
-                // 每小时检查更新
                 setInterval(() => {
                   reg.update();
                   console.log('🔄 正在检查更新...');
@@ -3516,7 +3853,7 @@
                   });
                 });
                 
-                return; // 成功就退出
+                return;
               } catch (err) {
                 console.log(`❌ 尝试 scope ${scope} 失败:`, err);
               }
