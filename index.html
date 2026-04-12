@@ -223,7 +223,7 @@
       right: 0;
       background: var(--card-bg);
       border-radius: 20px;
-      width: 170px;
+      width: 190px;
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
       display: none;
       z-index: 200;
@@ -1445,6 +1445,116 @@
           installBtn.style.opacity = '1';
         }
       }
+
+      // ==================== PWA 安装功能 ====================
+      async function installPWA() {
+        if (isRunningAsPWA()) {
+          const modal = modalManager.create(
+            '✅ 已安装',
+            `<div style="text-align:center;padding:20px 0;">
+              <div style="font-size:48px;margin-bottom:16px;">📱</div>
+              <div style="font-size:16px;font-weight:500;margin-bottom:8px;">您正在使用已安装的应用</div>
+              <div style="font-size:14px;color:#64748b;">当前已在独立应用模式下运行</div>
+            </div>`,
+            '<button class="close-btn" id="closeInstalledModal">知道了</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstalledModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
+        
+        const hasInstalledBefore = localStorage.getItem('pwa_installed') === 'true';
+        
+        if (!deferredPrompt) {
+          const browser = detectBrowser();
+          let instructions = '';
+          let title = '📲 安装应用';
+          
+          if (hasInstalledBefore) {
+            instructions = `
+              <div style="text-align:center;padding:20px 0;">
+                <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+                <div style="font-size:15px;font-weight:500;margin-bottom:12px;">应用似乎已安装</div>
+                <div style="font-size:13px;color:#64748b;margin-bottom:20px;">
+                  请从设备桌面查找「记账本」图标打开<br>
+                  如找不到，可尝试以下方法重新添加
+                </div>
+              </div>
+            `;
+          }
+          
+          if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击浏览器右上角菜单 ⋮</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>选择「添加到主屏幕」或「安装应用」</span>
+                </div>
+              </div>
+            `;
+          } else if (browser === 'ios' || browser === 'safari') {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 iOS 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击 Safari 底部的分享按钮 <span style="font-size:18px;">⎙</span></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>滑动找到「添加到主屏幕」</span>
+                </div>
+              </div>
+            `;
+          } else {
+            instructions += `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="color:#64748b;">当前浏览器可能不支持 PWA 安装</div>
+                <div style="margin-top:8px;">建议使用 Chrome、Edge 或 Safari 浏览器</div>
+              </div>
+            `;
+          }
+          
+          const modal = modalManager.create(
+            title,
+            instructions,
+            '<button class="close-btn" id="closeInstallModal">关闭</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstallModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
+
+        try {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          
+          if (outcome === 'accepted') {
+            localStorage.setItem('pwa_installed', 'true');
+            showToast('✅ 已添加到桌面');
+            localStorage.setItem('pwa_install_date', new Date().toISOString());
+            updateInstallMenuText();
+          } else {
+            showToast('已取消安装');
+          }
+          
+          deferredPrompt = null;
+        } catch (error) {
+          console.error('安装失败:', error);
+          showToast('安装失败，请稍后重试');
+        }
+      }
+
+      window.installPWA = installPWA;
 
       // ==================== HSL 颜色转换 ====================
       function hslToHex(h, s, l) {
@@ -3000,7 +3110,7 @@
         document.getElementById('exportNoteBtn').onclick = () => { exportNote(); closeMenu(); };
         
         document.getElementById('installAppBtn').onclick = () => { 
-          if (window.installPWA) window.installPWA(); 
+          installPWA(); 
           closeMenu(); 
         };
         
@@ -3375,6 +3485,50 @@
         backTopBtn.onclick = () => { window.scrollTo({ top: 0, behavior: 'smooth' }); };
       }
 
+      // ==================== Service Worker 初始化 ====================
+      function initServiceWorker() {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', async () => {
+            try {
+              const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
+                scope: '/expense-record/'
+              });
+              console.log('✅ Service Worker 注册成功', reg.scope);
+              
+              setInterval(() => {
+                reg.update();
+                console.log('🔄 正在检查更新...');
+              }, 60 * 60 * 1000);
+
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    showToast('🔄 发现新版本，刷新页面后生效');
+                  }
+                });
+              });
+            } catch (err) {
+              console.log('❌ Service Worker 注册失败', err);
+            }
+          });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          console.log('📲 应用可安装');
+        });
+
+        window.addEventListener('offline', () => {
+          showToast('📴 当前处于离线模式，数据将保存至本地');
+        });
+
+        window.addEventListener('online', () => {
+          showToast('🌐 网络已恢复');
+        });
+      }
+
       // ==================== 初始化 ====================
       window.onload = function() {
         load();
@@ -3385,19 +3539,20 @@
         renderCategoryDropdown();
         updateInputColor();
         initBackToTop();
+        initServiceWorker();
         
         updateInstallMenuText();
         
         const standaloneQuery = window.matchMedia('(display-mode: standalone)');
         if (standaloneQuery.addEventListener) {
-          standaloneQuery.addEventListener('change', (e) => {
+          standaloneQuery.addEventListener('change', () => {
             updateInstallMenuText();
           });
         }
         
         const fullscreenQuery = window.matchMedia('(display-mode: fullscreen)');
         if (fullscreenQuery.addEventListener) {
-          fullscreenQuery.addEventListener('change', (e) => {
+          fullscreenQuery.addEventListener('change', () => {
             updateInstallMenuText();
           });
         }
@@ -3409,156 +3564,6 @@
         });
       };
     })();
-  </script>
-  
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
-            scope: '/expense-record/'
-          });
-          console.log('✅ Service Worker 注册成功', reg.scope);
-          
-          setInterval(() => {
-            reg.update();
-            console.log('🔄 正在检查更新...');
-          }, 60 * 60 * 1000);
-
-          reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                showToast('🔄 发现新版本，刷新页面后生效');
-              }
-            });
-          });
-        } catch (err) {
-          console.log('❌ Service Worker 注册失败', err);
-        }
-      });
-
-      window.addEventListener('offline', () => {
-        showToast('📴 当前处于离线模式，数据将保存至本地');
-      });
-
-      window.addEventListener('online', () => {
-        showToast('🌐 网络已恢复');
-      });
-
-      let deferredPrompt;
-      window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        console.log('📲 应用可安装');
-      });
-
-      window.installPWA = async () => {
-        if (isRunningAsPWA()) {
-          const modal = modalManager.create(
-            '✅ 已安装',
-            `<div style="text-align:center;padding:20px 0;">
-              <div style="font-size:48px;margin-bottom:16px;">📱</div>
-              <div style="font-size:16px;font-weight:500;margin-bottom:8px;">您正在使用已安装的应用</div>
-              <div style="font-size:14px;color:#64748b;">当前已在独立应用模式下运行</div>
-            </div>`,
-            '<button class="close-btn" id="closeInstalledModal">知道了</button>'
-          );
-          
-          if (modal) {
-            modal.querySelector('#closeInstalledModal').onclick = () => modalManager.close(modal);
-          }
-          return;
-        }
-        
-        const hasInstalledBefore = localStorage.getItem('pwa_installed') === 'true';
-        
-        if (!deferredPrompt) {
-          const browser = detectBrowser();
-          let instructions = '';
-          let title = '📲 安装应用';
-          
-          if (hasInstalledBefore) {
-            instructions = `
-              <div style="text-align:center;padding:20px 0;">
-                <div style="font-size:48px;margin-bottom:16px;">🔍</div>
-                <div style="font-size:15px;font-weight:500;margin-bottom:12px;">应用似乎已安装</div>
-                <div style="font-size:13px;color:#64748b;margin-bottom:20px;">
-                  请从设备桌面查找「记账本」图标打开<br>
-                  如找不到，可尝试以下方法重新添加
-                </div>
-              </div>
-            `;
-          }
-          
-          if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
-            instructions += `
-              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-                <div style="font-weight:500;margin-bottom:12px;">📌 安装步骤：</div>
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
-                  <span>点击浏览器右上角菜单 ⋮</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
-                  <span>选择「添加到主屏幕」或「安装应用」</span>
-                </div>
-              </div>
-            `;
-          } else if (browser === 'ios' || browser === 'safari') {
-            instructions += `
-              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-                <div style="font-weight:500;margin-bottom:12px;">📌 iOS 安装步骤：</div>
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
-                  <span>点击 Safari 底部的分享按钮 <span style="font-size:18px;">⎙</span></span>
-                </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
-                  <span>滑动找到「添加到主屏幕」</span>
-                </div>
-              </div>
-            `;
-          } else {
-            instructions += `
-              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-                <div style="color:#64748b;">当前浏览器可能不支持 PWA 安装</div>
-                <div style="margin-top:8px;">建议使用 Chrome、Edge 或 Safari 浏览器</div>
-              </div>
-            `;
-          }
-          
-          const modal = modalManager.create(
-            title,
-            instructions,
-            '<button class="close-btn" id="closeInstallModal">关闭</button>'
-          );
-          
-          if (modal) {
-            modal.querySelector('#closeInstallModal').onclick = () => modalManager.close(modal);
-          }
-          return;
-        }
-
-        try {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          
-          if (outcome === 'accepted') {
-            localStorage.setItem('pwa_installed', 'true');
-            showToast('✅ 已添加到桌面');
-            localStorage.setItem('pwa_install_date', new Date().toISOString());
-          } else {
-            showToast('已取消安装');
-          }
-          
-          deferredPrompt = null;
-        } catch (error) {
-          console.error('安装失败:', error);
-          showToast('安装失败，请稍后重试');
-        }
-      };
-    }
   </script>
 </body>
 </html>
