@@ -3561,11 +3561,68 @@ function showPaxSelectionModal(amount, category) {
   </script>
   <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/expense-record/sw.js', { scope: '/expense-record/' })
-        .then(reg => console.log('✅ Service Worker 注册成功', reg.scope))
-        .catch(err => console.log('❌ Service Worker 注册失败', err));
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('/expense-record/sw.js', {
+          scope: '/expense-record/'
+        });
+        console.log('✅ Service Worker 注册成功', reg.scope);
+
+        // ⭐ 8.1 自动更新：每小时检查一次
+        setInterval(() => {
+          reg.update();
+          console.log('🔄 正在检查更新...');
+        }, 60 * 60 * 1000);
+
+        // 可选：监听更新发现
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              showToast('🔄 发现新版本，刷新页面后生效');
+            }
+          });
+        });
+
+      } catch (err) {
+        console.log('❌ Service Worker 注册失败', err);
+      }
     });
+
+    // 📡 8.2 离线/在线状态提示
+    window.addEventListener('offline', () => {
+      showToast('📴 当前处于离线模式，数据将保存至本地');
+    });
+
+    window.addEventListener('online', () => {
+      showToast('🌐 网络已恢复');
+    });
+
+    // 📲 8.4 安装提示 (PWA)
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      // 可以在这里显示一个安装按钮，为了不破坏现有UI，我们简单显示一个Toast
+      // 或者你可以把菜单里的某个按钮做成“安装应用”
+      console.log('📲 应用可安装');
+      // showToast('📲 可安装到桌面 (菜单中点击安装)');
+    });
+
+    // 将安装方法挂载到全局，方便菜单调用
+    window.installPWA = async () => {
+      if (!deferredPrompt) {
+        showToast('📲 应用已安装或暂不支持安装');
+        return;
+      }
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        showToast('✅ 已添加到桌面');
+      }
+      deferredPrompt = null;
+    };
   }
 </script>
 </body>
