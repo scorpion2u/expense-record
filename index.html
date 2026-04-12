@@ -1361,6 +1361,7 @@ body.dark-mode .pax-skip-btn {
         <div class="menu-container">
           <button class="menu-button" id="menuButton" aria-label="菜单" aria-expanded="false" aria-haspopup="true">☰</button>
           <div class="menu-dropdown" id="menuDropdown" role="menu">
+          <div class="menu-item" id="installAppBtn" role="menuitem">📱 安装应用</div>
             <div class="menu-item" id="settingsMenuItem" role="menuitem">🎨 界面设置</div>
             <div class="menu-item" id="darkModeMenuItem" role="menuitem">🌙 暗色模式</div>
             <div class="menu-item" id="statisticsMenuItem" role="menuitem">📊 月度统计</div>
@@ -3170,7 +3171,12 @@ function showPaxSelectionModal(amount, category) {
 
         // 菜单项
         document.getElementById('exportNoteBtn').onclick = () => { exportNote(); closeMenu(); };
-        document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
+        document.getElementById('installAppBtn').onclick = () => {
+    if (window.installPWA) window.installPWA();
+    closeMenu();
+};
+        document.
+       getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
         document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); closeMenu(); };
         document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); closeMenu(); };
         document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
