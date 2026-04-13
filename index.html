@@ -3845,6 +3845,7 @@ function initServiceWorker() {
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
+    updateInstallMenuText();
   });
 
   window.addEventListener('offline', () => {
