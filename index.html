@@ -3825,58 +3825,49 @@
       }
 
       // ==================== Service Worker 初始化 ====================
-      function initServiceWorker() {
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', async () => {
-            const possibleScopes = [
-              location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1),
-              '/expense-record/',
-              '/',
-            ].filter((v, i, a) => a.indexOf(v) === i);
-            
-            for (const scope of possibleScopes) {
-              try {
-                const reg = await navigator.serviceWorker.register(scope + 'sw.js', { scope });
-                console.log('✅ Service Worker 注册成功，scope:', reg.scope);
-                
-                setInterval(() => {
-                  reg.update();
-                  console.log('🔄 正在检查更新...');
-                }, 60 * 60 * 1000);
+function initServiceWorker() {
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      const basePath = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+      
+      try {
+        const reg = await navigator.serviceWorker.register(basePath + 'sw.js', { scope: basePath });
+        console.log('✅ Service Worker 注册成功，scope:', reg.scope);
+        
+        setInterval(() => {
+          reg.update();
+        }, 60 * 60 * 1000);
 
-                reg.addEventListener('updatefound', () => {
-                  const newWorker = reg.installing;
-                  newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      showToast('🔄 发现新版本，刷新页面后生效');
-                    }
-                  });
-                });
-                
-                return;
-              } catch (err) {
-                console.log(`❌ 尝试 scope ${scope} 失败:`, err);
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showToast('🔄 发现新版本，刷新页面后生效');
               }
-            }
-            
-            console.warn('⚠️ 所有路径都注册失败，离线功能不可用');
-          });
-        }
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-          e.preventDefault();
-          deferredPrompt = e;
-          console.log('📲 应用可安装');
+            });
+          }
         });
-
-        window.addEventListener('offline', () => {
-          showToast('📴 当前处于离线模式，数据将保存至本地');
-        });
-
-        window.addEventListener('online', () => {
-          showToast('🌐 网络已恢复');
-        });
+        
+      } catch (err) {
+        console.warn('⚠️ Service Worker 注册失败，离线功能不可用');
       }
+    });
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+  });
+
+  window.addEventListener('offline', () => {
+    showToast('📴 当前处于离线模式');
+  });
+
+  window.addEventListener('online', () => {
+    showToast('🌐 网络已恢复');
+  });
+}
 
       // ==================== 初始化 ====================
       window.onload = function() {
@@ -3889,7 +3880,6 @@
         updateInputColor();
         initBackToTop();
         initServiceWorker();
-        
         updateInstallMenuText();
         
         const standaloneQuery = window.matchMedia('(display-mode: standalone)');
