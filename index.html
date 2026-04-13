@@ -1543,20 +1543,23 @@
 
       // ==================== 更新安装菜单文本 ====================
       function updateInstallMenuText() {
-        const installBtn = document.getElementById('installAppBtn');
-        if (!installBtn) return;
-        
-        if (isRunningAsPWA()) {
-          installBtn.innerHTML = '✅ 已安装应用';
-          installBtn.style.opacity = '0.6';
-        } else if (localStorage.getItem('pwa_installed') === 'true') {
-          installBtn.innerHTML = '📱 已安装（查找应用）';
-          installBtn.style.opacity = '0.8';
-        } else {
-          installBtn.innerHTML = '📲 安装应用';
-          installBtn.style.opacity = '1';
-        }
-      }
+  const installBtn = document.getElementById('installAppBtn');
+  if (!installBtn) return;
+  
+  if (isRunningAsPWA()) {
+    // 确实在 PWA 模式下运行
+    installBtn.innerHTML = '✅ 已安装应用';
+    installBtn.style.opacity = '0.6';
+  } else if (deferredPrompt) {
+    // 浏览器支持安装，可以触发安装弹窗
+    installBtn.innerHTML = '📲 安装应用';
+    installBtn.style.opacity = '1';
+  } else {
+    // 浏览器暂不支持安装，或已安装过
+    installBtn.innerHTML = '📱 添加到主屏幕';
+    installBtn.style.opacity = '0.8';
+  }
+}
 
       // ==================== PWA 安装功能 ====================
       async function installPWA() {
@@ -1651,11 +1654,10 @@
           const { outcome } = await deferredPrompt.userChoice;
           
           if (outcome === 'accepted') {
-            localStorage.setItem('pwa_installed', 'true');
-            showToast('✅ 已添加到桌面');
-            localStorage.setItem('pwa_install_date', new Date().toISOString());
-            updateInstallMenuText();
-          } else {
+  showToast('✅ 已添加到桌面');
+  deferredPrompt = null;  // 安装后清空，下次菜单会变
+  updateInstallMenuText();
+} else {
             showToast('已取消安装');
           }
           
