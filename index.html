@@ -19,12 +19,15 @@
       -webkit-tap-highlight-color: transparent;
     }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      padding: 10px 10px;
-      display: flex;
-      justify-content: center;
-      transition: background 0.2s ease, color 0.2s ease;
-    }
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  padding: 10px 10px;
+  display: flex;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease;
+
+  font-size: var(--font-size-base);
+  background: var(--bg-color);
+}
     :root {
       --card-radius: 24px;
       --card-padding: 16px;
@@ -36,10 +39,8 @@
       --spacing-gap: 6px;
       --bg-color: #f1f5f9;
       --card-bg: #ffffff;
-    }
-    body {
-      font-size: var(--font-size-base);
-      background: var(--bg-color);
+      --border-light: rgba(0, 0, 0, 0.18);
+      --border-strong-light: rgba(0, 0, 0, 0.25);
     }
     .container {
       max-width: 500px;
@@ -69,7 +70,7 @@
       padding: var(--stat-padding) 4px;
       text-align: center;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-light);
       cursor: pointer;
     }
     .stat-label {
@@ -106,7 +107,7 @@
     .list-card {
       background: var(--card-bg);
       border-radius: var(--card-radius);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-light);
       margin-bottom: var(--spacing-gap);
     }
     .date-header {
@@ -228,7 +229,6 @@
       box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
       display: none;
       z-index: 200;
-      overflow: hidden;
       max-height: 400px;
       overflow-y: auto;
     }
@@ -380,7 +380,7 @@
       border-radius: 12px;
       cursor: pointer;
       font-size: calc(var(--font-size-base) * 0.75);
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-light);
       transition: all 0.1s ease;
       padding: 4px 0;
     }
@@ -479,7 +479,7 @@ body.dark-mode #backupStatus {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-light);
       transition: all 0.1s;
     }
     .entries-list li:active {
@@ -605,7 +605,7 @@ body.dark-mode #backupStatus {
       justify-content: space-between;
       align-items: center;
       padding: 16px 20px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--border-light);
     }
     .modal-title {
       font-size: 1.2rem;
@@ -630,8 +630,8 @@ body.dark-mode #backupStatus {
       padding: 16px 20px;
     }
     .modal-footer {
-      padding: 12px 20px;
-      border-top: 1px solid #e2e8f0;
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-light);
     }
     @keyframes slideUp {
       from {
@@ -778,7 +778,7 @@ body.dark-mode #backupStatus {
     }
     .search-result-item {
       padding: 10px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid var(--border-light);
       display: flex;
       cursor: pointer;
       justify-content: space-between;
@@ -792,7 +792,7 @@ body.dark-mode #backupStatus {
       background: rgba(0, 0, 0, 0.04);
       cursor: pointer;
       transition: all 0.15s;
-      border: 1px solid rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-light);
     }
     .pay-card:active {
       background: rgba(0, 0, 0, 0.08);
@@ -810,8 +810,11 @@ body.dark-mode #backupStatus {
     }
     /* 深色模式样式 */
     body.dark-mode {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
+    --bg-color: #0f172a;
+    --card-bg: #1e293b;
+    
+    --border-light: rgba(255, 255, 255, 0.08);
+    --border-strong-light: rgba(255, 255, 255, 0.18);
     }
     body.dark-mode .stat-card,
     body.dark-mode .input-card,
@@ -823,15 +826,6 @@ body.dark-mode #backupStatus {
     }
     body.dark-mode .stat-label {
       color: #94a3b8;
-    }
-    body.dark-mode .stat-number {
-      color: #f1f5f9;
-    }
-    body.dark-mode .stat-card.income .stat-number {
-      color: var(--income-color);
-    }
-    body.dark-mode .stat-card.expense .stat-number {
-      color: var(--expense-color);
     }
     body.dark-mode .selected-label {
       background: rgba(255, 255, 255, 0.15);
@@ -1319,6 +1313,193 @@ body.dark-mode .highlight-entry {
   background: rgba(194, 65, 58, 0.25) !important;
 }
 
+.arrow {
+  font-size:12px;
+  opacity:0.6;
+  transition:0.2s;
+}
+
+/* ===== 修复导出弹窗选择框样式 ===== */
+.select-box {
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  position: relative;
+  cursor: pointer;
+}
+
+body.dark-mode .select-box {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: #1e293b;
+}
+
+.select-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.select-display .text {
+  color: #1e293b;
+}
+
+body.dark-mode .select-display .text {
+  color: #e2e8f0;
+}
+
+.select-display .arrow {
+  font-size: 12px;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+
+body.dark-mode .select-display .arrow {
+  color: #94a3b8;
+}
+
+.select-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1010;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .select-options {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.select-options div {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-size: 15px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background 0.1s;
+  color: #1e293b;
+}
+
+body.dark-mode .select-options div {
+  color: #e2e8f0;
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.select-options div:last-child {
+  border-bottom: none;
+}
+
+.select-options div:hover,
+.select-options div:active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .select-options div:hover,
+body.dark-mode .select-options div:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.select-options div.active {
+  background: rgba(194, 65, 58, 0.1);
+  color: var(--expense-color);
+  font-weight: 500;
+}
+
+body.dark-mode .select-options div.active {
+  background: rgba(194, 65, 58, 0.2);
+}
+
+/* 自定义日期输入框 */
+#customBox {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+body.dark-mode #customBox {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#customBox input[type="date"] {
+  flex: 1;
+  min-width: 130px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  font-size: 14px;
+  color: #1e293b;
+  outline: none;
+}
+
+body.dark-mode #customBox input[type="date"] {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e2e8f0;
+}
+
+#customBox input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+body.dark-mode #customBox input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* 弹窗内按钮样式 */
+.btn-cancel {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+
+body.dark-mode .btn-cancel {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+}
+
+.btn-cancel:active {
+  background: #e2e8f0;
+  transform: scale(0.98);
+}
+
+body.dark-mode .btn-cancel:active {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* 导出弹窗标题样式 */
+.export-section-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+body.dark-mode .export-section-title {
+  color: #e2e8f0;
+}
   </style>
 </head>
 <body>
@@ -3533,185 +3714,291 @@ const monthSelect = createCustomSelect(container, options, defaultMonth, () => {
         };
       }
 
-      // ==================== 导出备份弹窗 ====================
-      function showExportDialog() {
-        const currentMonthStr = selectedDate.slice(0, 7);
-        const currentYearStr = selectedDate.slice(0, 4);
-        const monthDisplay = `${currentMonthStr.split('-')[1]}/${currentMonthStr.split('-')[0]}`;
-
-        const html = `
-          <div class="export-options">
-            <div style="margin-bottom:16px;">
-              <label style="display:block;margin-bottom:8px;font-weight:500;">📅 导出范围：</label>
-              <div id="exportRangeContainer"></div>
-            </div>
-            <div id="customDateRange" style="display:none;margin-bottom:16px;">
-              <label style="display:block;margin-bottom:8px;font-weight:500;">📅 日期范围：</label>
-              <div style="display:flex;gap:8px;">
-                <input type="date" id="startDate" style="flex:1;padding:10px;border-radius:28px;">
-                <span>→</span>
-                <input type="date" id="endDate" style="flex:1;padding:10px;border-radius:28px;">
+      // ==================== 修复后的导出备份弹窗 ====================
+    function showExportDialog() {
+      const html = `
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- 导出范围 -->
+          <div>
+            <div class="export-section-title">📅 导出范围：</div>
+            <div class="select-box" id="rangeSelect">
+              <div class="select-display">
+                <span class="text">当前月份</span>
+                <span class="arrow">▼</span>
+              </div>
+              <div class="select-options">
+              <div data-value="all">全部记录</div>
+               <div data-value="month" class="active">当前月份</div>
+                <div data-value="year">当前年份</div>
+                <div data-value="custom">自定义日期范围</div>
               </div>
             </div>
-            <div style="margin-bottom:16px;">
-              <label style="display:block;margin-bottom:8px;font-weight:500;">💰 收支类型：</label>
-              <div id="exportTypeContainer"></div>
-            </div>
-            <div id="categoryFilterDiv" style="display:none;margin-bottom:16px;">
-              <label style="display:block;margin-bottom:8px;font-weight:500;">📝 分类筛选：</label>
-              <div id="exportCategoryContainer"></div>
-            </div>
-            <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;font-size:12px;">💡 提示：导出文件可按月份/类型筛选</div>
           </div>
-        `;
 
-        const modal = modalManager.create('📤 导出备份', html, '<button id="confirmExport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导出</button><button id="cancelExport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>');
-        if (!modal) return;
+          <!-- 自定义日期 -->
+          <div id="customBox" style="display:none;">
+            <input type="date" id="startDate" value="${getLocalDate()}">
+            <span style="color:#64748b;">至</span>
+            <input type="date" id="endDate" value="${getLocalDate()}">
+          </div>
 
-        const customRange = modal.querySelector('#customDateRange');
-        const categoryDiv = modal.querySelector('#categoryFilterDiv');
-        
-        const rangeOptions = [
-          { value: 'all', label: `全部数据 (${entries.length}条)` },
-          { value: 'current_month', label: `当前月份 (${monthDisplay})` },
-          { value: 'current_year', label: `当前年份 (${currentYearStr})` },
-          { value: 'custom', label: '自定义日期范围' }
-        ];
-        
-        let currentRange = 'current_month';
-        
-        const rangeSelect = createCustomSelect(
-          modal.querySelector('#exportRangeContainer'),
-          rangeOptions,
-          currentRange,
-          (value) => {
-            currentRange = value;
-            customRange.style.display = value === 'custom' ? 'block' : 'none';
-          }
-        );
-        
-        const typeOptions = [
-          { value: 'all', label: '全部' },
-          { value: 'expense', label: '💸 仅支出' },
-          { value: 'income', label: '💰 仅收入' }
-        ];
-        
-        let currentTypeExport = 'all';
-        let categorySelect = null;
-        
-        const typeSelect = createCustomSelect(
-          modal.querySelector('#exportTypeContainer'),
-          typeOptions,
-          currentTypeExport,
-          (value) => {
-            currentTypeExport = value;
-            if (value !== 'all') {
-              categoryDiv.style.display = 'block';
-              const cats = value === 'expense' ? expenseCats : incomeCats;
-              const catOptions = [
-                { value: '', label: '全部' },
-                ...cats.map(c => ({ value: c, label: c }))
-              ];
-              
-              const container = modal.querySelector('#exportCategoryContainer');
-              container.innerHTML = '';
-              categorySelect = createCustomSelect(container, catOptions, '', () => {});
-            } else {
-              categoryDiv.style.display = 'none';
-            }
-          }
-        );
+          <!-- 类型 -->
+          <div>
+            <div class="export-section-title">💰 收支类型：</div>
+            <div class="select-box" id="typeSelect">
+              <div class="select-display">
+                <span class="text">全部</span>
+                <span class="arrow">▼</span>
+              </div>
+              <div class="select-options">
+                <div data-value="all" class="active">全部</div>
+                <div data-value="expense">仅支出</div>
+                <div data-value="income">仅收入</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
 
-        modal.querySelector('#confirmExport').onclick = () => {
-          let filteredEntries = [...entries];
+      const modal = modalManager.create(
+        '📤 导出备份',
+        html,
+        `
+          <button id="confirmExport" style="width:100%;padding:12px;background:var(--expense-color);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">确认导出</button>
+          <button id="cancelExport" class="btn-cancel">取消</button>
+        `
+      );
+
+      if (!modal) return;
+
+      let selectedRange = 'month';
+      let selectedType = 'all';
+
+      // 通用 select 逻辑
+      function setupSelect(boxId, callback) {
+        const box = modal.querySelector(boxId);
+        const display = box.querySelector('.select-display');
+        const textSpan = display.querySelector('.text');
+        const arrow = display.querySelector('.arrow');
+        const options = box.querySelector('.select-options');
+        const optionsDivs = options.querySelectorAll('div');
+
+        // 点击展开/收起
+        display.onclick = (e) => {
+          e.stopPropagation();
+          const isOpen = options.style.display === 'block';
           
-          filteredEntries.sort((a, b) => {
-            const dateCompare = a.date.localeCompare(b.date);
-            if (dateCompare !== 0) return dateCompare;
-            return (a.time || '').localeCompare(b.time || '');
+          // 关闭其他下拉框
+          modal.querySelectorAll('.select-options').forEach(opt => {
+            opt.style.display = 'none';
+            const parentBox = opt.closest('.select-box');
+            if (parentBox) {
+              parentBox.querySelector('.arrow').style.transform = 'rotate(0deg)';
+            }
           });
           
-          const range = rangeSelect.getValue();
-          if (range === 'current_month') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentMonthStr));
-          else if (range === 'current_year') filteredEntries = filteredEntries.filter(e => e.date.startsWith(currentYearStr));
-          else if (range === 'custom') {
-            const start = modal.querySelector('#startDate')?.value;
-            const end = modal.querySelector('#endDate')?.value;
-            if (start && end) filteredEntries = filteredEntries.filter(e => e.date >= start && e.date <= end);
+          if (!isOpen) {
+            options.style.display = 'block';
+            arrow.style.transform = 'rotate(180deg)';
+          } else {
+            options.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
           }
+        };
 
-          const type = typeSelect.getValue();
-          if (type !== 'all') filteredEntries = filteredEntries.filter(e => e.type === type);
+        // 选项点击
+        optionsDivs.forEach(opt => {
+          opt.onclick = (e) => {
+            e.stopPropagation();
+            const value = opt.dataset.value;
+            const label = opt.innerText;
+            
+            // 更新选中状态
+            optionsDivs.forEach(o => o.classList.remove('active'));
+            opt.classList.add('active');
+            
+            // 更新显示文本
+            textSpan.innerText = label;
+            
+            // 关闭下拉
+            options.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+            
+            // 回调
+            callback(value);
+          };
+        });
+      }
 
-          const category = categorySelect ? categorySelect.getValue() : '';
-          if (category) filteredEntries = filteredEntries.filter(e => e.note === category);
+      // 初始化选择器
+      setupSelect('#rangeSelect', (val) => {
+        selectedRange = val;
+        const customBox = modal.querySelector('#customBox');
+        customBox.style.display = val === 'custom' ? 'flex' : 'none';
+      });
 
-          if (filteredEntries.length === 0) {
-            showToast('没有符合条件的数据可导出');
+      setupSelect('#typeSelect', (val) => {
+        selectedType = val;
+      });
+
+      // 点击外部关闭下拉框
+      modal.addEventListener('click', (e) => {
+        if (!e.target.closest('.select-box')) {
+          modal.querySelectorAll('.select-options').forEach(opt => {
+            opt.style.display = 'none';
+            const parentBox = opt.closest('.select-box');
+            if (parentBox) {
+              parentBox.querySelector('.arrow').style.transform = 'rotate(0deg)';
+            }
+          });
+        }
+      });
+
+      // 导出逻辑
+      modal.querySelector('#confirmExport').onclick = async () => {
+        const range = selectedRange;
+        const type = selectedType;
+
+        // 获取数据
+        let filtered = await dbManager.getAll('entries');
+
+        // 按范围筛选
+        if (range === 'month') {
+          const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+          filtered = filtered.filter(e => e.date.startsWith(monthStr));
+        } else if (range === 'year') {
+          const yearStr = String(currentYear);
+          filtered = filtered.filter(e => e.date.startsWith(yearStr));
+        } else if (range === 'custom') {
+          const start = modal.querySelector('#startDate').value;
+          const end = modal.querySelector('#endDate').value;
+
+          if (!start || !end) {
+            showToast('请选择日期范围');
             return;
           }
 
-          const backup = {
-            version: '2.0',
-            source: 'main',
-            entries: filteredEntries,
-            expenseCats,
-            incomeCats,
-            uiSettings,
-            exportDate: new Date().toISOString(),
-            exportInfo: {
-              totalRecords: filteredEntries.length,
-              dateRange: getDateRangeFromEntries(filteredEntries),
-              totalExpense: calculateTotalByType(filteredEntries, 'expense'),
-              totalIncome: calculateTotalByType(filteredEntries, 'income')
-            }
-          };
+          filtered = filtered.filter(e => e.date >= start && e.date <= end);
+        }
 
-          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
+        // 按类型筛选
+        if (type !== 'all') {
+          filtered = filtered.filter(e => e.type === type);
+        }
 
-          const formatDateDMY = (dateStr) => {
-            if (!dateStr) return '';
-            const parts = dateStr.split('-');
-            if (parts.length !== 3) return dateStr;
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
-          };
+        // 排序
+        filtered.sort((a, b) => {
+          return new Date(`${b.date} ${b.time || '00:00'}`) -
+                 new Date(`${a.date} ${a.time || '00:00'}`);
+        });
 
-          let fileName;
-          const monthNames = ['01/', '02/', '03/', '04/', '05/', '06/', '07/', '08/', '09/', '10/', '11/', '12/'];
+        if (!filtered.length) {
+          showToast('没有符合条件的数据');
+          return;
+        }
 
-          if (range === 'current_month') {
-            const monthIndex = parseInt(currentMonthStr.split('-')[1]) - 1;
-            const year = currentMonthStr.split('-')[0];
-            fileName = `记帐本备份_${monthNames[monthIndex]}${year}`;
-          } else if (range === 'current_year') {
-            fileName = `记帐本备份_${currentYearStr}年`;
-          } else if (range === 'custom') {
-            const start = modal.querySelector('#startDate')?.value || '';
-            const end = modal.querySelector('#endDate')?.value || '';
-            fileName = `记帐本备份_${formatDateDMY(start)}至${formatDateDMY(end)}`;
-          } else {
-            const now = new Date();
-            const dateStr = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
-            fileName = `记帐本备份_全部_${dateStr}`;
-          }
-
-          if (type === 'expense') fileName += '_仅支出';
-          if (type === 'income') fileName += '_仅收入';
-
-          fileName += '.json';
-
-          a.download = fileName;
-          a.click();
-          URL.revokeObjectURL(a.href);
-          showToast(`✅ 导出成功！共 ${filteredEntries.length} 条记录`);
-          modalManager.close(modal);
-          saveBackupTime();
+        // 构建导出数据
+        const exportData = {
+          source: 'main',
+          version: '1.0',
+          exportDate: new Date().toISOString(),
+          entries: filtered,
+          expenseCats: expenseCats,
+          incomeCats: incomeCats
         };
 
-        modal.querySelector('#cancelExport').onclick = () => modalManager.close(modal);
+        // 生成文件名
+        let fileName = '记账本备份';
+        
+        if (range === 'month') {
+          const m = String(currentMonth + 1).padStart(2, '0');
+          fileName += `_${m}_${currentYear}`;
+        } else if (range === 'year') {
+          fileName += `_${currentYear}`;
+        } else if (range === 'custom') {
+          const start = modal.querySelector('#startDate').value;
+          const end = modal.querySelector('#endDate').value;
+          if (start && end) {
+            const format = (d) => {
+              const [y, m, day] = d.split('-');
+              return `${day}_${m}_${y}`;
+            };
+            fileName += `_${format(start)}至${format(end)}`;
+          } else {
+            fileName += '_自定义';
+          }
+        } else {
+          fileName += '_全部记录';
+        }
+
+        if (type === 'expense') fileName += '_仅支出';
+        if (type === 'income') fileName += '_仅收入';
+        
+        fileName += '.json';
+
+        // 下载文件
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+          type: 'application/json'
+        });
+
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(a.href);
+
+        // 保存备份时间
+        saveBackupTime();
+
+        showToast(`✅ 已导出 ${filtered.length} 条记录`);
+        modalManager.close(modal);
+      };
+
+      modal.querySelector('#cancelExport').onclick = () => {
+        modalManager.close(modal);
+      };
+    }
+
+    // 添加保存备份时间的辅助函数
+    function saveBackupTime() {
+      const now = new Date().toISOString();
+      localStorage.setItem('lastBackupTime', now);
+      updateBackupStatus(now);
+    }
+
+    function updateBackupStatus(lastBackupTime) {
+      const now = new Date();
+      const last = new Date(lastBackupTime);
+      const diffMs = now - last;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+      const el = document.getElementById("backupStatus");
+      if (!el) return;
+
+      if (diffDays === 0) {
+        if (diffHours === 0) {
+          el.innerText = "💾 刚刚备份";
+        } else {
+          el.innerText = `💾 ${diffHours}小时前备份`;
+        }
+      } else if (diffDays === 1) {
+        el.innerText = "💾 1天前备份";
+      } else {
+        el.innerText = `💾 ${diffDays}天前备份`;
       }
+    }
+
+    // 页面加载时更新备份状态
+    window.addEventListener('load', function() {
+      const savedBackupTime = localStorage.getItem('lastBackupTime');
+      if (savedBackupTime) {
+        updateBackupStatus(savedBackupTime);
+      } else {
+        const el = document.getElementById("backupStatus");
+        if (el) el.innerText = "💾 尚未备份";
+      }
+    });
 
       // ==================== 导入备份弹窗 ====================
       function showImportDialog() {
