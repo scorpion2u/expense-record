@@ -2,7 +2,8 @@
 <html lang="zh">
 <head>
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#c2413a">
+  <meta name="theme-color" content="#c2413a" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="记账本">
@@ -431,15 +432,25 @@
       margin-top: 1px;
     }
     .list-card {
-      padding: calc(var(--card-padding) - 2px) var(--card-padding);
-      margin-bottom: 8px;
-    }
-    .entries-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+  padding: calc(var(--card-padding) - 2px) var(--card-padding);
+  margin-bottom: 8px;
+}
+.entries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#backupStatus {
+  font-size: calc(var(--font-size-base) * 0.7);
+  color: #8b9ab0;
+  opacity: 0.8;
+}
+body.dark-mode #backupStatus {
+  color: #94a3b8;
+}
     .entries-header h4 {
       font-size: calc(var(--font-size-base) * 0.9);
       font-weight: 600;
@@ -839,10 +850,7 @@
     body.dark-mode .entry-time {
       color: #94a3b8;
     }
-    body.dark-mode .amount-box,
-    body.dark-mode .category-wrapper {
-      background: rgba(255, 255, 255, 0.08);
-    }
+    
     body.dark-mode .amount-box input,
     body.dark-mode #categoryInput {
       color: #f1f5f9;
@@ -1131,6 +1139,55 @@
       color: #94a3b8;
     }
 
+    /* ===== 深色模式输入框样式 ===== */
+body.dark-mode input,
+body.dark-mode .custom-select-trigger,
+body.dark-mode textarea,
+body.dark-mode select {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #64748b;
+}
+
+body.dark-mode input:focus,
+body.dark-mode .custom-select-trigger:focus {
+  border-color: var(--focus-color);
+}
+
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content .custom-select-trigger {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* 输入框容器背景统一，极淡边框 */
+body.dark-mode .amount-box,
+body.dark-mode .category-wrapper {
+  background: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 聚焦时使用外发光效果（与亮色模式一致） */
+body.dark-mode .amount-box:focus-within,
+body.dark-mode .category-wrapper:focus-within {
+  box-shadow: 0 0 0 2px var(--focus-color) !important;
+}
+
+/* 输入框本身透明，继承容器背景，去掉自己的边框 */
+body.dark-mode .amount-box input,
+body.dark-mode #categoryInput {
+  background: transparent !important;
+  color: #e2e8f0 !important;
+  border: none !important;
+  outline: none !important;
+}
+/* ===== 新增结束 ===== */
+
     /* 自定义选择器样式 */
     .custom-select {
       position: relative;
@@ -1228,7 +1285,9 @@
     body.dark-mode .custom-select-option.selected {
       background: rgba(194, 65, 58, 0.2);
     }
-
+body.dark-mode .custom-select-trigger:active {
+  background: rgba(255, 255, 255, 0.1);
+}
     .select-overlay {
       position: fixed;
       top: 0;
@@ -1242,9 +1301,35 @@
     .select-overlay.show {
       display: block;
     }
+    
+    .highlight-entry {
+  background: rgba(194, 65, 58, 0.15) !important;
+  border: 2px solid var(--expense-color) !important;
+  transition: all 0.3s ease;
+  animation: pulse-highlight 1.5s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+  0% { background: rgba(194, 65, 58, 0.3); }
+  50% { background: rgba(194, 65, 58, 0.1); }
+  100% { background: rgba(194, 65, 58, 0.15); }
+}
+
+body.dark-mode .highlight-entry {
+  background: rgba(194, 65, 58, 0.25) !important;
+}
+
   </style>
 </head>
 <body>
+  <!-- 加载指示器 -->
+  <div id="loadingOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg-color);display:flex;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.3s ease;">
+    <div style="text-align:center;">
+      <div class="loading-spinner" style="width:40px;height:40px;border:4px solid rgba(0,0,0,0.1);border-top-color:var(--expense-color);"></div>
+      <div style="margin-top:16px;color:#64748b;font-size:14px;">加载中...</div>
+    </div>
+  </div>
+  
   <div class="container">
     <div class="stats-row">
       <div class="stat-card income" role="button" tabindex="0" aria-label="查看本月收入详情">
@@ -1316,14 +1401,16 @@
       <div class="calendar-grid" id="calendarGrid" role="grid" aria-label="日历"></div>
     </div>
 
-    <div class="list-card">
-      <div class="entries-header">
-        <h4>📋 今日明细 <span id="entryCount"></span></h4>
-        <button class="view-more-btn" id="viewMoreBtn">查看全部</button>
-      </div>
-      <ul class="entries-list" id="entriesList" aria-label="今日记录列表"></ul>
-    </div>
+    <div class="entries-header">
+  <h4>📋 今日明细 <span id="entryCount"></span></h4>
+
+  <div style="display:flex; align-items:center; gap:10px;">
+    <span id="backupStatus">💾 上次备份：3天前</span>
+    <button class="view-more-btn" id="viewMoreBtn">查看全部</button>
   </div>
+</div>
+
+<ul class="entries-list" id="entriesList"></ul>
 
   <button class="float-back-top" id="floatBackTop" aria-label="返回顶部">↑</button>
 
@@ -1347,10 +1434,10 @@
       // ==================== 常量定义 ====================
       const CONSTANTS = {
         STORAGE_KEYS: {
-          ENTRIES: 'book_v10_main',
-          EXPENSE_CATS: 'book_expense_cats_v10',
-          INCOME_CATS: 'book_income_cats_v10',
-          SETTINGS: 'book_ui_settings_v10'
+          ENTRIES: 'book_v1_main',
+          EXPENSE_CATS: 'book_expense_cats_v1',
+          INCOME_CATS: 'book_income_cats_v1',
+          SETTINGS: 'book_ui_settings_v1'
         },
         PAYMENT_TYPES: ['TNG', '现金', '信用卡', '借记卡'],
         DEFAULT_CATS: {
@@ -1361,6 +1448,176 @@
         MAX_ENTRIES: 5000,
         SWIPE_THRESHOLD: 50
       };
+
+      // ==================== IndexedDB 管理类（增强版）====================
+      class IndexedDBManager {
+        constructor() {
+          this.dbName = 'AccountingBookDB';
+          this.version = 1;
+          this.db = null;
+        }
+
+        async open() {
+          if (this.db) return this.db;
+          
+          return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.version);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => {
+              this.db = request.result;
+              resolve(this.db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+              const db = event.target.result;
+              
+              if (!db.objectStoreNames.contains('entries')) {
+                const entriesStore = db.createObjectStore('entries', { keyPath: 'id' });
+                entriesStore.createIndex('date', 'date', { unique: false });
+                entriesStore.createIndex('timestamp', 'timestamp', { unique: false });
+              }
+              
+              if (!db.objectStoreNames.contains('settings')) {
+                db.createObjectStore('settings', { keyPath: 'key' });
+              }
+              
+              if (!db.objectStoreNames.contains('categories')) {
+                db.createObjectStore('categories', { keyPath: 'key' });
+              }
+            };
+          });
+        }
+
+        async getAll(storeName) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+
+        async get(storeName, key) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.get(key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+
+        async put(storeName, item) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.put(item);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+
+        async putAll(storeName, items) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            let completed = 0;
+            let hasError = false;
+            
+            items.forEach(item => {
+              const request = store.put(item);
+              request.onerror = () => {
+                if (!hasError) {
+                  hasError = true;
+                  reject(request.error);
+                }
+              };
+              request.onsuccess = () => {
+                completed++;
+                if (completed === items.length && !hasError) {
+                  resolve();
+                }
+              };
+            });
+          });
+        }
+
+        async delete(storeName, key) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.delete(key);
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+
+        async clear(storeName) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.clear();
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+
+        async clearAll() {
+          const storeNames = ['entries', 'settings', 'categories'];
+          await Promise.all(storeNames.map(name => this.clear(name)));
+        }
+
+        async getOldestEntries(limit = 1) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction('entries', 'readonly');
+            const store = transaction.objectStore('entries');
+            const index = store.index('timestamp');
+            
+            const request = index.openCursor();
+            const results = [];
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = (event) => {
+              const cursor = event.target.result;
+              if (cursor && results.length < limit) {
+                results.push(cursor.value);
+                cursor.continue();
+              } else {
+                resolve(results);
+              }
+            };
+          });
+        }
+
+        async getCount(storeName) {
+          const db = await this.open();
+          return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.count();
+            
+            request.onerror = () => reject(request.error);
+            request.onsuccess = () => resolve(request.result);
+          });
+        }
+      }
+
+      const dbManager = new IndexedDBManager();
 
       // ==================== 全局变量 ====================
       let entries = [];
@@ -1376,8 +1633,8 @@
       let isAdding = false;
       let applyTimeout = null;
       let isClearing = false;
-      let saveTimer = null;
       let deferredPrompt = null;
+      let renderCalendarTimer = null;
 
       let uiSettings = {
         cardRadius: 24,
@@ -1543,115 +1800,112 @@
 
       // ==================== 更新安装菜单文本 ====================
       function updateInstallMenuText() {
-  const installBtn = document.getElementById('installAppBtn');
-  if (!installBtn) return;
-  
-  if (isRunningAsPWA()) {
-    // 确实在 PWA 模式下运行
-    installBtn.innerHTML = '✅ 已安装应用';
-    installBtn.style.opacity = '0.6';
-  } else if (deferredPrompt) {
-    // 浏览器支持安装，可以触发安装弹窗
-    installBtn.innerHTML = '📲 安装应用';
-    installBtn.style.opacity = '1';
-  } else {
-    // 浏览器暂不支持安装，或已安装过
-    installBtn.innerHTML = '📱 添加到主屏幕';
-    installBtn.style.opacity = '0.8';
-  }
-}
+        const installBtn = document.getElementById('installAppBtn');
+        if (!installBtn) return;
+        
+        if (isRunningAsPWA()) {
+          installBtn.innerHTML = '✅ 已安装应用';
+          installBtn.style.opacity = '0.6';
+        } else if (deferredPrompt) {
+          installBtn.innerHTML = '📲 安装应用';
+          installBtn.style.opacity = '1';
+        } else {
+          installBtn.innerHTML = '📱 添加到主屏幕';
+          installBtn.style.opacity = '0.8';
+        }
+      }
 
       // ==================== PWA 安装功能 ====================
       async function installPWA() {
-  if (isRunningAsPWA()) {
-    const modal = modalManager.create(
-      '✅ 已安装',
-      `<div style="text-align:center;padding:20px 0;">
-        <div style="font-size:48px;margin-bottom:16px;">📱</div>
-        <div style="font-size:16px;font-weight:500;margin-bottom:8px;">您正在使用已安装的应用</div>
-        <div style="font-size:14px;color:#64748b;">当前已在独立应用模式下运行</div>
-      </div>`,
-      '<button class="close-btn" id="closeInstalledModal">知道了</button>'
-    );
-    
-    if (modal) {
-      modal.querySelector('#closeInstalledModal').onclick = () => modalManager.close(modal);
-    }
-    return;
-  }
-  
-  if (!deferredPrompt) {
-    const browser = detectBrowser();
-    let instructions = '';
-    let title = '📲 安装应用';
-    
-    if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
-      instructions = `
-        <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-          <div style="font-weight:500;margin-bottom:12px;">📌 安装步骤：</div>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-            <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
-            <span>点击浏览器右上角菜单 ⋮</span>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
-            <span>选择「添加到主屏幕」或「安装应用」</span>
-          </div>
-        </div>
-      `;
-    } else if (browser === 'ios' || browser === 'safari') {
-      instructions = `
-        <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-          <div style="font-weight:500;margin-bottom:12px;">📌 iOS 安装步骤：</div>
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-            <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
-            <span>点击 Safari 底部的分享按钮 <span style="font-size:18px;">⎙</span></span>
-          </div>
-          <div style="display:flex;align-items:center;gap:12px;">
-            <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
-            <span>滑动找到「添加到主屏幕」</span>
-          </div>
-        </div>
-      `;
-    } else {
-      instructions = `
-        <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
-          <div style="color:#64748b;">当前浏览器可能不支持 PWA 安装</div>
-          <div style="margin-top:8px;">建议使用 Chrome、Edge 或 Safari 浏览器</div>
-        </div>
-      `;
-    }
-    
-    const modal = modalManager.create(
-      title,
-      instructions,
-      '<button class="close-btn" id="closeInstallModal">关闭</button>'
-    );
-    
-    if (modal) {
-      modal.querySelector('#closeInstallModal').onclick = () => modalManager.close(modal);
-    }
-    return;
-  }
+        if (isRunningAsPWA()) {
+          const modal = modalManager.create(
+            '✅ 已安装',
+            `<div style="text-align:center;padding:20px 0;">
+              <div style="font-size:48px;margin-bottom:16px;">📱</div>
+              <div style="font-size:16px;font-weight:500;margin-bottom:8px;">您正在使用已安装的应用</div>
+              <div style="font-size:14px;color:#64748b;">当前已在独立应用模式下运行</div>
+            </div>`,
+            '<button class="close-btn" id="closeInstalledModal">知道了</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstalledModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
+        
+        if (!deferredPrompt) {
+          const browser = detectBrowser();
+          let instructions = '';
+          let title = '📲 安装应用';
+          
+          if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
+            instructions = `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击浏览器右上角菜单 ⋮</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>选择「添加到主屏幕」或「安装应用」</span>
+                </div>
+              </div>
+            `;
+          } else if (browser === 'ios' || browser === 'safari') {
+            instructions = `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="font-weight:500;margin-bottom:12px;">📌 iOS 安装步骤：</div>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span>
+                  <span>点击 Safari 底部的分享按钮 <span style="font-size:18px;">⎙</span></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span>
+                  <span>滑动找到「添加到主屏幕」</span>
+                </div>
+              </div>
+            `;
+          } else {
+            instructions = `
+              <div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;">
+                <div style="color:#64748b;">当前浏览器可能不支持 PWA 安装</div>
+                <div style="margin-top:8px;">建议使用 Chrome、Edge 或 Safari 浏览器</div>
+              </div>
+            `;
+          }
+          
+          const modal = modalManager.create(
+            title,
+            instructions,
+            '<button class="close-btn" id="closeInstallModal">关闭</button>'
+          );
+          
+          if (modal) {
+            modal.querySelector('#closeInstallModal').onclick = () => modalManager.close(modal);
+          }
+          return;
+        }
 
-  try {
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      showToast('✅ 已添加到桌面');
-      deferredPrompt = null;
-      updateInstallMenuText();
-    } else {
-      showToast('已取消安装');
-    }
-    
-    deferredPrompt = null;
-  } catch (error) {
-    console.error('安装失败:', error);
-    showToast('安装失败，请稍后重试');
-  }
-}
+        try {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          
+          if (outcome === 'accepted') {
+            showToast('✅ 已添加到桌面');
+            deferredPrompt = null;
+            updateInstallMenuText();
+          } else {
+            showToast('已取消安装');
+          }
+          
+          deferredPrompt = null;
+        } catch (error) {
+          console.error('安装失败:', error);
+          showToast('安装失败，请稍后重试');
+        }
+      }
 
       window.installPWA = installPWA;
 
@@ -1721,19 +1975,16 @@
         document.documentElement.style.setProperty('--focus-color', color);
       }
 
-      function saveSettings() {
-        localStorage.setItem(CONSTANTS.STORAGE_KEYS.SETTINGS, JSON.stringify(uiSettings));
-        applyUISettings();
+      async function saveSettings() {
+        try {
+          await dbManager.put('settings', { key: 'uiSettings', value: uiSettings });
+          applyUISettings();
+        } catch (e) {
+          console.error('保存设置失败:', e);
+        }
       }
 
       function loadSettings() {
-        try {
-          const saved = localStorage.getItem(CONSTANTS.STORAGE_KEYS.SETTINGS);
-          if (saved) {
-            const loaded = JSON.parse(saved);
-            uiSettings = { ...uiSettings, ...loaded };
-          }
-        } catch (e) {}
         applyUISettings();
         if (uiSettings.darkMode) {
           document.body.classList.add('dark-mode');
@@ -1812,48 +2063,112 @@
         }
       }
 
-      // ==================== 数据管理 ====================
-      function save() {
+      // ==================== 数据管理（增量操作）====================
+      async function saveEntry(entry) {
         try {
-          localStorage.setItem(CONSTANTS.STORAGE_KEYS.ENTRIES, JSON.stringify(entries));
-          localStorage.setItem(CONSTANTS.STORAGE_KEYS.EXPENSE_CATS, JSON.stringify(expenseCats));
-          localStorage.setItem(CONSTANTS.STORAGE_KEYS.INCOME_CATS, JSON.stringify(incomeCats));
-          saveSettings();
+          await dbManager.put('entries', entry);
+          return true;
         } catch (error) {
-          console.error('保存失败:', error);
-          if (error.name === 'QuotaExceededError') {
-            showToast('⚠️ 存储空间已满，请导出备份后清理数据');
-          } else {
-            showToast('❌ 保存失败');
-          }
+          console.error('保存记录失败:', error);
+          showToast('❌ 保存失败，请重试');
+          return false;
         }
       }
 
-      function saveDebounced() {
-        clearTimeout(saveTimer);
-        saveTimer = setTimeout(() => save(), 300);
+      async function deleteEntryFromDB(id) {
+        try {
+          await dbManager.delete('entries', id);
+          return true;
+        } catch (error) {
+          console.error('删除记录失败:', error);
+          showToast('❌ 删除失败，请重试');
+          return false;
+        }
       }
 
-      function load() {
+      async function saveCategories() {
         try {
-          const e = localStorage.getItem(CONSTANTS.STORAGE_KEYS.ENTRIES);
-          if (e) {
-            const parsed = JSON.parse(e);
-            if (Array.isArray(parsed)) entries = parsed.filter(validateEntry);
+          await dbManager.put('categories', { key: 'expenseCats', value: expenseCats });
+          await dbManager.put('categories', { key: 'incomeCats', value: incomeCats });
+          return true;
+        } catch (error) {
+          console.error('保存分类失败:', error);
+          return false;
+        }
+      }
+
+      async function enforceMaxEntries() {
+  try {
+    const count = await dbManager.getCount('entries');
+
+    if (count <= CONSTANTS.MAX_ENTRIES) {
+      return false;
+    }
+
+    const excessCount = count - CONSTANTS.MAX_ENTRIES;
+
+    // 取最旧记录
+    const oldestEntries = await dbManager.getOldestEntries(excessCount);
+
+    if (!oldestEntries || oldestEntries.length === 0) {
+      return false;
+    }
+
+    // 🚀 并行删除数据库记录（性能优化）
+    await Promise.all(
+      oldestEntries.map(entry => dbManager.delete('entries', entry.id))
+    );
+
+    // 🧠 同步内存数据
+    for (const entry of oldestEntries) {
+      const index = entries.findIndex(e => e.id === entry.id);
+      if (index !== -1) {
+        entries.splice(index, 1);
+        removeFromCache(entry);
+      }
+    }
+
+    console.log(`已清理 ${excessCount} 条旧记录`);
+
+    // 🔔 提示用户（只在真的删除时）
+    if (excessCount > 0) {
+      showToast(`⚠️ 已自动清理 ${excessCount} 条最旧记录`);
+    }
+
+    return true;
+
+  } catch (error) {
+    console.error('清理旧记录失败:', error);
+    return false;
+  }
+}
+
+      async function load() {
+        
+        try {
+          const loadedEntries = await dbManager.getAll('entries');
+          if (loadedEntries && loadedEntries.length > 0) {
+            entries = loadedEntries.filter(validateEntry);
           }
-          const ec = localStorage.getItem(CONSTANTS.STORAGE_KEYS.EXPENSE_CATS);
-          if (ec) {
-            const parsed = JSON.parse(ec);
-            if (Array.isArray(parsed)) expenseCats = parsed;
+          
+          const settingsData = await dbManager.get('settings', 'uiSettings');
+          if (settingsData) {
+            uiSettings = { ...uiSettings, ...settingsData.value };
           }
-          const ic = localStorage.getItem(CONSTANTS.STORAGE_KEYS.INCOME_CATS);
-          if (ic) {
-            const parsed = JSON.parse(ic);
-            if (Array.isArray(parsed)) incomeCats = parsed;
+          
+          const expenseCatsData = await dbManager.get('categories', 'expenseCats');
+          if (expenseCatsData) {
+            expenseCats = expenseCatsData.value;
+          }
+          
+          const incomeCatsData = await dbManager.get('categories', 'incomeCats');
+          if (incomeCatsData) {
+            incomeCats = incomeCatsData.value;
           }
         } catch (e) {
           console.warn('加载失败', e);
         }
+        
         loadSettings();
       }
 
@@ -2041,112 +2356,120 @@
         }
       }
 
-      function renderCalendar() {
-        const year = currentYear, month = currentMonth;
-        const firstDay = new Date(year, month, 1);
-        const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const prevMonthDays = new Date(year, month, 0).getDate();
-        const grid = document.getElementById('calendarGrid');
-        const todayStr = getLocalDate();
+      function renderCalendarImmediate() {
+  const year = currentYear, month = currentMonth;
+  const firstDay = new Date(year, month, 1);
+  const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const prevMonthDays = new Date(year, month, 0).getDate();
+  const grid = document.getElementById('calendarGrid');
+  const todayStr = getLocalDate();
 
-        if (grid.children.length !== 42) {
-          grid.innerHTML = '';
-          for (let i = 0; i < 42; i++) {
-            const dayDiv = document.createElement('div');
-            dayDiv.className = 'calendar-day';
-            dayDiv.setAttribute('role', 'gridcell');
-            dayDiv.setAttribute('tabindex', '0');
-            grid.appendChild(dayDiv);
-          }
-        }
+  if (grid.children.length !== 42) {
+    grid.innerHTML = '';
+    for (let i = 0; i < 42; i++) {
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'calendar-day';
+      dayDiv.setAttribute('role', 'gridcell');
+      dayDiv.setAttribute('tabindex', '0');
+      grid.appendChild(dayDiv);
+    }
+  }
 
-        const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-        const prevMonth = month === 0 ? 11 : month - 1;
-        const prevYear = month === 0 ? year - 1 : year;
-        const nextMonth = month === 11 ? 0 : month + 1;
-        const nextYear = month === 11 ? year + 1 : year;
+  const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const prevMonth = month === 0 ? 11 : month - 1;
+  const prevYear = month === 0 ? year - 1 : year;
+  const nextMonth = month === 11 ? 0 : month + 1;
+  const nextYear = month === 11 ? year + 1 : year;
 
-        for (let i = 0; i < 42; i++) {
-          const dayDiv = grid.children[i];
-          let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
+  for (let i = 0; i < 42; i++) {
+    const dayDiv = grid.children[i];
+    let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
 
-          if (i < startOffset) {
-            dayNum = prevMonthDays - (startOffset - i) + 1;
-            isCurrentMonth = false;
-            displayYear = prevYear;
-            displayMonth = prevMonth;
-            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-          } else if (i >= startOffset + daysInMonth) {
-            dayNum = i - (startOffset + daysInMonth) + 1;
-            isCurrentMonth = false;
-            displayYear = nextYear;
-            displayMonth = nextMonth;
-            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-          } else {
-            dayNum = i - startOffset + 1;
-            isCurrentMonth = true;
-            displayYear = year;
-            displayMonth = month;
-            dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
-          }
+    if (i < startOffset) {
+      dayNum = prevMonthDays - (startOffset - i) + 1;
+      isCurrentMonth = false;
+      displayYear = prevYear;
+      displayMonth = prevMonth;
+      dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    } else if (i >= startOffset + daysInMonth) {
+      dayNum = i - (startOffset + daysInMonth) + 1;
+      isCurrentMonth = false;
+      displayYear = nextYear;
+      displayMonth = nextMonth;
+      dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+    } else {
+      dayNum = i - startOffset + 1;
+      isCurrentMonth = true;
+      displayYear = year;
+      displayMonth = month;
+      dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
+    }
 
-          const dayEntries = dateMap[dateStr] || [];
-          let expense = 0, income = 0;
-          for (const e of dayEntries) {
-            if (e.type === 'expense') expense += e.amount;
-            else income += e.amount;
-          }
+    const dayEntries = dateMap[dateStr] || [];
+    let expense = 0, income = 0;
+    for (const e of dayEntries) {
+      if (e.type === 'expense') expense += e.amount;
+      else income += e.amount;
+    }
 
-          const classList = dayDiv.classList;
-          classList.toggle('selected', dateStr === selectedDate);
-          classList.toggle('today', dateStr === todayStr);
-          classList.toggle('other-month', !isCurrentMonth);
+    const classList = dayDiv.classList;
+    classList.toggle('selected', dateStr === selectedDate);
+    classList.toggle('today', dateStr === todayStr);
+    classList.toggle('other-month', !isCurrentMonth);
 
-          dayDiv.setAttribute('data-date', dateStr);
-          dayDiv.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
+    dayDiv.setAttribute('data-date', dateStr);
+    dayDiv.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
 
-          let numDiv = dayDiv.querySelector('.day-number');
-          if (!numDiv) {
-            numDiv = document.createElement('div');
-            numDiv.className = 'day-number';
-            dayDiv.appendChild(numDiv);
-          }
-          numDiv.textContent = dayNum;
+    let numDiv = dayDiv.querySelector('.day-number');
+    if (!numDiv) {
+      numDiv = document.createElement('div');
+      numDiv.className = 'day-number';
+      dayDiv.appendChild(numDiv);
+    }
+    numDiv.textContent = dayNum;
 
-          const oldExpense = dayDiv.querySelector('.day-expense');
-          const oldIncome = dayDiv.querySelector('.day-income');
-          if (oldExpense) oldExpense.remove();
-          if (oldIncome) oldIncome.remove();
+    const oldExpense = dayDiv.querySelector('.day-expense');
+    const oldIncome = dayDiv.querySelector('.day-income');
+    if (oldExpense) oldExpense.remove();
+    if (oldIncome) oldIncome.remove();
 
-          if (isCurrentMonth) {
-            if (expense > 0) {
-              const expenseSpan = document.createElement('div');
-              expenseSpan.className = 'day-expense';
-              expenseSpan.textContent = `-${expense.toFixed(0)}`;
-              dayDiv.appendChild(expenseSpan);
-            }
-            if (income > 0) {
-              const incomeSpan = document.createElement('div');
-              incomeSpan.className = 'day-income';
-              incomeSpan.textContent = `+${income.toFixed(0)}`;
-              dayDiv.appendChild(incomeSpan);
-            }
-          }
-        }
-
-        const [y, m, d] = selectedDate.split('-');
-        const dateObj = new Date(y, m - 1, d);
-        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        let label = weekdays[dateObj.getDay()];
-        const today = new Date();
-        if (dateObj.toDateString() === today.toDateString()) label = `今天 · ${label}`;
-        document.getElementById('selectedDateLabel').innerHTML = label;
-        document.getElementById('currentYearMonthDay').innerText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
-
-        renderTopCards();
-        renderSelectedDayTotal();
+    if (isCurrentMonth) {
+      if (expense > 0) {
+        const expenseSpan = document.createElement('div');
+        expenseSpan.className = 'day-expense';
+        expenseSpan.textContent = `-${expense.toFixed(0)}`;
+        dayDiv.appendChild(expenseSpan);
       }
+      if (income > 0) {
+        const incomeSpan = document.createElement('div');
+        incomeSpan.className = 'day-income';
+        incomeSpan.textContent = `+${income.toFixed(0)}`;
+        dayDiv.appendChild(incomeSpan);
+      }
+    }
+  }
+
+  const [y, m, d] = selectedDate.split('-');
+  const dateObj = new Date(y, m - 1, d);
+  const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  let label = weekdays[dateObj.getDay()];
+  const today = new Date();
+  if (dateObj.toDateString() === today.toDateString()) label = `今天 · ${label}`;
+  document.getElementById('selectedDateLabel').innerHTML = label;
+  document.getElementById('currentYearMonthDay').innerText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
+
+  renderTopCards();
+  renderSelectedDayTotal();
+}
+
+function renderCalendar() {
+  if (renderCalendarTimer) clearTimeout(renderCalendarTimer);
+  renderCalendarTimer = setTimeout(() => {
+    renderCalendarImmediate();
+    renderCalendarTimer = null;
+  }, 16);
+}
 
       function updateSingleDay(dateStr) {
         const dayEl = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
@@ -2238,7 +2561,9 @@
 
       function getCategory() {
         let category = document.getElementById('categoryInput').value.trim();
-        if (!category) category = currentType === 'expense' ? '其他支出' : '其他收入';
+        if (!category) {
+  category = currentType === 'expense' ? '未分类支出' : '未分类收入';
+}
         return category;
       }
 
@@ -2318,27 +2643,27 @@
           };
         });
         
-        confirmBtn.onclick = () => {
+        confirmBtn.onclick = async () => {
           modalManager.close(modal);
           
           isAdding = true;
           document.getElementById('amountInput').blur();
           document.getElementById('categoryInput').blur();
           
-          choosePayType((payType) => {
+          choosePayType(async (payType) => {
             const entry = createNewEntry(amount, category, payType);
             entry.note = `${category} (${selectedPax}人份)`;
+            
+            const success = await saveEntry(entry);
+            if (!success) {
+              isAdding = false;
+              return;
+            }
             
             entries.push(entry);
             addToCache(entry);
             
-            if (entries.length > CONSTANTS.MAX_ENTRIES) {
-              entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-              entries.shift();
-              rebuildStatsCache();
-            }
-            
-            saveDebounced();
+            await enforceMaxEntries();
             
             document.getElementById('amountInput').value = '';
             document.getElementById('categoryInput').value = '';
@@ -2348,30 +2673,30 @@
             
             showToast(`已记账 · ${category} ${selectedPax}人份 (${payType})`);
             
-            setTimeout(() => { isAdding = false; }, 300);
+            isAdding = false;
           });
         };
         
-        modal.querySelector('#paxSkipBtn').onclick = () => {
+        modal.querySelector('#paxSkipBtn').onclick = async () => {
           modalManager.close(modal);
           
           isAdding = true;
           document.getElementById('amountInput').blur();
           document.getElementById('categoryInput').blur();
           
-          choosePayType((payType) => {
+          choosePayType(async (payType) => {
             const entry = createNewEntry(amount, category, payType);
+            
+            const success = await saveEntry(entry);
+            if (!success) {
+              isAdding = false;
+              return;
+            }
             
             entries.push(entry);
             addToCache(entry);
             
-            if (entries.length > CONSTANTS.MAX_ENTRIES) {
-              entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-              entries.shift();
-              rebuildStatsCache();
-            }
-            
-            saveDebounced();
+            await enforceMaxEntries();
             
             document.getElementById('amountInput').value = '';
             document.getElementById('categoryInput').value = '';
@@ -2381,7 +2706,7 @@
             
             showToast(`已记账 · ${category} (${payType})`);
             
-            setTimeout(() => { isAdding = false; }, 300);
+            isAdding = false;
           });
         };
         
@@ -2401,7 +2726,7 @@
         });
       }
 
-      function addRecord() {
+      async function addRecord() {
         if (isAdding) return false;
 
         const amount = getValidAmount();
@@ -2420,35 +2745,36 @@
         document.getElementById('amountInput').blur();
         document.getElementById('categoryInput').blur();
 
-        choosePayType((payType) => {
+        choosePayType(async (payType) => {
           const entry = createNewEntry(amount, category, payType);
+
+          const success = await saveEntry(entry);
+          if (!success) {
+            isAdding = false;
+            return;
+          }
 
           entries.push(entry);
           addToCache(entry);
 
-          if (entries.length > CONSTANTS.MAX_ENTRIES) {
-            entries.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-            entries.shift();
-            rebuildStatsCache();
-          }
-
-          saveDebounced();
+          await enforceMaxEntries();
 
           document.getElementById('amountInput').value = '';
           document.getElementById('categoryInput').value = '';
 
           updateSingleDay(entry.date);
           renderEntries();
+          renderCategoryDropdown();
 
           showToast(`已记账（${payType}）`);
 
-          setTimeout(() => { isAdding = false; }, 300);
+          isAdding = false;
         });
 
         return true;
       }
 
-      function editEntry(id) {
+      async function editEntry(id) {
         const entry = entries.find(e => String(e.id) === String(id));
         if (!entry) return;
 
@@ -2462,7 +2788,7 @@
 
         if (!modal) return;
 
-        modal.querySelector('#saveEditBtn').onclick = () => {
+        modal.querySelector('#saveEditBtn').onclick = async () => {
           const newAmount = parseFloat(document.getElementById('editAmount').value);
           if (!newAmount || newAmount <= 0) {
             showToast('请输入有效金额');
@@ -2476,8 +2802,14 @@
           entry.timestamp = Date.now();
           entry.time = new Date().toTimeString().slice(0, 5);
 
+          const success = await saveEntry(entry);
+          if (!success) {
+            modalManager.close(modal);
+            return;
+          }
+
           updateCache(oldEntry, entry);
-          saveDebounced();
+          
           updateSingleDay(entry.date);
           renderEntries();
           renderCategoryDropdown();
@@ -2495,21 +2827,52 @@
         };
       }
 
-      function changeMonth(delta) {
-        currentMonth += delta;
-        if (currentMonth < 0) {
-          currentMonth = 11;
-          currentYear--;
-        }
-        if (currentMonth > 11) {
-          currentMonth = 0;
-          currentYear++;
-        }
+      async function deleteEntry(id, showToastMessage = true) {
+        const entryToDelete = entries.find(e => String(e.id) === String(id));
+        if (!entryToDelete) return false;
 
-        selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
-        renderCalendar();
+        const success = await deleteEntryFromDB(id);
+        if (!success) return false;
+
+        entries = entries.filter(e => String(e.id) !== String(id));
+        removeFromCache(entryToDelete);
+        
+        updateSingleDay(entryToDelete.date);
         renderEntries();
+        renderCategoryDropdown();
+        
+        if (showToastMessage) {
+          showToast('已删除');
+        }
+        
+        return true;
       }
+
+      function changeMonth(delta) {
+  currentMonth += delta;
+  if (currentMonth < 0) {
+    currentMonth = 11;
+    currentYear--;
+  }
+  if (currentMonth > 11) {
+    currentMonth = 0;
+    currentYear++;
+  }
+
+  const today = new Date();
+  const isCurrentMonth = (currentYear === today.getFullYear() && currentMonth === today.getMonth());
+  
+  if (isCurrentMonth) {
+    // 回到当前月份，选中今天
+    selectedDate = getLocalDate();
+  } else {
+    // 其他月份，选 1 号
+    selectedDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+  }
+  
+  renderCalendar();
+  renderEntries();
+}
 
       function showAllEntriesModal() {
         const dayEntries = dateMap[selectedDate] || [];
@@ -2522,7 +2885,7 @@
         for (const e of dayEntries) {
           const sign = e.type === 'expense' ? '-' : '+';
           const color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-          html += `<div class="search-result-item" style="margin-bottom:8px;border-bottom:1px solid #e2e8f0;padding:10px;"><div style="flex:1;"><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${escapeHtml(e.time)} · ${escapeHtml(e.payType || 'TNG')}</div></div><div style="display:flex;align-items:center;gap:12px;"><span style="font-weight:600;color:${color}">${sign}RM${e.amount.toFixed(2)}</span><span class="edit-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">✏️</span><span class="delete-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">🗑</span></div></div>`;
+          html += `<div class="search-result-item" style="margin-bottom:8px;border-bottom:1px solid #e2e8f0;padding:10px;" data-id="${e.id}"><div style="flex:1;"><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${escapeHtml(e.time)} · ${escapeHtml(e.payType || 'TNG')}</div></div><div style="display:flex;align-items:center;gap:12px;"><span style="font-weight:600;color:${color}">${sign}RM${e.amount.toFixed(2)}</span><span class="edit-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">✏️</span><span class="delete-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">🗑</span></div></div>`;
         }
 
         const modal = modalManager.create(`📋 全部记录 (${dayEntries.length}条)`, html, '<button id="closeModalBtn" class="close-btn">关闭</button>');
@@ -2531,27 +2894,56 @@
         modal.querySelector('#closeModalBtn').onclick = () => modalManager.close(modal);
 
         modal.querySelectorAll('.delete-modal').forEach(btn => {
-          btn.onclick = () => {
+          btn.onclick = async (e) => {
+            e.stopPropagation();
             const id = btn.dataset.id;
-            const entryToDelete = entries.find(e => String(e.id) === String(id));
-            entries = entries.filter(e => String(e.id) !== String(id));
-            if (entryToDelete) {
-              removeFromCache(entryToDelete);
-              updateSingleDay(entryToDelete.date);
-            }
-            saveDebounced();
-            renderEntries();
-            renderCategoryDropdown();
-            showToast('已删除');
+            await deleteEntry(id);
             modalManager.close(modal);
           };
         });
 
         modal.querySelectorAll('.edit-modal').forEach(btn => {
-          btn.onclick = () => {
+          btn.onclick = (e) => {
+            e.stopPropagation();
             const id = btn.dataset.id;
             modalManager.close(modal);
             editEntry(id);
+            
+            // 高亮对应的记录
+            setTimeout(() => {
+              const entriesList = document.getElementById('entriesList');
+              const targetLi = entriesList.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+              if (targetLi) {
+                targetLi.classList.add('highlight-entry');
+                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                  targetLi.classList.remove('highlight-entry');
+                }, 2000);
+              }
+            }, 100);
+          };
+        });
+        
+        // 点击整条记录也可以高亮（但不关闭弹窗）
+        modal.querySelectorAll('.search-result-item').forEach(item => {
+          item.style.cursor = 'pointer';
+          item.onclick = (e) => {
+            // 如果点击的是编辑或删除按钮，不触发
+            if (e.target.closest('.edit-modal') || e.target.closest('.delete-modal')) return;
+            
+            const id = item.dataset.id;
+            if (id) {
+              // 高亮对应的记录
+              const entriesList = document.getElementById('entriesList');
+              const targetLi = entriesList.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+              if (targetLi) {
+                targetLi.classList.add('highlight-entry');
+                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                setTimeout(() => {
+                  targetLi.classList.remove('highlight-entry');
+                }, 2000);
+              }
+            }
           };
         });
       }
@@ -2598,7 +2990,9 @@
         ];
 
         const container = modal.querySelector('#noteMonthContainer');
-        const monthSelect = createCustomSelect(container, options, 'all', () => {});
+        const currentMonthStr = selectedDate.slice(0, 7);
+const defaultMonth = availableMonths.includes(currentMonthStr) ? currentMonthStr : 'all';
+const monthSelect = createCustomSelect(container, options, defaultMonth, () => {});
 
         modal.querySelector('#confirmExportNoteBtn').onclick = () => {
           const selectedMonth = monthSelect.getValue();
@@ -2827,21 +3221,34 @@
           resultsDiv.innerHTML = html;
 
           resultsDiv.querySelectorAll('.search-result-item').forEach(item => {
-            item.onclick = () => {
-              const id = item.dataset.id;
-              const entry = entries.find(e => String(e.id) === String(id));
-              if (entry) {
-                selectedDate = entry.date;
-                const [y, m] = entry.date.split('-');
-                currentYear = parseInt(y);
-                currentMonth = parseInt(m) - 1;
-                renderCalendar();
-                renderEntries();
-                modalManager.close(modal);
-                showToast(`已跳转到 ${entry.date}`);
-              }
-            };
-          });
+  item.onclick = () => {
+    const id = item.dataset.id;
+    const entry = entries.find(e => String(e.id) === String(id));
+    if (entry) {
+      selectedDate = entry.date;
+      const [y, m] = entry.date.split('-');
+      currentYear = parseInt(y);
+      currentMonth = parseInt(m) - 1;
+      renderCalendar();
+      renderEntries();
+      modalManager.close(modal);
+      showToast(`已跳转到 ${entry.date}`);
+      
+      // 高亮对应的记录
+      setTimeout(() => {
+        const entriesList = document.getElementById('entriesList');
+        const targetLi = entriesList.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+        if (targetLi) {
+          targetLi.classList.add('highlight-entry');
+          targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            targetLi.classList.remove('highlight-entry');
+          }, 2000);
+        }
+      }, 100);
+    }
+  };
+});
         };
 
         const resetSearch = () => {
@@ -2868,10 +3275,10 @@
         let dragStartIndex = null;
 
         const getCurrentCatsList = () => type === 'expense' ? expenseCats : incomeCats;
-        const saveCatsList = (newList) => {
+        const saveCatsList = async (newList) => {
           if (type === 'expense') expenseCats = newList;
           else incomeCats = newList;
-          saveDebounced();
+          await saveCategories();
           renderCategoryDropdown();
         };
 
@@ -2934,11 +3341,7 @@
         const bindDeleteButtons = (container) => {
           container.querySelectorAll('.delete-cat-btn').forEach(btn => {
             btn.onclick = () => {
-              const catName = btn.getAttribute('data-cat');
-              if (catName === '其他') {
-                showToast('「其他」分类不可删除');
-                return;
-              }
+              const catName = btn.getAttribute('data-cat');              
 
               const modalConfirm = modalManager.create(
                 '⚠️ 删除分类',
@@ -2951,7 +3354,9 @@
                 modalConfirm.querySelector('#confirmDelete').onclick = () => {
                   let currentCats = [...getCurrentCatsList()];
                   currentCats = currentCats.filter(c => c !== catName);
-                  if (currentCats.length === 0) currentCats = ['其他'];
+                  if (currentCats.length === 0) {
+  currentCats = [type === 'expense' ? '未分类支出' : '未分类收入'];
+}
                   saveCatsList(currentCats);
 
                   const categoryInput = document.getElementById('categoryInput');
@@ -3000,7 +3405,6 @@
 
                   saveCatsList(currentCats);
                   rebuildStatsCache();
-                  saveDebounced();
 
                   renderEntries();
                   renderCategoryDropdown();
@@ -3054,7 +3458,7 @@
         modal.querySelector('#closeCatModal').onclick = () => modalManager.close(modal);
       }
 
-      function clearAllData() {
+      async function clearAllData() {
         if (isClearing) return;
         isClearing = true;
 
@@ -3084,13 +3488,17 @@
           );
 
           if (inputModal) {
-            inputModal.querySelector('#finalConfirmBtn').onclick = () => {
+            inputModal.querySelector('#finalConfirmBtn').onclick = async () => {
               const input = inputModal.querySelector('#deleteConfirmInput').value;
               if (input !== CONSTANTS.DELETE_CONFIRM_WORD) {
                 showToast('已取消');
                 modalManager.close(inputModal);
                 isClearing = false;
               } else {
+                await dbManager.clear('entries');
+                await dbManager.put('categories', { key: 'expenseCats', value: CONSTANTS.DEFAULT_CATS.EXPENSE });
+                await dbManager.put('categories', { key: 'incomeCats', value: CONSTANTS.DEFAULT_CATS.INCOME });
+
                 entries = [];
                 expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
                 incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
@@ -3108,15 +3516,12 @@
                 document.querySelector('.type-option.expense').classList.add('active');
                 updateInputColor();
 
-                localStorage.removeItem(CONSTANTS.STORAGE_KEYS.ENTRIES);
-                localStorage.removeItem(CONSTANTS.STORAGE_KEYS.EXPENSE_CATS);
-                localStorage.removeItem(CONSTANTS.STORAGE_KEYS.INCOME_CATS);
-
                 renderCalendar();
                 renderEntries();
                 renderCategoryDropdown();
                 closeCategoryDropdown();
                 closeMenu();
+                
                 showToast('数据已清空');
                 modalManager.close(inputModal);
                 isClearing = false;
@@ -3274,12 +3679,12 @@
           };
 
           let fileName;
-          const monthNames = ['01月', '02月', '03月', '04月', '05月', '06月', '07月', '08月', '09月', '10月', '11月', '12月'];
+          const monthNames = ['01/', '02/', '03/', '04/', '05/', '06/', '07/', '08/', '09/', '10/', '11/', '12/'];
 
           if (range === 'current_month') {
             const monthIndex = parseInt(currentMonthStr.split('-')[1]) - 1;
             const year = currentMonthStr.split('-')[0];
-            fileName = `记帐本备份_${monthNames[monthIndex]}${year}年`;
+            fileName = `记帐本备份_${monthNames[monthIndex]}${year}`;
           } else if (range === 'current_year') {
             fileName = `记帐本备份_${currentYearStr}年`;
           } else if (range === 'custom') {
@@ -3302,6 +3707,7 @@
           URL.revokeObjectURL(a.href);
           showToast(`✅ 导出成功！共 ${filteredEntries.length} 条记录`);
           modalManager.close(modal);
+          saveBackupTime();
         };
 
         modal.querySelector('#cancelExport').onclick = () => modalManager.close(modal);
@@ -3397,7 +3803,7 @@
                 () => {}
               );
 
-              modal.querySelector('#confirmImport').onclick = () => {
+              modal.querySelector('#confirmImport').onclick = async () => {
                 const mode = modeSelect.getValue();
                 const selectedMonth = monthSelect.getValue();
 
@@ -3415,19 +3821,21 @@
                 let importedCount = 0, skippedCount = 0;
 
                 if (mode === 'replace') {
+                  await dbManager.clear('entries');
+                  await dbManager.putAll('entries', entriesToImport);
                   entries = entriesToImport;
                   importedCount = entriesToImport.length;
                   showToast(`✅ 替换完成，共 ${importedCount} 条记录`);
                 } else {
                   const existingIds = new Set(entries.map(e => e.id));
-                  for (const entry of entriesToImport) {
-                    if (!existingIds.has(entry.id)) {
-                      entries.push(entry);
-                      importedCount++;
-                    } else {
-                      skippedCount++;
-                    }
+                  const newEntries = entriesToImport.filter(e => !existingIds.has(e.id));
+                  
+                  for (const entry of newEntries) {
+                    await dbManager.put('entries', entry);
+                    entries.push(entry);
+                    importedCount++;
                   }
+                  skippedCount = entriesToImport.length - importedCount;
                   showToast(`🔄 合并完成，新增 ${importedCount} 条${skippedCount > 0 ? `，跳过 ${skippedCount} 条重复` : ''}`);
                 }
 
@@ -3450,11 +3858,11 @@
                 }
 
                 if (newExpenseCats > 0 || newIncomeCats > 0) {
+                  await saveCategories();
                   showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
                 }
 
                 rebuildStatsCache();
-                saveDebounced();
                 renderCalendar();
                 renderEntries();
                 renderCategoryDropdown();
@@ -3529,6 +3937,20 @@
           }
         });
 
+// 移动端键盘处理：仅 iOS 设备输入框聚焦时自动滚动到可视区域
+const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+
+if (isIOS) {
+  const handleInputFocus = (e) => {
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  };
+
+  amountInput.addEventListener('focus', handleInputFocus);
+  categoryInput.addEventListener('focus', handleInputFocus);
+}
+
         document.getElementById('calendarGrid').addEventListener('click', (e) => {
           const day = e.target.closest('.calendar-day');
           if (day && day.dataset.date) {
@@ -3592,18 +4014,27 @@
         });
 
         document.getElementById('dropdownBtn').onclick = (e) => {
-          e.stopPropagation();
-          const dropdown = document.getElementById('categoryDropdown');
-          dropdown.classList.toggle('show');
-          renderCategoryDropdown();
-        };
+  e.stopPropagation();
+  closeMenu(); // 关闭菜单下拉
+  const dropdown = document.getElementById('categoryDropdown');
+  const isOpen = dropdown.classList.contains('show');
+  if (!isOpen) {
+    dropdown.classList.add('show');
+    renderCategoryDropdown();
+  } else {
+    dropdown.classList.remove('show');
+  }
+};
 
-        categoryInput.onclick = (e) => {
-          e.stopPropagation();
-          const dropdown = document.getElementById('categoryDropdown');
-          dropdown.classList.toggle('show');
-          renderCategoryDropdown();
-        };
+categoryInput.onclick = (e) => {
+  e.stopPropagation();
+  closeMenu();
+  // 点击输入框时，只关闭下拉菜单（如果开着），不打开
+  const dropdown = document.getElementById('categoryDropdown');
+  if (dropdown.classList.contains('show')) {
+    dropdown.classList.remove('show');
+  }
+};
 
         document.getElementById('categoryDropdown').addEventListener('click', (e) => {
           const item = e.target.closest('.category-item');
@@ -3622,7 +4053,7 @@
           }
         });
 
-        document.getElementById('entriesList').addEventListener('click', (e) => {
+        document.getElementById('entriesList').addEventListener('click', async (e) => {
           const editBtn = e.target.closest('.edit-btn');
           const deleteBtn = e.target.closest('.delete-btn');
 
@@ -3637,17 +4068,8 @@
             );
 
             if (modal) {
-              modal.querySelector('#confirmDeleteBtn').onclick = () => {
-                const entryToDelete = entries.find(e => String(e.id) === String(id));
-                entries = entries.filter(e => String(e.id) !== String(id));
-                if (entryToDelete) {
-                  removeFromCache(entryToDelete);
-                  updateSingleDay(entryToDelete.date);
-                }
-                saveDebounced();
-                renderEntries();
-                renderCategoryDropdown();
-                showToast('已删除');
+              modal.querySelector('#confirmDeleteBtn').onclick = async () => {
+                await deleteEntry(id);
                 modalManager.close(modal);
               };
               modal.querySelector('#cancelDeleteBtn').onclick = () => modalManager.close(modal);
@@ -3812,54 +4234,54 @@
       }
 
       // ==================== Service Worker 初始化 ====================
-function initServiceWorker() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', async () => {
-      const basePath = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
-      
-      try {
-        const reg = await navigator.serviceWorker.register(basePath + 'sw.js', { scope: basePath });
-        console.log('✅ Service Worker 注册成功，scope:', reg.scope);
-        
-        setInterval(() => {
-          reg.update();
-        }, 60 * 60 * 1000);
+      function initServiceWorker() {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', async () => {
+            const basePath = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+            
+            try {
+              const reg = await navigator.serviceWorker.register(basePath + 'sw.js', { scope: basePath });
+              console.log('✅ Service Worker 注册成功，scope:', reg.scope);
+              
+              setInterval(() => {
+                reg.update();
+              }, 60 * 60 * 1000);
 
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                showToast('🔄 发现新版本，刷新页面后生效');
-              }
-            });
-          }
+              reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (newWorker) {
+                  newWorker.addEventListener('statechange', () => {
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                      showToast('🔄 发现新版本，刷新页面后生效');
+                    }
+                  });
+                }
+              });
+              
+            } catch (err) {
+              console.warn('⚠️ Service Worker 注册失败，离线功能不可用');
+            }
+          });
+        }
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          updateInstallMenuText();
         });
-        
-      } catch (err) {
-        console.warn('⚠️ Service Worker 注册失败，离线功能不可用');
+
+        window.addEventListener('offline', () => {
+          showToast('📴 当前处于离线模式');
+        });
+
+        window.addEventListener('online', () => {
+          showToast('🌐 网络已恢复');
+        });
       }
-    });
-  }
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    updateInstallMenuText();
-  });
-
-  window.addEventListener('offline', () => {
-    showToast('📴 当前处于离线模式');
-  });
-
-  window.addEventListener('online', () => {
-    showToast('🌐 网络已恢复');
-  });
-}
 
       // ==================== 初始化 ====================
-      window.onload = function() {
-        load();
+      window.onload = async function() {
+        await load();
         rebuildStatsCache();
         bindEvents();
         renderCalendar();
@@ -3869,6 +4291,23 @@ function initServiceWorker() {
         initBackToTop();
         initServiceWorker();
         updateInstallMenuText();
+        
+        const savedBackupTime = localStorage.getItem('lastBackupTime');
+
+if (savedBackupTime) {
+  updateBackupStatus(savedBackupTime);
+} else {
+  // 没备份过
+  document.getElementById("backupStatus").innerText = "💾 尚未备份";
+}
+        
+        const loadingOverlay = document.getElementById('loadingOverlay');
+  if (loadingOverlay) {
+    loadingOverlay.style.opacity = '0';
+    setTimeout(() => {
+      loadingOverlay.style.display = 'none';
+    }, 300);
+  }
         
         const standaloneQuery = window.matchMedia('(display-mode: standalone)');
         if (standaloneQuery.addEventListener) {
@@ -3889,8 +4328,39 @@ function initServiceWorker() {
             updateInstallMenuText();
           }
         });
+        
       };
+
     })();
+    
+    function saveBackupTime() {
+  const now = new Date().toISOString();
+  localStorage.setItem('lastBackupTime', now);
+  updateBackupStatus(now);
+}
+    
+    function updateBackupStatus(lastBackupTime) {
+  const now = new Date();
+  const last = new Date(lastBackupTime);
+  const diffMs = now - last;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  const el = document.getElementById("backupStatus");
+  if (!el) return;
+
+  if (diffDays === 0) {
+    if (diffHours === 0) {
+      el.innerText = "💾 刚刚备份";
+    } else {
+      el.innerText = `💾 ${diffHours}小时前备份`;
+    }
+  } else if (diffDays === 1) {
+    el.innerText = "💾 1天前备份";
+  } else {
+    el.innerText = `💾 ${diffDays}天前备份`;
+  }
+}
   </script>
 </body>
 </html>
