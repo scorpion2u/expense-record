@@ -1500,6 +1500,145 @@ body.dark-mode .btn-cancel:active {
 body.dark-mode .export-section-title {
   color: #e2e8f0;
 }
+
+/* ===== 深色模式补充修正 ===== */
+
+/* 1. 弹窗内输入框边框更明显 */
+body.dark-mode .modal-content input,
+body.dark-mode .modal-content .custom-select-trigger,
+body.dark-mode #editAmount,
+body.dark-mode #editCategory,
+body.dark-mode #editCatInput,
+body.dark-mode #newCategoryName,
+body.dark-mode #deleteConfirmInput,
+body.dark-mode #searchKeyword,
+body.dark-mode #searchStartDate,
+body.dark-mode #searchEndDate,
+body.dark-mode #searchMinAmount,
+body.dark-mode #searchMaxAmount {
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+
+body.dark-mode .modal-content input:focus {
+  border-color: var(--expense-color) !important;
+  box-shadow: 0 0 0 2px rgba(194, 65, 58, 0.3) !important;
+}
+
+/* 2. 下拉选项悬停效果增强 */
+body.dark-mode .custom-select-option:hover,
+body.dark-mode .select-options div:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 3. 统计弹窗边框 */
+body.dark-mode .modal-content .settings-item {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 4. 滑块轨道在深色下更明显 */
+body.dark-mode input[type="range"] {
+  background: linear-gradient(to right, #475569, #64748b) !important;
+}
+
+body.dark-mode input[type="range"]::-webkit-slider-thumb {
+  background: #e2e8f0 !important;
+  border: 2px solid #94a3b8 !important;
+}
+
+/* 5. 弹窗整体背景与文字 */
+body.dark-mode .modal-content {
+  background: #1e293b !important;
+  color: #f1f5f9 !important;
+}
+
+/* 6. 分类管理弹窗的列表项边框 */
+body.dark-mode .category-list-item {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* 7. 搜索结果显示区域 */
+body.dark-mode #searchResults {
+  border-top-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .search-result-item {
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+  color: #e2e8f0 !important;
+}
+
+/* 8. 支付方式选择卡片 */
+body.dark-mode .pay-card {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.dark-mode .pay-card:active {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 9. 份数选择弹窗的选项 */
+body.dark-mode .pax-option {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+body.dark-mode .pax-option.selected {
+  background: rgba(194, 65, 58, 0.25) !important;
+}
+
+/* 10. 设置面板中预览块边框 */
+body.dark-mode .color-preview-block {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 11. 导出弹窗中选择框样式 */
+body.dark-mode .select-box {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  background: #1e293b !important;
+}
+
+/* 12. 按钮禁用状态 */
+body.dark-mode button:disabled {
+  opacity: 0.5 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #94a3b8 !important;
+}
+/* ===== 导出笔记弹窗深色模式 ===== */
+.export-note-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.export-note-modal .modal-title {
+  color: #1e293b;
+  transition: color 0.2s ease;
+}
+
+body.dark-mode .export-note-modal {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .export-note-modal .modal-title {
+  color: #f1f5f9;
+}
+
+body.dark-mode .export-note-modal .cancel-btn {
+  background: #475569 !important;
+}
+
+body.dark-mode .export-note-modal .record-badge {
+  background: #334155 !important;
+  color: #cbd5e1 !important;
+}
+
+body.dark-mode .export-note-modal textarea {
+  background: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #e2e8f0 !important;
+}
   </style>
 </head>
 <body>
@@ -1707,31 +1846,55 @@ body.dark-mode .export-section-title {
         }
 
         async putAll(storeName, items) {
-          const db = await this.open();
-          return new Promise((resolve, reject) => {
-            const transaction = db.transaction(storeName, 'readwrite');
-            const store = transaction.objectStore(storeName);
-            
-            let completed = 0;
-            let hasError = false;
-            
-            items.forEach(item => {
-              const request = store.put(item);
-              request.onerror = () => {
-                if (!hasError) {
-                  hasError = true;
-                  reject(request.error);
-                }
-              };
-              request.onsuccess = () => {
-                completed++;
-                if (completed === items.length && !hasError) {
-                  resolve();
-                }
-              };
-            });
+  const db = await this.open();
+  return new Promise((resolve, reject) => {
+    if (!items || items.length === 0) {
+      resolve({ success: 0, failed: 0, errors: [] });
+      return;
+    }
+
+    const transaction = db.transaction(storeName, 'readwrite');
+    const store = transaction.objectStore(storeName);
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errors = [];
+
+    transaction.oncomplete = () => {
+      resolve({ success: successCount, failed: failedCount, errors });
+    };
+
+    transaction.onerror = (event) => {
+      reject({ error: transaction.error, message: '事务执行失败' });
+    };
+
+    items.forEach((item, index) => {
+      try {
+        const request = store.put(item);
+        
+        request.onsuccess = () => {
+          successCount++;
+        };
+        
+        request.onerror = (event) => {
+          failedCount++;
+          errors.push({
+            index,
+            id: item.id || 'unknown',
+            error: request.error?.message || '未知错误'
           });
-        }
+        };
+      } catch (err) {
+        failedCount++;
+        errors.push({
+          index,
+          id: item.id || 'unknown',
+          error: err.message
+        });
+      }
+    });
+  });
+}
 
         async delete(storeName, key) {
           const db = await this.open();
@@ -1816,6 +1979,18 @@ body.dark-mode .export-section-title {
       let isClearing = false;
       let deferredPrompt = null;
       let renderCalendarTimer = null;
+      
+      // 清理所有定时器
+function cleanupTimers() {
+  if (renderCalendarTimer) {
+    clearTimeout(renderCalendarTimer);
+    renderCalendarTimer = null;
+  }
+  if (applyTimeout) {
+    clearTimeout(applyTimeout);
+    applyTimeout = null;
+  }
+}
 
       let uiSettings = {
         cardRadius: 24,
@@ -1881,7 +2056,7 @@ body.dark-mode .export-section-title {
         if (!entry.date || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) return false;
         if (typeof entry.amount !== 'number' || isNaN(entry.amount) || entry.amount <= 0) return false;
         if (entry.type !== 'expense' && entry.type !== 'income') return false;
-        if (!entry.note || typeof entry.note !== 'string') return false;
+        if (typeof entry.note !== 'string') entry.note = '';
         return true;
       }
 
@@ -2130,22 +2305,23 @@ body.dark-mode .export-section-title {
 
       // ==================== UI 设置 ====================
       function applyUISettings() {
-        if (applyTimeout) clearTimeout(applyTimeout);
-        applyTimeout = setTimeout(() => {
-          const root = document.documentElement;
-          root.style.setProperty('--card-radius', uiSettings.cardRadius + 'px');
-          root.style.setProperty('--card-padding', uiSettings.cardPadding + 'px');
-          root.style.setProperty('--stat-padding', uiSettings.statPadding + 'px');
-          root.style.setProperty('--input-padding', uiSettings.inputPadding + 'px');
-          root.style.setProperty('--font-size-base', uiSettings.fontSize + 'px');
-          root.style.setProperty('--expense-color', uiSettings.expenseColor);
-          root.style.setProperty('--income-color', uiSettings.incomeColor);
-          root.style.setProperty('--spacing-gap', uiSettings.spacingGap + 'px');
-          root.style.setProperty('--bg-color', uiSettings.bgColor);
-          root.style.setProperty('--card-bg', uiSettings.cardBg);
-          updateInputColor();
-        }, 16);
-      }
+  if (applyTimeout) clearTimeout(applyTimeout);
+  applyTimeout = setTimeout(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--card-radius', uiSettings.cardRadius + 'px');
+    root.style.setProperty('--card-padding', uiSettings.cardPadding + 'px');
+    root.style.setProperty('--stat-padding', uiSettings.statPadding + 'px');
+    root.style.setProperty('--input-padding', uiSettings.inputPadding + 'px');
+    root.style.setProperty('--font-size-base', uiSettings.fontSize + 'px');
+    root.style.setProperty('--expense-color', uiSettings.expenseColor);
+    root.style.setProperty('--income-color', uiSettings.incomeColor);
+    root.style.setProperty('--spacing-gap', uiSettings.spacingGap + 'px');
+    root.style.setProperty('--bg-color', uiSettings.bgColor);
+    root.style.setProperty('--card-bg', uiSettings.cardBg);
+    updateInputColor();
+    applyTimeout = null;
+  }, 16);
+}
 
       function updateInputColor() {
         const span = document.getElementById('currencySymbol');
@@ -2645,11 +2821,12 @@ body.dark-mode .export-section-title {
 }
 
 function renderCalendar() {
-  if (renderCalendarTimer) clearTimeout(renderCalendarTimer);
-  renderCalendarTimer = setTimeout(() => {
-    renderCalendarImmediate();
-    renderCalendarTimer = null;
-  }, 16);
+  if (renderCalendarTimer) return;
+
+renderCalendarTimer = setTimeout(() => {
+  renderCalendarImmediate();
+  renderCalendarTimer = null;
+}, 16);
 }
 
       function updateSingleDay(dateStr) {
@@ -2841,16 +3018,19 @@ function renderCalendar() {
               return;
             }
             
+            await enforceMaxEntries();
+            
             entries.push(entry);
             addToCache(entry);
-            
-            await enforceMaxEntries();
             
             document.getElementById('amountInput').value = '';
             document.getElementById('categoryInput').value = '';
             
             updateSingleDay(entry.date);
+            
+            if (entry.date === selectedDate) {
             renderEntries();
+            }
             
             showToast(`已记账 · ${category} ${selectedPax}人份 (${payType})`);
             
@@ -2874,16 +3054,19 @@ function renderCalendar() {
               return;
             }
             
+            await enforceMaxEntries();
+            
             entries.push(entry);
             addToCache(entry);
-            
-            await enforceMaxEntries();
             
             document.getElementById('amountInput').value = '';
             document.getElementById('categoryInput').value = '';
             
             updateSingleDay(entry.date);
+            
+            if (entry.date === selectedDate) {
             renderEntries();
+            }
             
             showToast(`已记账 · ${category} (${payType})`);
             
@@ -2934,18 +3117,17 @@ function renderCalendar() {
             isAdding = false;
             return;
           }
+          
+          await enforceMaxEntries();
 
           entries.push(entry);
           addToCache(entry);
-
-          await enforceMaxEntries();
 
           document.getElementById('amountInput').value = '';
           document.getElementById('categoryInput').value = '';
 
           updateSingleDay(entry.date);
           renderEntries();
-          renderCategoryDropdown();
 
           showToast(`已记账（${payType}）`);
 
@@ -2992,7 +3174,11 @@ function renderCalendar() {
           updateCache(oldEntry, entry);
           
           updateSingleDay(entry.date);
+          
+          if (entry.date === selectedDate) {
           renderEntries();
+          }
+          
           renderCategoryDropdown();
 
           if (entry.type !== currentType) {
@@ -3019,7 +3205,11 @@ function renderCalendar() {
         removeFromCache(entryToDelete);
         
         updateSingleDay(entryToDelete.date);
+        
+        if (entryToDelete.date ===selectedDate) {
         renderEntries();
+        }
+        
         renderCategoryDropdown();
         
         if (showToastMessage) {
@@ -3148,16 +3338,16 @@ function renderCalendar() {
         modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
 
         modal.innerHTML = `
-          <div style="background:${uiSettings.cardBg};padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
-            <h3 style="margin-bottom:16px;font-size:20px;text-align:center;">📄 导出笔记</h3>
-            <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">选择要导出的月份</p>
-            <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
-            <div style="display:flex;gap:12px;">
-              <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#10b981;color:white;font-size:15px;font-weight:600;cursor:pointer;">确认导出</button>
-              <button id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
-            </div>
-          </div>
-        `;
+  <div class="export-note-modal" style="padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
+    <h3 class="modal-title" style="margin-bottom:16px;font-size:20px;text-align:center;">📄 导出笔记</h3>
+    <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">选择要导出的月份</p>
+    <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
+    <div style="display:flex;gap:12px;">
+      <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">确认导出</button>
+      <button class="cancel-btn" id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
+    </div>
+  </div>
+`;
 
         document.body.appendChild(modal);
 
@@ -3268,16 +3458,16 @@ const monthSelect = createCustomSelect(container, options, defaultMonth, () => {
         const recordCount = text.split('\n').filter(l => l.includes('）')).length;
 
         modal.innerHTML = `
-          <div style="background:${uiSettings.cardBg};padding:20px;border-radius:28px;width:90%;max-width:420px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
-            <h3 style="margin-bottom:8px;font-size:20px;display:flex;align-items:center;gap:8px;">📄 导出笔记 <span style="font-size:13px;background:#e2e8f0;padding:2px 10px;border-radius:30px;">${recordCount} 条记录</span></h3>
-            <p style="font-size:12px;color:#64748b;margin-bottom:14px;">✅ 点击下方按钮可一键复制全部内容</p>
-            <textarea id="exportTextArea" style="width:100%;height:280px;border-radius:20px;padding:14px;font-size:13px;font-family:'SF Mono',Monaco,monospace;border:1px solid #e2e8f0;background:${uiSettings.darkMode ? '#1e293b' : '#f8fafc'};color:${uiSettings.darkMode ? '#e2e8f0' : '#1e293b'};resize:vertical;line-height:1.5;" readonly>${escapeHtml(text)}</textarea>
-            <div style="display:flex;gap:12px;margin-top:18px;">
-              <button id="copyExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#10b981;color:white;font-size:15px;font-weight:600;cursor:pointer;">📋 一键复制</button>
-              <button id="closeExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">关闭</button>
-            </div>
-          </div>
-        `;
+  <div class="export-note-modal" style="padding:20px;border-radius:28px;width:90%;max-width:420px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
+    <h3 class="modal-title" style="margin-bottom:8px;font-size:20px;display:flex;align-items:center;gap:8px;">📄 导出笔记 <span class="record-badge" style="font-size:13px;background:#e2e8f0;padding:2px 10px;border-radius:30px;color:#475569;">${recordCount} 条记录</span></h3>
+    <p style="font-size:12px;color:#64748b;margin-bottom:14px;">✅ 点击下方按钮可一键复制全部内容</p>
+    <textarea id="exportTextArea" style="width:100%;height:280px;border-radius:20px;padding:14px;font-size:13px;font-family:'SF Mono',Monaco,monospace;border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b;resize:vertical;line-height:1.5;" readonly>${escapeHtml(text)}</textarea>
+    <div style="display:flex;gap:12px;margin-top:18px;">
+      <button id="copyExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">📋 一键复制</button>
+      <button class="cancel-btn" id="closeExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">关闭</button>
+    </div>
+  </div>
+`;
 
         document.body.appendChild(modal);
 
@@ -4002,192 +4192,294 @@ const monthSelect = createCustomSelect(container, options, defaultMonth, () => {
 
       // ==================== 导入备份弹窗 ====================
       function showImportDialog() {
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = '.json';
-        fileInput.onchange = async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = '.json';
+  fileInput.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-          try {
-            const text = await file.text();
-            const data = JSON.parse(text);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
 
-            if (!data.entries || !Array.isArray(data.entries)) throw new Error('文件格式错误：缺少 entries 字段');
-            if (data.source !== 'main') {
-              showToast('❌ 只能导入【记帐本】备份文件');
-              return;
-            }
-
-            let validEntries = [];
-            let invalidCount = 0;
-            for (const entry of data.entries) {
-              if (validateEntry(entry)) validEntries.push(entry);
-              else invalidCount++;
-            }
-            if (invalidCount > 0) showToast(`⚠️ 发现 ${invalidCount} 条无效记录，已自动跳过`);
-            if (validEntries.length === 0) throw new Error('文件中没有有效记录可导入');
-
-            data.entries = validEntries;
-
-            const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
-            const totalExpense = calculateTotalByType(data.entries, 'expense');
-            const totalIncome = calculateTotalByType(data.entries, 'income');
-
-            const modalHtml = `
-              <div class="import-options">
-                <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
-                  <div><strong>📄 文件：</strong> ${escapeHtml(file.name)}</div>
-                  <div><strong>📊 记录数：</strong> ${data.entries.length} 条</div>
-                  <div><strong>📅 时间范围：</strong> ${getDateRangeFromEntries(data.entries)}</div>
-                  <div><strong>💰 总支出：</strong> RM${totalExpense.toFixed(2)}</div>
-                  <div><strong>💵 总收入：</strong> RM${totalIncome.toFixed(2)}</div>
-                </div>
-                <div style="margin-bottom:16px;">
-                  <label style="display:block;margin-bottom:8px;font-weight:500;">导入模式：</label>
-                  <div id="importModeContainer"></div>
-                </div>
-                <div style="margin-bottom:16px;">
-                  <label style="display:block;margin-bottom:8px;font-weight:500;">📅 选择要恢复的月份：</label>
-                  <div id="importMonthContainer"></div>
-                </div>
-                <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">⚠️ 提示：合并模式会根据记录ID自动去重</div>
-              </div>
-            `;
-
-            const modal = modalManager.create(
-              '📥 导入备份',
-              modalHtml,
-              `<button id="confirmImport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导入</button><button id="cancelImport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>`
-            );
-
-            if (modal) {
-              const modeOptions = [
-                { value: 'merge', label: '🔄 合并模式（保留现有记录，自动去重）' },
-                { value: 'replace', label: '⚠️ 替换模式（清空所有现有数据）' }
-              ];
-              
-              const modeSelect = createCustomSelect(
-                modal.querySelector('#importModeContainer'),
-                modeOptions,
-                'merge',
-                () => {}
-              );
-
-              const monthOptions = [
-                { value: 'all', label: `全部月份 (${data.entries.length}条)` },
-                ...monthsInFile.map(month => {
-                  const count = data.entries.filter(e => e.date.startsWith(month)).length;
-                  const formatted = `${month.split('-')[1]}/${month.split('-')[0]}`;
-                  return { value: month, label: `${formatted} (${count}条)` };
-                })
-              ];
-              
-              const monthSelect = createCustomSelect(
-                modal.querySelector('#importMonthContainer'),
-                monthOptions,
-                'all',
-                () => {}
-              );
-
-              modal.querySelector('#confirmImport').onclick = async () => {
-                const mode = modeSelect.getValue();
-                const selectedMonth = monthSelect.getValue();
-
-                let entriesToImport = [...data.entries];
-                if (selectedMonth !== 'all') {
-                  entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
-                }
-
-                if (entriesToImport.length === 0) {
-                  showToast('没有符合条件的数据可导入');
-                  modalManager.close(modal);
-                  return;
-                }
-
-                let importedCount = 0, skippedCount = 0;
-
-                if (mode === 'replace') {
-                  await dbManager.clear('entries');
-                  await dbManager.putAll('entries', entriesToImport);
-                  entries = entriesToImport;
-                  importedCount = entriesToImport.length;
-                  showToast(`✅ 替换完成，共 ${importedCount} 条记录`);
-                } else {
-                  const existingIds = new Set(entries.map(e => e.id));
-                  const newEntries = entriesToImport.filter(e => !existingIds.has(e.id));
-                  
-                  for (const entry of newEntries) {
-                    await dbManager.put('entries', entry);
-                    entries.push(entry);
-                    importedCount++;
-                  }
-                  skippedCount = entriesToImport.length - importedCount;
-                  showToast(`🔄 合并完成，新增 ${importedCount} 条${skippedCount > 0 ? `，跳过 ${skippedCount} 条重复` : ''}`);
-                }
-
-                let newExpenseCats = 0, newIncomeCats = 0;
-                if (data.expenseCats) {
-                  for (const cat of data.expenseCats) {
-                    if (!expenseCats.includes(cat)) {
-                      expenseCats.push(cat);
-                      newExpenseCats++;
-                    }
-                  }
-                }
-                if (data.incomeCats) {
-                  for (const cat of data.incomeCats) {
-                    if (!incomeCats.includes(cat)) {
-                      incomeCats.push(cat);
-                      newIncomeCats++;
-                    }
-                  }
-                }
-
-                if (newExpenseCats > 0 || newIncomeCats > 0) {
-                  await saveCategories();
-                  showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
-                }
-
-                rebuildStatsCache();
-                renderCalendar();
-                renderEntries();
-                renderCategoryDropdown();
-                updateInputColor();
-                showToast(`🎉 导入成功！当前共 ${entries.length} 条记录`);
-                modalManager.close(modal);
-              };
-
-              modal.querySelector('#cancelImport').onclick = () => modalManager.close(modal);
-            }
-          } catch (error) {
-            showToast('❌ 文件解析失败：' + error.message);
-          }
-        };
-        fileInput.click();
+      if (!data.entries || !Array.isArray(data.entries)) throw new Error('文件格式错误：缺少 entries 字段');
+      if (data.source !== 'main') {
+        showToast('❌ 只能导入【记帐本】备份文件');
+        return;
       }
+
+      let validEntries = [];
+      let invalidCount = 0;
+      for (const entry of data.entries) {
+        if (validateEntry(entry)) validEntries.push(entry);
+        else invalidCount++;
+      }
+      if (invalidCount > 0) showToast(`⚠️ 发现 ${invalidCount} 条无效记录，已自动跳过`);
+      if (validEntries.length === 0) throw new Error('文件中没有有效记录可导入');
+
+      data.entries = validEntries;
+
+      const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
+      const totalExpense = calculateTotalByType(data.entries, 'expense');
+      const totalIncome = calculateTotalByType(data.entries, 'income');
+
+      const modalHtml = `
+        <div class="import-options">
+          <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
+            <div><strong>📄 文件：</strong> ${escapeHtml(file.name)}</div>
+            <div><strong>📊 记录数：</strong> ${data.entries.length} 条</div>
+            <div><strong>📅 时间范围：</strong> ${getDateRangeFromEntries(data.entries)}</div>
+            <div><strong>💰 总支出：</strong> RM${totalExpense.toFixed(2)}</div>
+            <div><strong>💵 总收入：</strong> RM${totalIncome.toFixed(2)}</div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:8px;font-weight:500;">导入模式：</label>
+            <div id="importModeContainer"></div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:8px;font-weight:500;">📅 选择要恢复的月份：</label>
+            <div id="importMonthContainer"></div>
+          </div>
+          <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">⚠️ 提示：合并模式会根据记录ID自动去重</div>
+        </div>
+      `;
+
+      const modal = modalManager.create(
+        '📥 导入备份',
+        modalHtml,
+        `<button id="confirmImport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">确认导入</button><button id="cancelImport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">取消</button>`
+      );
+
+      if (modal) {
+        const modeOptions = [
+          { value: 'merge', label: '🔄 合并模式（保留现有记录，自动去重）' },
+          { value: 'replace', label: '⚠️ 替换模式（清空所有现有数据）' }
+        ];
+        
+        const modeSelect = createCustomSelect(
+          modal.querySelector('#importModeContainer'),
+          modeOptions,
+          'merge',
+          () => {}
+        );
+
+        const monthOptions = [
+          { value: 'all', label: `全部月份 (${data.entries.length}条)` },
+          ...monthsInFile.map(month => {
+            const count = data.entries.filter(e => e.date.startsWith(month)).length;
+            const formatted = `${month.split('-')[1]}/${month.split('-')[0]}`;
+            return { value: month, label: `${formatted} (${count}条)` };
+          })
+        ];
+        
+        const monthSelect = createCustomSelect(
+          modal.querySelector('#importMonthContainer'),
+          monthOptions,
+          'all',
+          () => {}
+        );
+
+        modal.querySelector('#confirmImport').onclick = async () => {
+          const mode = modeSelect.getValue();
+          const selectedMonth = monthSelect.getValue();
+
+          let entriesToImport = [...data.entries];
+          if (selectedMonth !== 'all') {
+            entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
+          }
+          
+          const MAX_ENTRIES = CONSTANTS.MAX_ENTRIES;
+          if (entriesToImport.length > MAX_ENTRIES) {
+            entriesToImport.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+            entriesToImport = entriesToImport.slice(0, MAX_ENTRIES);
+            showToast(`⚠️ 数据超过上限，仅导入最新 ${MAX_ENTRIES} 条`);
+          }
+
+          if (entriesToImport.length === 0) {
+            showToast('没有符合条件的数据可导入');
+            modalManager.close(modal);
+            return;
+          }
+
+          let importedCount = 0, skippedCount = 0, failedCount = 0;
+
+          if (mode === 'replace') {
+            await dbManager.clear('entries');
+            const result = await dbManager.putAll('entries', entriesToImport);
+            
+            importedCount = result.success;
+            failedCount = result.failed;
+            
+            if (result.failed > 0) {
+              console.warn('导入失败记录:', result.errors);
+              showToast(`⚠️ ${result.failed} 条记录导入失败`);
+            }
+            
+            // 重新加载 entries
+            entries = await dbManager.getAll('entries');
+            showToast(`✅ 替换完成，成功 ${importedCount} 条` + (failedCount > 0 ? `，失败 ${failedCount} 条` : ''));
+          } else {
+            const existingIds = new Set(entries.map(e => e.id));
+            const newEntries = entriesToImport.filter(e => !existingIds.has(e.id));
+            
+            skippedCount = entriesToImport.length - newEntries.length;
+            
+            if (newEntries.length > 0) {
+              const result = await dbManager.putAll('entries', newEntries);
+              importedCount = result.success;
+              failedCount = result.failed;
+              
+              if (result.failed > 0) {
+                console.warn('导入失败记录:', result.errors);
+              }
+              
+              // 只把成功的添加到内存
+              const successEntries = newEntries.filter((_, idx) => 
+                !result.errors.some(e => e.index === idx)
+              );
+              entries.push(...successEntries);
+            }
+            
+            let msg = `🔄 合并完成，新增 ${importedCount} 条`;
+            if (skippedCount > 0) msg += `，跳过 ${skippedCount} 条重复`;
+            if (failedCount > 0) msg += `，失败 ${failedCount} 条`;
+            showToast(msg);
+          }
+
+          let newExpenseCats = 0, newIncomeCats = 0;
+          if (data.expenseCats) {
+            for (const cat of data.expenseCats) {
+              if (!expenseCats.includes(cat)) {
+                expenseCats.push(cat);
+                newExpenseCats++;
+              }
+            }
+          }
+          if (data.incomeCats) {
+            for (const cat of data.incomeCats) {
+              if (!incomeCats.includes(cat)) {
+                incomeCats.push(cat);
+                newIncomeCats++;
+              }
+            }
+          }
+
+          if (newExpenseCats > 0 || newIncomeCats > 0) {
+            await saveCategories();
+            showToast(`📝 自动添加了 ${newExpenseCats} 个支出分类，${newIncomeCats} 个收入分类`);
+          }
+
+          rebuildStatsCache();
+          renderCalendar();
+          renderEntries();
+          renderCategoryDropdown();
+          updateInputColor();
+          showToast(`🎉 导入完成！当前共 ${entries.length} 条记录`);
+          modalManager.close(modal);
+        };
+
+        modal.querySelector('#cancelImport').onclick = () => modalManager.close(modal);
+      }
+    } catch (error) {
+      showToast('❌ 文件解析失败：' + error.message);
+    }
+  };
+  fileInput.click();
+}
 
       // ==================== 事件绑定 ====================
       function bindEvents() {
         const amountInput = document.getElementById('amountInput');
         amountInput.addEventListener('input', function() {
-          let val = this.value;
-          if (val === '') return;
-          if (val === '.') { this.value = '0.'; updateInputColor(); return; }
-          if (val.length > 1 && val[0] === '0' && val[1] !== '.') { this.value = val.replace(/^0+/, ''); updateInputColor(); return; }
-          const regex = /^\d*\.?\d{0,2}$/;
-          if (!regex.test(val)) this.value = this._lastValid || '';
-          else this._lastValid = val;
-          if ((val.match(/\./g) || []).length > 1) this.value = this._lastValid || '';
-          updateInputColor();
-        });
+  let val = this.value;
+  
+  // 1. 允许空字符串
+  if (val === '') {
+    this._lastValid = '';
+    updateInputColor();
+    return;
+  }
+  
+  // 2. 允许单独的 "." 转为 "0."
+  if (val === '.') {
+    this.value = '0.';
+    this._lastValid = '0.';
+    updateInputColor();
+    return;
+  }
+  
+  // 3. 保留 "0." 作为合法过渡状态
+  if (val === '0.' || val === '0.0') {
+    // 如果变成了 "0.0"，保持为 "0."（让用户继续输入）
+    if (val === '0.0') {
+      this.value = '0.';
+    }
+    this._lastValid = '0.';
+    updateInputColor();
+    return;
+  }
+  
+  // 4. 移除非数字和小数点字符
+  val = val.replace(/[^\d.]/g, '');
+  
+  // 5. 确保只有一个小数点
+  const dotCount = (val.match(/\./g) || []).length;
+  if (dotCount > 1) {
+    const firstDotIndex = val.indexOf('.');
+    val = val.substring(0, firstDotIndex + 1) + val.substring(firstDotIndex + 1).replace(/\./g, '');
+  }
+  
+  // 6. 限制小数位数不超过 2 位
+  const dotIndex = val.indexOf('.');
+  if (dotIndex !== -1 && val.length - dotIndex - 1 > 2) {
+    val = val.substring(0, dotIndex + 3);
+  }
+  
+  // 7. 处理前导零（保留 "0." 情况）
+  if (val.length > 1 && val[0] === '0' && val[1] !== '.') {
+    val = val.replace(/^0+/, '');
+    // 如果全删完了，给个 "0"
+    if (val === '' || val === '.') {
+      val = '0' + val;
+    }
+  }
+  
+  // 8. 处理以小数点开头的情况（如 ".5" → "0.5"）
+  if (val[0] === '.') {
+    val = '0' + val;
+  }
+  
+  // 9. 如果只输入了 "0"，保留
+  if (val === '0') {
+    this.value = val;
+    this._lastValid = val;
+    updateInputColor();
+    return;
+  }
+  
+  // 10. 赋值
+  this.value = val;
+  this._lastValid = val;
+  updateInputColor();
+});
 
         amountInput.addEventListener('focus', function() { this._lastValid = this.value; });
         amountInput.addEventListener('blur', function() {
-          const val = parseFloat(this.value);
-          if (!isNaN(val) && val > 0) this.value = val.toFixed(2);
-          else if (this.value === '' || this.value === '0') this.value = '';
-        });
+  const val = this.value.trim();
+  
+  if (val === '' || val === '0.' || val === '.') {
+    this.value = '';
+    return;
+  }
+  
+  const num = parseFloat(val);
+  if (!isNaN(num) && num > 0) {
+    this.value = num.toFixed(2);
+  } else if (val === '0') {
+    this.value = '';
+  }
+});
 
         amountInput.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
@@ -4615,6 +4907,16 @@ if (savedBackupTime) {
             updateInstallMenuText();
           }
         });
+        
+        // 页面卸载前清理定时器
+window.addEventListener('beforeunload', cleanupTimers);
+
+// 页面隐藏时清理定时器（可选优化）
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cleanupTimers();
+  }
+});
         
       };
 
