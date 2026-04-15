@@ -2729,6 +2729,22 @@ function cleanupTimers() {
       dayDiv.className = 'calendar-day';
       dayDiv.setAttribute('role', 'gridcell');
       dayDiv.setAttribute('tabindex', '0');
+      
+      // 预先创建子元素
+      const numDiv = document.createElement('div');
+      numDiv.className = 'day-number';
+      dayDiv.appendChild(numDiv);
+      
+      const expenseSpan = document.createElement('div');
+      expenseSpan.className = 'day-expense';
+      expenseSpan.style.display = 'none';
+      dayDiv.appendChild(expenseSpan);
+      
+      const incomeSpan = document.createElement('div');
+      incomeSpan.className = 'day-income';
+      incomeSpan.style.display = 'none';
+      dayDiv.appendChild(incomeSpan);
+      
       grid.appendChild(dayDiv);
     }
   }
@@ -2778,32 +2794,29 @@ function cleanupTimers() {
     dayDiv.setAttribute('data-date', dateStr);
     dayDiv.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
 
-    let numDiv = dayDiv.querySelector('.day-number');
-    if (!numDiv) {
-      numDiv = document.createElement('div');
-      numDiv.className = 'day-number';
-      dayDiv.appendChild(numDiv);
-    }
+    // 复用子元素，只更新内容
+    const numDiv = dayDiv.querySelector('.day-number');
     numDiv.textContent = dayNum;
 
-    const oldExpense = dayDiv.querySelector('.day-expense');
-    const oldIncome = dayDiv.querySelector('.day-income');
-    if (oldExpense) oldExpense.remove();
-    if (oldIncome) oldIncome.remove();
+    const expenseSpan = dayDiv.querySelector('.day-expense');
+    const incomeSpan = dayDiv.querySelector('.day-income');
 
     if (isCurrentMonth) {
       if (expense > 0) {
-        const expenseSpan = document.createElement('div');
-        expenseSpan.className = 'day-expense';
         expenseSpan.textContent = `-${expense.toFixed(0)}`;
-        dayDiv.appendChild(expenseSpan);
+        expenseSpan.style.display = 'block';
+      } else {
+        expenseSpan.style.display = 'none';
       }
       if (income > 0) {
-        const incomeSpan = document.createElement('div');
-        incomeSpan.className = 'day-income';
         incomeSpan.textContent = `+${income.toFixed(0)}`;
-        dayDiv.appendChild(incomeSpan);
+        incomeSpan.style.display = 'block';
+      } else {
+        incomeSpan.style.display = 'none';
       }
+    } else {
+      expenseSpan.style.display = 'none';
+      incomeSpan.style.display = 'none';
     }
   }
 
@@ -2830,39 +2843,42 @@ renderCalendarTimer = setTimeout(() => {
 }
 
       function updateSingleDay(dateStr) {
-        const dayEl = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
-        if (!dayEl) return;
+  const dayEl = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
+  if (!dayEl) return;
 
-        const dayEntries = dateMap[dateStr] || [];
-        let expense = 0, income = 0;
-        for (const e of dayEntries) {
-          if (e.type === 'expense') expense += e.amount;
-          else income += e.amount;
-        }
+  const dayEntries = dateMap[dateStr] || [];
+  let expense = 0, income = 0;
+  for (const e of dayEntries) {
+    if (e.type === 'expense') expense += e.amount;
+    else income += e.amount;
+  }
 
-        const oldExpense = dayEl.querySelector('.day-expense');
-        const oldIncome = dayEl.querySelector('.day-income');
-        if (oldExpense) oldExpense.remove();
-        if (oldIncome) oldIncome.remove();
+  const expenseSpan = dayEl.querySelector('.day-expense');
+  const incomeSpan = dayEl.querySelector('.day-income');
 
-        if (expense > 0) {
-          const el = document.createElement('div');
-          el.className = 'day-expense';
-          el.textContent = `-${expense.toFixed(0)}`;
-          dayEl.appendChild(el);
-        }
-        if (income > 0) {
-          const el = document.createElement('div');
-          el.className = 'day-income';
-          el.textContent = `+${income.toFixed(0)}`;
-          dayEl.appendChild(el);
-        }
+  if (expenseSpan) {
+    if (expense > 0) {
+      expenseSpan.textContent = `-${expense.toFixed(0)}`;
+      expenseSpan.style.display = 'block';
+    } else {
+      expenseSpan.style.display = 'none';
+    }
+  }
+  
+  if (incomeSpan) {
+    if (income > 0) {
+      incomeSpan.textContent = `+${income.toFixed(0)}`;
+      incomeSpan.style.display = 'block';
+    } else {
+      incomeSpan.style.display = 'none';
+    }
+  }
 
-        dayEl.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
+  dayEl.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
 
-        renderSelectedDayTotal();
-        renderTopCards();
-      }
+  renderSelectedDayTotal();
+  renderTopCards();
+}
 
       function renderEntries() {
         const dayEntries = dateMap[selectedDate] || [];
