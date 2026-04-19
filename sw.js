@@ -1,13 +1,14 @@
-const CACHE_NAME = 'expense-github-v2';
+const CACHE_NAME = 'expense-github-v3';
 
 const STATIC_ASSETS = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  '/expense-record/',
+  '/expense-record/index.html',
+  '/expense-record/manifest.json',
+  '/expense-record/icon-192.png',
+  '/expense-record/icon-512.png'
 ];
 
+// 安装
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
@@ -17,6 +18,7 @@ self.addEventListener('install', (event) => {
   );
 });
 
+// 激活
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -30,6 +32,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// 请求拦截
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
@@ -49,11 +52,8 @@ self.addEventListener('fetch', (event) => {
 
         return res;
       } catch (err) {
-        if (event.request.headers.get('accept')?.includes('text/html')) {
-          return cache.match('./index.html');
-        }
-
-        return new Response('离线不可用', { status: 503 });
+        // 👇 关键 fallback
+        return cache.match('/expense-record/index.html');
       }
     })()
   );
