@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-github-v1';
+const CACHE_NAME = 'expense-github-v2';
 
 const STATIC_ASSETS = [
   './',
