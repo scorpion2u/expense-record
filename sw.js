@@ -1,7 +1,7 @@
-// 自动缓存版 sw.js - 修复模块加载问题
-const CACHE_NAME = 'expense-cache-v3';  // 👈 改了版本号，强制更新
+// 自动缓存版 sw.js - 适合网络不稳定的环境
+const CACHE_NAME = 'expense-cache-v4';
 
-// 核心文件列表
+// 需要确保离线时能返回页面的核心文件
 const CORE_FILES = [
   './',
   './index.html',
@@ -18,17 +18,7 @@ const CORE_FILES = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('开始缓存核心文件...');
-        // 逐个添加，确保每个都成功
-        return Promise.all(
-          CORE_FILES.map(url => {
-            return cache.add(url).catch(err => {
-              console.error('缓存失败:', url, err);
-            });
-          })
-        );
-      })
+      .then(cache => cache.addAll(CORE_FILES))
       .then(() => self.skipWaiting())
   );
 });
@@ -43,50 +33,40 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  
-  // 对于页面导航请求，网络优先
+
+  // HTML → Network First
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request) || caches.match('./index.html');
-        })
+      fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
-  
-  // 对于 JS 和 CSS 文件，缓存优先
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css')) {
+
+  // JS / CSS → SWR
+  if (
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css')
+  ) {
     event.respondWith(
-      caches.match(event.request)
-        .then(cachedResponse => {
-          if (cachedResponse) {
-            return cachedResponse;
+      (async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(event.request);
+
+        const fetchPromise = fetch(event.request).then(res => {
+          if (res && res.status === 200) {
+            cache.put(event.request, res.clone());
           }
-          return fetch(event.request).then(response => {
-            if (response && response.status === 200) {
-              const responseClone = response.clone();
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, responseClone);
-              });
-            }
-            return response;
-          });
-        })
+          return res;
+        }).catch(() => null);
+
+        return cached || fetchPromise;
+      })()
     );
     return;
   }
-  
-  // 其他请求
+
+  // 其他 → Cache First
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => cachedResponse || fetch(event.request))
+    caches.match(event.request).then(res => res || fetch(event.request))
   );
 });
