@@ -3,21 +3,19 @@ const CACHE_NAME = 'expense-tracker-v2'; // 更新版本号以强制刷新缓存
 
 // 根据您的文件结构，列出所有需要缓存的核心文件
 const urlsToCache = [
-  '/', // 缓存根路径
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  // CSS 文件（如果有请补充具体文件名，如 /css/style.css）
-  '/css/styles.css', // 请确认 CSS 文件夹下是否有文件，如有请替换为实际文件名
-  // JS 文件
-  '/js/app.js',
-  '/js/constants.js',
-  '/js/db.js',
-  '/js/events.js',
-  '/js/modal.js',
-  '/js/ui.js',
-  '/js/utils.js'
+  '/expense-record/', // 改为您的实际部署路径
+  '/expense-record/index.html',
+  '/expense-record/css/styles.css',
+  '/expense-record/js/constants.js',
+  '/expense-record/js/db.js',
+  '/expense-record/js/utils.js',
+  '/expense-record/js/modal.js',
+  '/expense-record/js/ui.js',
+  '/expense-record/js/app.js',
+  '/expense-record/js/events.js',
+  '/expense-record/manifest.json',
+  '/expense-record/icon-192.png',
+  '/expense-record/icon-512.png'
 ];
 
 // 安装事件：预缓存关键资源
