@@ -1,82 +1,60 @@
-// sw.js
-const CACHE_NAME = 'expense-record-v3'; // 升级版本号强制更新
+const CACHE_NAME = 'expense-github-v1';
 
-const urlsToCache = [
-  '/expense-record/',
-  '/expense-record/index.html',
-  '/expense-record/manifest.json',
-  '/expense-record/icon-192.png',
-  '/expense-record/icon-512.png'
+const STATIC_ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
-// 安装事件
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('✅ 缓存已打开');
-      return cache.addAll(urlsToCache);
+      return cache.addAll(STATIC_ASSETS);
     })
   );
-  self.skipWaiting();
 });
 
-// 激活事件
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('🗑 删除旧缓存:', cacheName);
-            return caches.delete(cacheName);
-          }
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) return caches.delete(key);
         })
-      );
-    })
+      )
+    )
   );
-  return self.clients.claim();
+  self.clients.claim();
 });
 
-// 请求拦截
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // 有缓存直接返回，同时后台更新
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        }).catch(() => {});
-        
-        return cachedResponse;
-      }
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
 
-      // 无缓存，尝试网络请求
-      return fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // 网络失败且无缓存，返回首页（如果是 HTML 请求）
-          if (event.request.headers.get('accept')?.includes('text/html')) {
-            return caches.match('/expense-record/');
-          }
-          // 其他资源（图片等）静默失败
-          return new Response('离线不可用', { status: 503 });
-        });
-    })
+      const cached = await cache.match(event.request);
+      if (cached) return cached;
+
+      try {
+        const res = await fetch(event.request);
+
+        if (res && res.status === 200) {
+          cache.put(event.request, res.clone());
+        }
+
+        return res;
+      } catch (err) {
+        if (event.request.headers.get('accept')?.includes('text/html')) {
+          return cache.match('./index.html');
+        }
+
+        return new Response('离线不可用', { status: 503 });
+      }
+    })()
   );
 });
