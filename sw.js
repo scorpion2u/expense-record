@@ -9,7 +9,7 @@ const urlsToCache = [
   '/icon-192.png',
   '/icon-512.png',
   // CSS 文件（如果有请补充具体文件名，如 /css/style.css）
-  '/css/style.css', // 请确认 CSS 文件夹下是否有文件，如有请替换为实际文件名
+  '/css/styles.css', // 请确认 CSS 文件夹下是否有文件，如有请替换为实际文件名
   // JS 文件
   '/js/app.js',
   '/js/constants.js',
