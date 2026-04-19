@@ -32,16 +32,38 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  
+  // 对 HTML 页面使用 Network First 策略
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // 网络请求成功，缓存响应
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // 网络失败，尝试返回缓存
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+  
+  // 对静态资源使用 Cache First 策略
   event.respondWith(
     caches.match(event.request)
       .then(cachedResponse => {
-        // 如果有缓存，直接返回
         if (cachedResponse) {
           return cachedResponse;
         }
-        // 没有缓存，发起网络请求
         return fetch(event.request).then(response => {
-          // 请求成功，将响应克隆并存入缓存
           if (response && response.status === 200) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
