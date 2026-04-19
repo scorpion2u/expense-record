@@ -1,72 +1,82 @@
-// 自动缓存版 sw.js - 适合网络不稳定的环境
-const CACHE_NAME = 'expense-cache-v4';
+// sw.js
+const CACHE_NAME = 'expense-record-v3'; // 升级版本号强制更新
 
-// 需要确保离线时能返回页面的核心文件
-const CORE_FILES = [
-  './',
-  './index.html',
-  './css/styles.css',
-  './js/app.js',
-  './js/events.js',
-  './js/ui.js',
-  './js/db.js',
-  './js/utils.js',
-  './js/constants.js',
-  './js/modal.js'
+const urlsToCache = [
+  '/expense-record/',
+  '/expense-record/index.html',
+  '/expense-record/manifest.json',
+  '/expense-record/icon-192.png',
+  '/expense-record/icon-512.png'
 ];
 
-self.addEventListener('install', event => {
+// 安装事件
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(CORE_FILES))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('✅ 缓存已打开');
+      return cache.addAll(urlsToCache);
+    })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+// 激活事件
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    )).then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-
-  // HTML → Network First
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // JS / CSS → SWR
-  if (
-    url.pathname.endsWith('.js') ||
-    url.pathname.endsWith('.css')
-  ) {
-    event.respondWith(
-      (async () => {
-        const cache = await caches.open(CACHE_NAME);
-        const cached = await cache.match(event.request);
-
-        const fetchPromise = fetch(event.request).then(res => {
-          if (res && res.status === 200) {
-            cache.put(event.request, res.clone());
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('🗑 删除旧缓存:', cacheName);
+            return caches.delete(cacheName);
           }
-          return res;
-        }).catch(() => null);
+        })
+      );
+    })
+  );
+  return self.clients.claim();
+});
 
-        return cached || fetchPromise;
-      })()
-    );
-    return;
-  }
+// 请求拦截
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
 
-  // 其他 → Cache First
   event.respondWith(
-    caches.match(event.request).then(res => res || fetch(event.request))
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // 有缓存直接返回，同时后台更新
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        }).catch(() => {});
+        
+        return cachedResponse;
+      }
+
+      // 无缓存，尝试网络请求
+      return fetch(event.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // 网络失败且无缓存，返回首页（如果是 HTML 请求）
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/expense-record/');
+          }
+          // 其他资源（图片等）静默失败
+          return new Response('离线不可用', { status: 503 });
+        });
+    })
   );
 });
