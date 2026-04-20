@@ -1704,39 +1704,160 @@ class AccountingApp {
     fileInput.click();
   }
   
-  showExportNoteResultModal(text) {
-  const existingModal = document.querySelector('.export-modal-overlay');
-  if (existingModal) existingModal.remove();
+  exportNote() {
+  const allEntries = this.state.entries;
+  if (!allEntries || allEntries.length === 0) { 
+    showToast('📭 没有记录可以导出'); 
+    return; 
+  }
   
-  const recordCount = text.split('\n').filter(l => l.includes('）')).length;
+  const availableMonths = [...new Set(allEntries.map(item => item.date.slice(0, 7)))].sort().reverse();
+  if (availableMonths.length === 0) { 
+    showToast('📭 没有记录可以导出'); 
+    return; 
+  }
   
-  // 检测暗色模式
-  const isDark = this.state.uiSettings.darkMode || document.body.classList.contains('dark-mode');
-  const cardBg = isDark ? '#1e293b' : '#ffffff';
-  const textColor = isDark ? '#f1f5f9' : '#1e293b';
-  const secondaryText = isDark ? '#94a3b8' : '#64748b';
-  const badgeBg = isDark ? '#334155' : '#e2e8f0';
-  const badgeText = isDark ? '#cbd5e1' : '#475569';
-  const inputBg = isDark ? '#0f172a' : '#f8fafc';
-  const inputBorder = isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0';
-  const cancelBg = isDark ? '#475569' : '#64748b';
+  // 直接使用 modalManager 创建，确保风格统一
+  const options = [
+    { value: 'all', label: `📆 全部月份 (${allEntries.length}条)` },
+    ...availableMonths.map(month => {
+      const count = allEntries.filter(e => e.date.startsWith(month)).length;
+      const formattedMonth = `${month.split('-')[1]}/${month.split('-')[0]}`;
+      return { value: month, label: `📅 ${formattedMonth} (${count}条)` };
+    })
+  ];
   
-  const modal = document.createElement('div');
-  modal.className = 'export-modal-overlay';
-  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
-  modal.innerHTML = `
-    <div style="padding:20px;border-radius:28px;width:90%;max-width:420px;box-shadow:0 25px 40px rgba(0,0,0,0.25);background:${cardBg};">
-      <h3 style="margin-bottom:8px;font-size:20px;display:flex;align-items:center;gap:8px;color:${textColor};">📄 导出笔记 <span style="font-size:13px;background:${badgeBg};padding:2px 10px;border-radius:30px;color:${badgeText};">${recordCount} 条记录</span></h3>
-      <p style="font-size:12px;color:${secondaryText};margin-bottom:14px;">✅ 点击下方按钮可一键复制全部内容</p>
-      <textarea id="exportTextArea" style="width:100%;height:280px;border-radius:20px;padding:14px;font-size:13px;font-family:'SF Mono',Monaco,monospace;border:1px solid ${inputBorder};background:${inputBg};color:${textColor};resize:vertical;line-height:1.5;" readonly>${escapeHtml(text)}</textarea>
-      <div style="display:flex;gap:12px;margin-top:18px;">
-        <button id="copyExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">📋 一键复制</button>
-        <button id="closeExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:${cancelBg};color:white;font-size:15px;font-weight:600;cursor:pointer;">关闭</button>
-      </div>
+  const currentMonthStr = this.state.selectedDate.slice(0, 7);
+  const defaultMonth = availableMonths.includes(currentMonthStr) ? currentMonthStr : 'all';
+  
+  const html = `
+    <div style="padding: 8px 0;">
+      <p style="font-size: 14px; color: var(--secondary-text, #64748b); margin-bottom: 16px; text-align: center;">选择要导出的月份</p>
+      <div id="noteMonthContainer" style="margin-bottom: 20px;"></div>
     </div>
   `;
   
-  document.body.appendChild(modal);
+  const modal = this.modalManager.create('📄 导出笔记', html, `
+    <div style="display: flex; gap: 12px;">
+      <button id="confirmExportNoteBtn" style="flex: 1; padding: 12px; border: none; border-radius: 40px; background: var(--expense-color); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">确认导出</button>
+      <button id="cancelExportNoteBtn" style="flex: 1; padding: 12px; border: none; border-radius: 40px; background: var(--secondary-btn-bg, #64748b); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">取消</button>
+    </div>
+  `);
+  
+  if (!modal) return;
+  
+  const container = modal.querySelector('#noteMonthContainer');
+  const monthSelect = this.ui.createCustomSelect(container, options, defaultMonth, () => {});
+  
+  modal.querySelector('#confirmExportNoteBtn').onclick = () => {
+    const selectedMonth = monthSelect.getValue();
+    let entriesToExport = [...allEntries];
+    if (selectedMonth !== 'all') {
+      entriesToExport = entriesToExport.filter(e => e.date.startsWith(selectedMonth));
+    }
+    
+    if (entriesToExport.length === 0) { 
+      showToast('📭 该月份没有记录'); 
+      this.modalManager.close(modal);
+      return; 
+    }
+    
+    const grouped = {};
+    entriesToExport.forEach(item => { 
+      const date = item.date || '未知日期'; 
+      if (!grouped[date]) grouped[date] = []; 
+      grouped[date].push(item); 
+    });
+    
+    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
+    let result = '', totalExpense = 0, totalIncome = 0, lastMonth = '';
+    
+    sortedDates.forEach(date => {
+      const parts = date.split('-');
+      const year = parts[0];
+      const month = parts[1];
+      const currentMonthKey = `${year}-${month}`;
+      
+      if (currentMonthKey !== lastMonth) { 
+        result += `\n【${parseInt(month)}月】\n`; 
+        lastMonth = currentMonthKey; 
+      }
+      
+      const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      result += `\n${formattedDate}\n`;
+      
+      const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+      sortedDayEntries.forEach((item, index) => {
+        const amount = Number(item.amount || 0).toFixed(2);
+        const note = item.note || '';
+        const typeSymbol = item.type === 'income' ? '+' : '-';
+        const pay = item.payType ? `（${item.payType}）` : '';
+        result += `${index + 1}）${typeSymbol} RM ${amount}   ${note}${pay}\n`;
+        if (item.type === 'expense') totalExpense += item.amount; 
+        else totalIncome += item.amount;
+      });
+    });
+    
+    const totalBalance = totalIncome - totalExpense;
+    result += `\n═══════════\n总支出:  RM${totalExpense.toFixed(2)}\n总收入:  RM${totalIncome.toFixed(2)}\n总结余: ${totalBalance >= 0 ? '+' : '-'}RM${Math.abs(totalBalance).toFixed(2)}\n═══════════\n`;
+    
+    const stats = this.state.getPayTypeStats(entriesToExport);
+    result += `--支付方式统计--\n`;
+    this.state.paymentTypes.forEach(type => { 
+      result += `${type}: RM${stats[type].toFixed(2)}\n`; 
+    });
+    result += `═══════════`;
+    
+    this.modalManager.close(modal);
+    this.showExportNoteResultModal(result);
+  };
+  
+  modal.querySelector('#cancelExportNoteBtn').onclick = () => this.modalManager.close(modal);
+}
+
+showExportNoteResultModal(text) {
+  const recordCount = text.split('\n').filter(l => l.includes('）')).length;
+  
+  const html = `
+    <div style="padding: 8px 0;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span style="font-size: 16px; font-weight: 600;">📄 导出笔记</span>
+        <span style="font-size: 13px; background: var(--badge-bg, #e2e8f0); padding: 2px 10px; border-radius: 30px; color: var(--badge-text, #475569);">${recordCount} 条记录</span>
+      </div>
+      <p style="font-size: 12px; color: var(--secondary-text, #64748b); margin-bottom: 14px;">✅ 点击下方按钮可一键复制全部内容</p>
+      <textarea id="exportTextArea" style="width: 100%; height: 280px; border-radius: 20px; padding: 14px; font-size: 13px; font-family: 'SF Mono', Monaco, monospace; border: 1px solid var(--border-light); background: var(--input-bg, #f8fafc); color: var(--text-color, #1e293b); resize: vertical; line-height: 1.5;" readonly>${escapeHtml(text)}</textarea>
+    </div>
+  `;
+  
+  const modal = this.modalManager.create('📄 导出笔记', html, `
+    <div style="display: flex; gap: 12px; margin-top: 18px;">
+      <button id="copyExportBtn" style="flex: 1; padding: 12px; border: none; border-radius: 40px; background: var(--expense-color); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">📋 一键复制</button>
+      <button id="closeExportBtn" style="flex: 1; padding: 12px; border: none; border-radius: 40px; background: var(--secondary-btn-bg, #64748b); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">关闭</button>
+    </div>
+  `);
+  
+  if (!modal) return;
+  
+  // 应用主题变量到 modal 内容区域
+  const isDark = this.state.uiSettings.darkMode || document.body.classList.contains('dark-mode');
+  const modalContent = modal.querySelector('.modal-content');
+  if (modalContent) {
+    if (isDark) {
+      modalContent.style.setProperty('--text-color', '#f1f5f9');
+      modalContent.style.setProperty('--secondary-text', '#94a3b8');
+      modalContent.style.setProperty('--badge-bg', '#334155');
+      modalContent.style.setProperty('--badge-text', '#cbd5e1');
+      modalContent.style.setProperty('--input-bg', '#0f172a');
+      modalContent.style.setProperty('--secondary-btn-bg', '#475569');
+    } else {
+      modalContent.style.setProperty('--text-color', '#1e293b');
+      modalContent.style.setProperty('--secondary-text', '#64748b');
+      modalContent.style.setProperty('--badge-bg', '#e2e8f0');
+      modalContent.style.setProperty('--badge-text', '#475569');
+      modalContent.style.setProperty('--input-bg', '#f8fafc');
+      modalContent.style.setProperty('--secondary-btn-bg', '#64748b');
+    }
+  }
   
   const copyBtn = modal.querySelector('#copyExportBtn');
   const textArea = modal.querySelector('#exportTextArea');
@@ -1765,8 +1886,7 @@ class AccountingApp {
     }
   };
   
-  modal.querySelector('#closeExportBtn').onclick = () => modal.remove();
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  modal.querySelector('#closeExportBtn').onclick = () => this.modalManager.close(modal);
 }
   
   async openSettingsPanel() {
