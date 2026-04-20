@@ -1577,9 +1577,9 @@ body.dark-mode #skipNoteBtn {
     date: selectedDate,
     time: new Date().toTimeString().slice(0, 5),
     amount,
-    note: category,
+    note: '',  // 先留空，后续设置
     type: currentType,
-    payType: payType || ''  // 收入时可以为空
+    payType: payType || ''
   };
 }
 
@@ -1640,24 +1640,29 @@ function showNoteModal(amount, category, payType, paxInfo = null) {
   
   const saveWithNote = async (note) => {
   modalManager.close(modal);
-  // 注意：isAdding 已在外层 addRecord 中设置为 true，此处不需要重复设置
   
   const entry = createNewEntry(amount, category, payType || '');
-if (note && note.trim()) {
-  let trimmedNote = note.trim();
-  // 限制备注长度
-  if (trimmedNote.length > CONSTANTS.MAX_NOTE_LENGTH) {
-    trimmedNote = trimmedNote.slice(0, CONSTANTS.MAX_NOTE_LENGTH);
-    showToast(`备注已自动截断至 ${CONSTANTS.MAX_NOTE_LENGTH} 字符`);
+  
+  // 处理备注：分类 + 备注（如果有）
+  if (note && note.trim()) {
+    let trimmedNote = note.trim();
+    if (trimmedNote.length > CONSTANTS.MAX_NOTE_LENGTH) {
+      trimmedNote = trimmedNote.slice(0, CONSTANTS.MAX_NOTE_LENGTH);
+      showToast(`备注已自动截断至 ${CONSTANTS.MAX_NOTE_LENGTH} 字符`);
+    }
+    // 将分类和备注组合：分类 · 备注 格式
+    entry.note = `${category} · ${trimmedNote}`;
+  } else if (paxInfo) {
+    // 有人份信息时
+    entry.note = `${category} (${paxInfo}人份)`;
+  } else {
+    // 无备注时保持分类
+    entry.note = category;
   }
-  entry.note = trimmedNote;
-} else if (paxInfo) {
-  entry.note = `${category} (${paxInfo}人份)`;
-}
   
   const success = await saveEntry(entry);
   if (!success) { 
-    isAdding = false;  // 保存失败时释放锁
+    isAdding = false;
     return; 
   }
   
@@ -1674,7 +1679,6 @@ if (note && note.trim()) {
   const toastMsg = payType ? `已记账 · ${entry.note} (${payType})` : `已记账 · ${entry.note}`;
   showToast(toastMsg);
   
-  // 成功完成，释放锁
   isAdding = false;
 };
   
