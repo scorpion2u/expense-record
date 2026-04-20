@@ -54,7 +54,10 @@
 ---
 
 ## 📁 项目结构
-. ├── index.html        # 主页面（包含核心逻辑） ├── manifest.json     # PWA 配置 ├── icon-192.png      # 应用图标
+├── index.html     # 主页面（包含核心逻辑）
+├── manifest.json  # PWA 配置
+├── icon-192.png   # 应用图标（小）
+├── icon-512.png   # 应用图标（大）
 
 ---
 
