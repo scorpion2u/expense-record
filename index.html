@@ -3087,6 +3087,7 @@ function translateCategories(cats, targetLang) {
       }
 
       // ==================== 导出备份 ====================
+            // ==================== 导出备份 ====================
       function showExportDialog() {
         const html = `
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -3116,14 +3117,28 @@ function translateCategories(cats, targetLang) {
           filtered.sort((a, b) => new Date(`${b.date} ${b.time || '00:00'}`) - new Date(`${a.date} ${a.time || '00:00'}`));
           if (!filtered.length) { showToast(t('noDataMatch')); return; }
           const exportData = { source: 'main', version: '1.0', exportDate: new Date().toISOString(), entries: filtered, expenseCats, incomeCats, paymentTypes };
-          let fileName = 'AccountingBook';
-          if (range === 'month') fileName += `_${String(currentMonth + 1).padStart(2, '0')}_${currentYear}`;
-          else if (range === 'year') fileName += `_${currentYear}`;
-          else if (range === 'custom') { const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value; fileName += `_${start}_to_${end}`; }
-          else fileName += '_All';
-          if (type === 'expense') fileName += '_Expense';
-          if (type === 'income') fileName += '_Income';
+          
+          // 根据语言生成文件名
+          let fileName;
+          if (currentLanguage === 'zh-CN') {
+            fileName = '记账本备份';
+            if (range === 'month') fileName += `_${currentYear}年${currentMonth + 1}月`;
+            else if (range === 'year') fileName += `_${currentYear}年`;
+            else if (range === 'custom') { const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value; fileName += `_${start}_至_${end}`; }
+            else fileName += '_全部记录';
+            if (type === 'expense') fileName += '_仅支出';
+            if (type === 'income') fileName += '_仅收入';
+          } else {
+            fileName = 'AccountingBook';
+            if (range === 'month') fileName += `_${String(currentMonth + 1).padStart(2, '0')}_${currentYear}`;
+            else if (range === 'year') fileName += `_${currentYear}`;
+            else if (range === 'custom') { const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value; fileName += `_${start}_to_${end}`; }
+            else fileName += '_All';
+            if (type === 'expense') fileName += '_Expense';
+            if (type === 'income') fileName += '_Income';
+          }
           fileName += '.json';
+          
           const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
           const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName; a.click(); URL.revokeObjectURL(a.href);
           saveBackupTime(); showToast(`${t('exportedCount')} ${filtered.length} ${t('records')}`); modalManager.close(modal);
