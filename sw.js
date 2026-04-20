@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-github-v7';
+const CACHE_NAME = 'expense-github-v3';
 
 const STATIC_ASSETS = [
   '/expense-record/',
@@ -6,14 +6,6 @@ const STATIC_ASSETS = [
   '/expense-record/manifest.json',
   '/expense-record/icon-192.png',
   '/expense-record/icon-512.png'
-  '/expense-record/css/styles.css',
-  '/expense-record/js/app.js',
-  '/expense-record/js/events.js',
-  '/expense-record/js/ui.js',
-  '/expense-record/js/db.js',
-  '/expense-record/js/utils.js',
-  '/expense-record/js/constants.js',
-  '/expense-record/js/modal.js'
 ];
 
 // 安装
