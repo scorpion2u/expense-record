@@ -1970,7 +1970,7 @@
         (function() {
             'use strict';
 
-            // ==================== 常量定义 ====================
+            // === 常量定义 ===
             const CONSTANTS = {
                 STORAGE_KEYS: {
                     ENTRIES: 'book_v1_main',
@@ -1991,7 +1991,7 @@
                 MAX_NOTE_LENGTH: 100
             };
 
-            // ==================== 多语言配置 ====================
+            // === 多语言配置 ===
             const LANGUAGES = {
                 'zh-CN': {
                     name: '简体中文',
@@ -2625,7 +2625,7 @@
                 return text;
             }
 
-            // ==================== 多货币配置 ====================
+            // === 多货币配置 ===
             const CURRENCIES = {
                 MYR: {
                     symbol: 'RM',
@@ -2737,7 +2737,7 @@
                 return `${symbol}${convertToDisplayAmount(amount).toFixed(decimals)}`;
             }
 
-            // ==================== IndexedDB 管理类 ====================
+            // === IndexedDB 管理类 ===
             class IndexedDBManager {
                 constructor() {
                     this.dbName = 'AccountingBookDB';
@@ -2931,7 +2931,7 @@
                 else amountInput.value = "";
             });
 
-            // ==================== 全局变量 ====================
+            // === 全局变量 ===
             let entries = [];
             let expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
             let incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
@@ -2974,7 +2974,7 @@
                 darkMode: false
             };
 
-            // ==================== 工具函数 ====================
+            // === 工具函数 ===
             function getLocalDate() {
                 const now = new Date();
                 return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -3035,7 +3035,7 @@
                 return `${y}-${m}-${d}`;
             }
 
-            // ==================== 模态框管理器 ====================
+            // === 模态框管理器 ===
             class ModalManager {
                 constructor() {
                     this.currentModal = null;
@@ -3087,7 +3087,7 @@
 
             const modalManager = new ModalManager();
 
-            // ==================== 检测浏览器类型 ====================
+            // === 检测浏览器类型 ===
             function detectBrowser() {
                 const ua = navigator.userAgent;
                 if (/Edg/.test(ua)) return 'edge';
@@ -3164,7 +3164,7 @@
 
             window.installPWA = installPWA;
 
-            // ==================== HSL 颜色转换 ====================
+            // === HSL 颜色转换 ===
             function hslToHex(h, s, l) {
                 s /= 100;
                 l /= 100;
@@ -3232,7 +3232,7 @@
                 };
             }
 
-            // ==================== UI 设置 ====================
+            // === UI 设置 ===
             function applyUISettings() {
                 if (applyTimeout) clearTimeout(applyTimeout);
                 applyTimeout = setTimeout(() => {
@@ -3316,7 +3316,7 @@
                 showToast(uiSettings.darkMode ? t('darkModeOn') : t('lightModeOn'));
             }
 
-            // ==================== 缓存操作 ====================
+            // === 缓存操作 ===
             function addToCache(entry) {
                 const monthKey = entry.date.slice(0, 7);
                 if (!monthStatsCache[monthKey]) monthStatsCache[monthKey] = {
@@ -3374,7 +3374,7 @@
                 for (const month in monthMap) monthMap[month].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             }
 
-            // ==================== 数据管理 ====================
+            // === 数据管理 ===
             async function saveEntry(entry) {
                 try {
                     await dbManager.put('entries', entry);
@@ -3558,7 +3558,7 @@
                 });
                 return stats;
             }
-            // ==================== 自定义选择器 ====================
+            // === 自定义选择器 ===
             function createCustomSelect(container, options, defaultValue, onChange) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'custom-select';
@@ -3644,7 +3644,7 @@
                 };
             }
 
-            // ==================== UI 语言更新 ====================
+            // === UI 语言更新 ===
             function updateUILanguage() {
                 // 更新统计卡片
                 document.querySelector('.stat-card.income .stat-label').innerHTML = t('monthIncome');
@@ -3756,7 +3756,7 @@
                 }
             }
 
-            // ==================== 渲染函数 ====================
+            // === 渲染函数 ===
             function renderTopCards() {
                 const stats = getMonthStats(currentYear, currentMonth);
                 const symbol = getCurrencySymbol();
@@ -3988,7 +3988,7 @@
                 dropdown.innerHTML = cats.map(c => `<div class="category-item" data-cat="${escapeHtml(c)}" role="option">${escapeHtml(c)}</div>`).join('');
             }
 
-            // ==================== 业务逻辑 ====================
+            // === 业务逻辑 ===
             function closeMenu() {
                 const dropdown = document.getElementById('menuDropdown');
                 dropdown.classList.remove('show');
@@ -4345,7 +4345,165 @@
                     };
                 });
             }
-            // ==================== 语言切换 ====================
+            
+            
+            // === 首次启动语言选择 ===
+            async function checkFirstRunAndShowLanguagePrompt() {
+                try {
+                    // 检查是否已经设置过语言（首次运行标记）
+                    const hasSetupLanguage = await dbManager.get('settings', 'hasSetupLanguage');
+                    
+                    // 如果已经设置过，直接返回
+                    if (hasSetupLanguage && hasSetupLanguage.value === true) {
+                        return;
+                    }
+                    
+                    // 首次运行，显示语言选择弹窗
+                    showFirstRunLanguageModal();
+                } catch (e) {
+                    // 如果读取失败，也显示弹窗
+                    console.warn('读取语言设置失败，显示首次运行弹窗', e);
+                    showFirstRunLanguageModal();
+                }
+            }
+
+            function showFirstRunLanguageModal() {
+                const html = `
+                    <div style="text-align: center; padding: 8px 0;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🌐</div>
+                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">
+                            选择语言 / Choose Language
+                        </div>
+                        <div style="font-size: 14px; color: #64748b; margin-bottom: 24px;">
+                            请选择您偏好的语言，后续可在菜单中更改<br>
+                            Please select your preferred language, you can change it later in the menu
+                        </div>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px;">
+                            <div class="lang-first-option" data-lang="zh-CN" style="
+                                display: flex;
+                                align-items: center;
+                                padding: 16px 20px;
+                                border-radius: 20px;
+                                background: rgba(194, 65, 58, 0.08);
+                                border: 2px solid var(--expense-color);
+                                cursor: pointer;
+                                transition: all 0.15s;
+                            ">
+                                <span style="font-size: 32px; margin-right: 16px;">🇨🇳</span>
+                                <div style="flex: 1; text-align: left;">
+                                    <div style="font-weight: 600; font-size: 18px;">简体中文</div>
+                                    <div style="font-size: 13px; color: #64748b;">Simplified Chinese</div>
+                                </div>
+                                <span style="color: var(--expense-color); font-size: 24px;">→</span>
+                            </div>
+                            
+                            <div class="lang-first-option" data-lang="en-US" style="
+                                display: flex;
+                                align-items: center;
+                                padding: 16px 20px;
+                                border-radius: 20px;
+                                background: rgba(0, 0, 0, 0.04);
+                                border: 2px solid transparent;
+                                cursor: pointer;
+                                transition: all 0.15s;
+                            ">
+                                <span style="font-size: 32px; margin-right: 16px;">🇺🇸</span>
+                                <div style="flex: 1; text-align: left;">
+                                    <div style="font-weight: 600; font-size: 18px;">English</div>
+                                    <div style="font-size: 13px; color: #64748b;">English (US)</div>
+                                </div>
+                                <span style="color: #64748b; font-size: 24px; opacity: 0.5;">→</span>
+                            </div>
+                        </div>
+                        
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 16px;">
+                            您可以在菜单的「语言」中随时切换<br>
+                            You can switch anytime in the "Language" menu
+                        </div>
+                    </div>
+                `;
+                
+                const modal = modalManager.create(
+                    '🌐 欢迎 / Welcome',
+                    html,
+                    `<div style="display: none;"></div>`
+                );
+                
+                if (!modal) return;
+                
+                // 移除关闭按钮，用户必须选择一个语言
+                const closeBtn = modal.querySelector('.modal-close');
+                if (closeBtn) closeBtn.style.display = 'none';
+                
+                // 禁止点击遮罩关闭
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        // 不做任何事，必须选择语言
+                    }
+                };
+                
+                // 绑定语言选择事件
+                modal.querySelectorAll('.lang-first-option').forEach(opt => {
+                    opt.addEventListener('mouseenter', () => {
+                        if (opt.dataset.lang !== currentLanguage) {
+                            opt.style.background = 'rgba(0, 0, 0, 0.06)';
+                        }
+                    });
+                    
+                                        opt.addEventListener('mouseleave', () => {
+                        if (opt.dataset.lang !== currentLanguage) {
+                            // 根据暗色模式设置不同的背景色
+                            if (uiSettings.darkMode) {
+                                opt.style.background = 'rgba(255, 255, 255, 0.06)';
+                            } else {
+                                opt.style.background = 'rgba(0, 0, 0, 0.04)';
+                            }
+                        }
+                    });
+                    
+                    opt.onclick = async () => {
+                        const selectedLang = opt.dataset.lang;
+                        
+                        // 保存语言设置
+                        currentLanguage = selectedLang;
+                        await saveLanguageSetting();
+                        
+                        // 标记已完成首次语言设置
+                        try {
+                            await dbManager.put('settings', {
+                                key: 'hasSetupLanguage',
+                                value: true
+                            });
+                        } catch (e) {
+                            console.warn('保存首次运行标记失败', e);
+                        }
+                        
+                        // 更新 UI 语言
+                        updateUILanguage();
+                        
+                        // 关闭弹窗
+                        modalManager.close(modal);
+                        
+                        // 显示欢迎提示
+                        const welcomeMsg = selectedLang === 'zh-CN' 
+                            ? '🎉 欢迎使用记账本！' 
+                            : '🎉 Welcome to Accounting Book!';
+                        showToast(welcomeMsg);
+                    };
+                });
+                
+                // 适配暗色模式
+                if (uiSettings.darkMode) {
+                    modal.querySelectorAll('.lang-first-option').forEach(opt => {
+                        if (opt.dataset.lang !== currentLanguage) {
+                            opt.style.background = 'rgba(255, 255, 255, 0.06)';
+                        }
+                    });
+                }
+            }
+            
+            // === 语言切换 ===
             function showLanguageSelector() {
                 const html = `
     <div style="max-height: 400px; overflow-y: auto; padding: 4px 0;">
@@ -4412,7 +4570,7 @@
                 modal.querySelector('#closeLangBtn').onclick = () => modalManager.close(modal);
             }
 
-            // ==================== 货币切换 ====================
+            // === 货币切换 ===
             function showCurrencySelector() {
                 const currentDisplay = displayCurrency;
                 const html = `
@@ -4483,7 +4641,7 @@
                 modal.querySelector('#closeCurrencyBtn').onclick = () => modalManager.close(modal);
             }
 
-            // ==================== 导出笔记 ====================
+            // === 导出笔记 ===
             function exportNote() {
                 const allEntries = entries;
                 if (!allEntries || allEntries.length === 0) {
@@ -4623,7 +4781,7 @@
                 };
             }
 
-            // ==================== 统计 ====================
+            // === 统计 ===
             function showStatistics() {
                 const stats = getMonthStats(currentYear, currentMonth);
                 const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -4655,7 +4813,7 @@
                 if (modal) modal.querySelector('#closeStatsBtn').onclick = () => modalManager.close(modal);
             }
 
-            // ==================== 搜索 ====================
+            // === 搜索 ===
             function showSearch(preset = null) {
                 const today = new Date();
                 const oneYearAgo = new Date();
@@ -4744,7 +4902,7 @@
                 if (preset) setTimeout(performSearch, 100);
             }
 
-            // ==================== 分类管理 ====================
+            // === 分类管理 ===
             function openCategoryManager(type) {
                 const title = type === 'expense' ? t('manageExpenseTitle') : t('manageIncomeTitle');
                 let dragStartIndex = null;
@@ -4907,7 +5065,7 @@
                 };
                 modal.querySelector('#closeCatModal').onclick = () => modalManager.close(modal);
             }
-            // ==================== 支付方式管理 ====================
+            // === 支付方式管理 ===
             function openPaymentTypeManager() {
                 const title = t('managePaymentTitle');
                 let dragStartIndex = null;
@@ -5065,7 +5223,7 @@
                 modal.querySelector('#closePayModal').onclick = () => modalManager.close(modal);
             }
 
-            // ==================== 清空数据 ====================
+            // === 清空数据 ===
             async function clearAllData() {
                 if (isClearing) return;
                 isClearing = true;
@@ -5127,8 +5285,13 @@
                         };
                         finalModal.querySelector('#reallyConfirmBtn').onclick = async () => {
                             modalManager.close(finalModal);
-                            try {
+                                                        try {
+                                // 清空所有 IndexedDB 数据
                                 await dbManager.clear('entries');
+                                await dbManager.clear('settings');
+                                await dbManager.clear('categories');
+                                
+                                // 重置为默认分类和支付方式
                                 await dbManager.put('categories', {
                                     key: 'expenseCats',
                                     value: CONSTANTS.DEFAULT_CATS.EXPENSE
@@ -5141,10 +5304,46 @@
                                     key: 'paymentTypes',
                                     value: CONSTANTS.DEFAULT_PAYMENT_TYPES
                                 });
+                                
+                                // 重置内存中的数据
                                 entries = [];
                                 expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
                                 incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
                                 paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
+                                
+                                // 重置语言为中文
+                                currentLanguage = 'zh-CN';
+                                
+                                // 重置货币为 MYR
+                                displayCurrency = 'MYR';
+                                document.getElementById('currencySymbol').textContent = getCurrencySymbol();
+                                
+                                // 重置 UI 设置为默认值
+                                uiSettings = {
+                                    cardRadius: 24,
+                                    cardPadding: 16,
+                                    statPadding: 8,
+                                    inputPadding: 12,
+                                    fontSize: 18,
+                                    expenseColor: '#c2413a',
+                                    incomeColor: '#2dd4bf',
+                                    spacingGap: 6,
+                                    bgColor: '#f1f5f9',
+                                    cardBg: '#ffffff',
+                                    darkMode: false
+                                };
+                                
+                                // 应用 UI 设置
+                                applyUISettings();
+                                
+                                // 关闭暗色模式
+                                document.body.classList.remove('dark-mode');
+                                const darkModeMenuItem = document.getElementById('darkModeMenuItem');
+                                if (darkModeMenuItem) darkModeMenuItem.innerHTML = t('darkMode');
+                                
+                                // 清空 localStorage 中的备份时间
+                                localStorage.removeItem('lastBackupTime');
+                                
                                 rebuildStatsCache();
                                 const now = new Date();
                                 currentYear = now.getFullYear();
@@ -5155,12 +5354,20 @@
                                 document.getElementById('categoryInput').value = '';
                                 document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
                                 document.querySelector('.type-option.expense').classList.add('active');
+                                
+                                // 更新 UI 语言
+                                updateUILanguage();
+                                
                                 updateInputColor();
                                 renderCalendar();
                                 renderEntries();
                                 renderCategoryDropdown();
                                 closeCategoryDropdown();
                                 closeMenu();
+                                
+                                // 更新备份状态显示
+                                document.getElementById("backupStatus").innerText = t('notBackedUp');
+                                
                                 showToast(t('dataCleared'));
                             } catch (error) {
                                 console.error('清空失败:', error);
@@ -5173,8 +5380,8 @@
                 };
             }
 
-            // ==================== 导出备份 ====================
-            // ==================== 导出备份 ====================
+            // === 导出备份 ===
+            // === 导出备份 ===
             function showExportDialog() {
                 const html = `
           <div style="display:flex;flex-direction:column;gap:16px;">
@@ -5336,7 +5543,7 @@
                 else el.innerText = `💾 ${diffDays} ${t('daysAgo')}`;
             }
 
-            // ==================== 导入备份 ====================
+            // === 导入备份 ===
             function showImportDialog() {
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
@@ -5487,7 +5694,7 @@
                 fileInput.click();
             }
 
-            // ==================== 事件绑定 ====================
+            // === 事件绑定 ===
             function bindEvents() {
                 const amountInput = document.getElementById('amountInput'),
                     categoryInput = document.getElementById('categoryInput');
@@ -5700,7 +5907,7 @@
                 });
             }
 
-            // ==================== 设置面板 ====================
+            // === 设置面板 ===
             function openSettingsPanel() {
                 if (!window._tempColors) window._tempColors = {
                     expenseColor: uiSettings.expenseColor,
@@ -5835,8 +6042,8 @@
                 window.addEventListener('online', () => showToast(t('online')));
             }
 
-            // ==================== 初始化 ====================
-            window.onload = async function() {
+            // === 初始化 ===
+                        window.onload = async function() {
                 await load();
                 rebuildStatsCache();
                 bindEvents();
@@ -5847,10 +6054,19 @@
                 initBackToTop();
                 initServiceWorker();
                 updateInstallMenuText();
+                
                 const savedBackupTime = localStorage.getItem('lastBackupTime');
                 savedBackupTime ? updateBackupStatus(savedBackupTime) : document.getElementById("backupStatus").innerText = t('notBackedUp');
+                
                 document.getElementById('loadingOverlay').style.opacity = '0';
                 setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 300);
+                
+                // === 首次运行显示语言选择 ===
+                // 延迟一点显示，确保加载动画已消失
+                setTimeout(() => {
+                    checkFirstRunAndShowLanguagePrompt();
+                }, 400);
+                
                 window.addEventListener('beforeunload', cleanupTimers);
                 document.addEventListener('visibilitychange', () => {
                     if (document.hidden) cleanupTimers();
