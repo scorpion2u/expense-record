@@ -283,6 +283,44 @@
             background: rgba(0, 0, 0, 0.03);
         }
 
+        /* 农历开关样式 */
+        .lunar-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lunar-switch-toggle {
+            width: 44px;
+            height: 24px;
+            background: #cbd5e1;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .lunar-switch-toggle.active {
+            background: var(--expense-color);
+        }
+
+        .lunar-switch-toggle::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .lunar-switch-toggle.active::after {
+            transform: translateX(20px);
+        }
+
         .input-row {
             display: flex;
             gap: 10px;
@@ -485,6 +523,16 @@
 
         .day-number {
             font-weight: 500;
+        }
+
+        .day-lunar {
+            font-size: calc(var(--font-size-base) * 0.45);
+            color: #9ca3af;
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
         .day-expense {
@@ -933,6 +981,10 @@
                 font-size: calc(var(--font-size-base) * 0.7);
             }
 
+            .day-lunar {
+                font-size: calc(var(--font-size-base) * 0.4);
+            }
+
             .day-expense,
             .day-income {
                 font-size: calc(var(--font-size-base) * 0.45);
@@ -1044,6 +1096,10 @@
             color: #e2e8f0;
         }
 
+        body.dark-mode .day-lunar {
+            color: #64748b;
+        }
+
         body.dark-mode .modal-content {
             background: #1e293b;
             color: #f1f5f9;
@@ -1079,6 +1135,14 @@
         body.dark-mode .hsl-row input[type="range"]::-webkit-slider-thumb {
             background: #1e293b;
             border: 2px solid #64748b;
+        }
+
+        body.dark-mode .lunar-switch-toggle {
+            background: #475569;
+        }
+
+        body.dark-mode .lunar-switch-toggle.active {
+            background: var(--expense-color);
         }
 
         .selected-amount {
@@ -1840,7 +1904,6 @@
             color: #cbd5e1 !important;
         }
 
-        /* 货币和语言切换样式 */
         .currency-option,
         .lang-option {
             transition: all 0.2s ease;
@@ -1906,6 +1969,12 @@
                         <div class="menu-item" id="installAppBtn" role="menuitem">📱 安装应用</div>
                         <div class="menu-item" id="settingsMenuItem" role="menuitem">🎨 界面设置</div>
                         <div class="menu-item" id="darkModeMenuItem" role="menuitem">🌙 暗色模式</div>
+                        <div class="menu-item lunar-switch-item" id="lunarSwitchMenuItem" role="menuitem">
+                            <div class="lunar-switch">
+                                <span>📅 显示农历</span>
+                                <div class="lunar-switch-toggle" id="lunarSwitchToggle"></div>
+                            </div>
+                        </div>
                         <div class="menu-item" id="languageMenuItem" role="menuitem">🌐 语言 / Language</div>
                         <div class="menu-item" id="currencyMenuItem" role="menuitem">💱 切换货币</div>
                         <div class="menu-item" id="statisticsMenuItem" role="menuitem">📊 月度统计</div>
@@ -1913,7 +1982,7 @@
                         <div class="menu-item" id="manageExpenseCategories" role="menuitem">📝 管理支出分类</div>
                         <div class="menu-item" id="manageIncomeCategories" role="menuitem">💰 管理收入分类</div>
                         <div class="menu-item" id="managePaymentTypes" role="menuitem">💳 管理支付方式</div>
-                        <div class="menu-item" id="exportNoteBtn" role="menuitem">📄 导出笔记（以文字分享）</div>
+                        <div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
                         <div class="menu-item" id="importMenuItem" role="menuitem">📥 导入备份（可选月份）</div>
                         <div class="menu-item" id="clearDataMenuItem" role="menuitem">🗑 清空所有数据</div>
@@ -1970,7 +2039,160 @@
         (function() {
             'use strict';
 
-            // === 常量定义 ===
+            // ==================== 农历计算模块（完整修复版）====================
+const Lunar = (function() {
+    // 农历数据 1900-2100
+    const lunarInfo = [
+        0x04bd8, 0x04ae0, 0x0a570, 0x054d5, 0x0d260, 0x0d950, 0x16554, 0x056a0, 0x09ad0, 0x055d2,
+        0x04ae0, 0x0a5b6, 0x0a4d0, 0x0d250, 0x1d255, 0x0b540, 0x0d6a0, 0x0ada2, 0x095b0, 0x14977,
+        0x04970, 0x0a4b0, 0x0b4b5, 0x06a50, 0x06d40, 0x1ab54, 0x02b60, 0x09570, 0x052f2, 0x04970,
+        0x06566, 0x0d4a0, 0x0ea50, 0x06e95, 0x05ad0, 0x02b60, 0x186e3, 0x092e0, 0x1c8d7, 0x0c950,
+        0x0d4a0, 0x1d8a6, 0x0b550, 0x056a0, 0x1a5b4, 0x025d0, 0x092d0, 0x0d2b2, 0x0a950, 0x0b557,
+        0x06ca0, 0x0b550, 0x15355, 0x04da0, 0x0a5b0, 0x14573, 0x052b0, 0x0a9a8, 0x0e950, 0x06aa0,
+        0x0aea6, 0x0ab50, 0x04b60, 0x0aae4, 0x0a570, 0x05260, 0x0f263, 0x0d950, 0x05b57, 0x056a0,
+        0x096d0, 0x04dd5, 0x04ad0, 0x0a4d0, 0x0d4d4, 0x0d250, 0x0d558, 0x0b540, 0x0b6a0, 0x195a6,
+        0x095b0, 0x049b0, 0x0a974, 0x0a4b0, 0x0b27a, 0x06a50, 0x06d40, 0x0af46, 0x0ab60, 0x09570,
+        0x04af5, 0x04970, 0x064b0, 0x074a3, 0x0ea50, 0x06b58, 0x055c0, 0x0ab60, 0x096d5, 0x092e0,
+        0x0c960, 0x0d954, 0x0d4a0, 0x0da50, 0x07552, 0x056a0, 0x0abb7, 0x025d0, 0x092d0, 0x0cab5,
+        0x0a950, 0x0b4a0, 0x0baa4, 0x0ad50, 0x055d9, 0x04ba0, 0x0a5b0, 0x15176, 0x052b0, 0x0a930,
+        0x07954, 0x06aa0, 0x0ad50, 0x05b52, 0x04b60, 0x0a6e6, 0x0a4e0, 0x0d260, 0x0ea65, 0x0d530,
+        0x05aa0, 0x076a3, 0x096d0, 0x04afb, 0x04ad0, 0x0a4d0, 0x1d0b6, 0x0d250, 0x0d520, 0x0dd45,
+        0x0b5a0, 0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0, 0x0aa50, 0x1b255, 0x06d20, 0x0ada0,
+        0x14b63, 0x09370, 0x049f8, 0x04970, 0x064b0, 0x168a6, 0x0ea50, 0x06b20, 0x1a6c4, 0x0aae0,
+        0x092e0, 0x0d2e3, 0x0c960, 0x0d557, 0x0d4a0, 0x0da50, 0x05d55, 0x056a0, 0x0a6d0, 0x055d4,
+        0x052d0, 0x0a9b8, 0x0a950, 0x0b4a0, 0x0b6a6, 0x0ad50, 0x055a0, 0x0aba4, 0x0a5b0, 0x052b0,
+        0x0b273, 0x06930, 0x07337, 0x06aa0, 0x0ad50, 0x14b55, 0x04b60, 0x0a570, 0x054e4, 0x0d160,
+        0x0e968, 0x0d520, 0x0daa0, 0x16aa6, 0x056d0, 0x04ae0, 0x0a9d4, 0x0a2d0, 0x0d150, 0x0f252,
+        0x0d520
+    ];
+
+    const solarTerms = [
+        '小寒', '大寒', '立春', '雨水', '惊蛰', '春分', '清明', '谷雨', '立夏', '小满', '芒种', '夏至',
+        '小暑', '大暑', '立秋', '处暑', '白露', '秋分', '寒露', '霜降', '立冬', '小雪', '大雪', '冬至'
+    ];
+
+    const lunarMonthNames = ['正', '二', '三', '四', '五', '六', '七', '八', '九', '十', '冬', '腊'];
+    const lunarDayNames = [
+        '初一', '初二', '初三', '初四', '初五', '初六', '初七', '初八', '初九', '初十',
+        '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十',
+        '廿一', '廿二', '廿三', '廿四', '廿五', '廿六', '廿七', '廿八', '廿九', '三十'
+    ];
+
+    // 公历日期转农历
+    function solarToLunar(date) {
+        // 获取年月日
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        
+        // 1900年1月31日为农历1900年正月初一
+        const baseYear = 1900;
+        const baseMonth = 1;
+        const baseDay = 31;
+        
+        let offset = 0;
+        // 计算从1900年1月31日到输入日期的天数
+        for (let y = baseYear; y < year; y++) {
+            offset += 365;
+            if ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0)) {
+                offset += 1;
+            }
+        }
+        
+        // 累加当年经过的月份天数
+        const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if ((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)) {
+            monthDays[1] = 29;
+        }
+        for (let m = 1; m < month; m++) {
+            offset += monthDays[m - 1];
+        }
+        offset += day - baseDay;
+        
+        // 确定农历年份
+        let lunarYear = baseYear;
+        let daysInLunarYear = getYearDays(lunarYear);
+        while (offset >= daysInLunarYear) {
+            offset -= daysInLunarYear;
+            lunarYear++;
+            daysInLunarYear = getYearDays(lunarYear);
+        }
+        
+        // 确定农历月份和日期
+        let lunarMonth = 1;
+        let isLeap = false;
+        const leapMonth = getLeapMonth(lunarYear);
+        
+        for (let m = 1; m <= 12; m++) {
+            let daysInMonth;
+            
+            // 处理闰月
+            if (leapMonth > 0 && m === leapMonth + 1 && !isLeap) {
+                isLeap = true;
+                m--;
+                daysInMonth = getLeapDays(lunarYear);
+            } else {
+                daysInMonth = getMonthDays(lunarYear, m);
+            }
+            
+            if (offset < daysInMonth) {
+                lunarMonth = m;
+                break;
+            }
+            
+            offset -= daysInMonth;
+            
+            if (leapMonth === m && isLeap) {
+                isLeap = false;
+            }
+        }
+        
+        const lunarDay = offset + 1;
+        
+        // 获取农历日期名称
+        const dayName = lunarDayNames[lunarDay - 1];
+        
+        return {
+            year: lunarYear,
+            month: lunarMonth,
+            day: lunarDay,
+            isLeap: isLeap,
+            dayName: dayName
+        };
+    }
+
+    function getLeapMonth(year) {
+        return lunarInfo[year - 1900] & 0xf;
+    }
+
+    function getLeapDays(year) {
+        if (getLeapMonth(year)) {
+            return (lunarInfo[year - 1900] & 0x10000) ? 30 : 29;
+        }
+        return 0;
+    }
+
+    function getMonthDays(year, month) {
+        return (lunarInfo[year - 1900] & (0x10000 >> month)) ? 30 : 29;
+    }
+
+    function getYearDays(year) {
+        let sum = 348;
+        for (let i = 0x8000; i > 0x8; i >>= 1) {
+            sum += (lunarInfo[year - 1900] & i) ? 1 : 0;
+        }
+        return sum + getLeapDays(year);
+    }
+
+    return {
+        solarToLunar: solarToLunar,
+        getLunarDate: function(date) {
+            return solarToLunar(date);
+        }
+    };
+})();
+
+            // ==================== 常量定义 ====================
             const CONSTANTS = {
                 STORAGE_KEYS: {
                     ENTRIES: 'book_v1_main',
@@ -1991,7 +2213,7 @@
                 MAX_NOTE_LENGTH: 100
             };
 
-            // === 多语言配置 ===
+            // ==================== 多语言配置 ====================
             const LANGUAGES = {
                 'zh-CN': {
                     name: '简体中文',
@@ -2006,6 +2228,7 @@
                     income: '💰 收入',
                     amountPlaceholder: '0.00',
                     categoryPlaceholder: '输入或选择分类',
+                    showLunar: '📅 显示农历',
                     installApp: '📱 安装应用',
                     installedApp: '✅ 已安装应用',
                     addToHome: '📱 添加到主屏幕',
@@ -2078,6 +2301,8 @@
                     switchedTo: '已切换至',
                     darkModeOn: '已切换至暗色模式',
                     lightModeOn: '已切换至亮色模式',
+                    lunarOn: '🌙 农历已开启',
+                    lunarOff: '☀️ 农历已关闭',
                     enterValidAmount: '请输入有效金额',
                     enterCategory: '请输入分类',
                     enterAmount: '请输入金额',
@@ -2277,6 +2502,7 @@
                     income: '💰 Income',
                     amountPlaceholder: '0.00',
                     categoryPlaceholder: 'Enter or select category',
+                    showLunar: '📅 Show Lunar',
                     installApp: '📱 Install App',
                     installedApp: '✅ Installed',
                     addToHome: '📱 Add to Home',
@@ -2349,6 +2575,8 @@
                     switchedTo: 'Switched to',
                     darkModeOn: 'Dark mode enabled',
                     lightModeOn: 'Light mode enabled',
+                    lunarOn: '🌙 Lunar enabled',
+                    lunarOff: '☀️ Lunar disabled',
                     enterValidAmount: 'Please enter a valid amount',
                     enterCategory: 'Please enter a category',
                     enterAmount: 'Please enter amount',
@@ -2537,67 +2765,21 @@
                 }
             };
 
-            // 分类翻译映射（用于切换语言时更新分类显示）
             const CATEGORY_TRANSLATIONS = {
                 'zh-CN': {
-                    '早餐': '早餐',
-                    '午餐': '午餐',
-                    '晚餐': '晚餐',
-                    '打油': '打油',
-                    '购物': '购物',
-                    '娱乐': '娱乐',
-                    '居家': '居家',
-                    '其他': '其他',
-                    '薪水': '薪水',
-                    '奖金': '奖金',
-                    '红包': '红包',
-                    '投资': '投资',
-                    '报销': '报销',
-                    'Breakfast': '早餐',
-                    'Lunch': '午餐',
-                    'Dinner': '晚餐',
-                    'Fuel': '打油',
-                    'Shopping': '购物',
-                    'Entertainment': '娱乐',
-                    'Home': '居家',
-                    'Other': '其他',
-                    'Salary': '薪水',
-                    'Bonus': '奖金',
-                    'Red Packet': '红包',
-                    'Investment': '投资',
-                    'Reimbursement': '报销'
+                    '早餐': '早餐', '午餐': '午餐', '晚餐': '晚餐', '打油': '打油', '购物': '购物', '娱乐': '娱乐', '居家': '居家', '其他': '其他',
+                    '薪水': '薪水', '奖金': '奖金', '红包': '红包', '投资': '投资', '报销': '报销',
+                    'Breakfast': '早餐', 'Lunch': '午餐', 'Dinner': '晚餐', 'Fuel': '打油', 'Shopping': '购物', 'Entertainment': '娱乐', 'Home': '居家', 'Other': '其他',
+                    'Salary': '薪水', 'Bonus': '奖金', 'Red Packet': '红包', 'Investment': '投资', 'Reimbursement': '报销'
                 },
                 'en-US': {
-                    '早餐': 'Breakfast',
-                    '午餐': 'Lunch',
-                    '晚餐': 'Dinner',
-                    '打油': 'Fuel',
-                    '购物': 'Shopping',
-                    '娱乐': 'Entertainment',
-                    '居家': 'Home',
-                    '其他': 'Other',
-                    '薪水': 'Salary',
-                    '奖金': 'Bonus',
-                    '红包': 'Red Packet',
-                    '投资': 'Investment',
-                    '报销': 'Reimbursement',
-                    'Breakfast': 'Breakfast',
-                    'Lunch': 'Lunch',
-                    'Dinner': 'Dinner',
-                    'Fuel': 'Fuel',
-                    'Shopping': 'Shopping',
-                    'Entertainment': 'Entertainment',
-                    'Home': 'Home',
-                    'Other': 'Other',
-                    'Salary': 'Salary',
-                    'Bonus': 'Bonus',
-                    'Red Packet': 'Red Packet',
-                    'Investment': 'Investment',
-                    'Reimbursement': 'Reimbursement'
+                    '早餐': 'Breakfast', '午餐': 'Lunch', '晚餐': 'Dinner', '打油': 'Fuel', '购物': 'Shopping', '娱乐': 'Entertainment', '居家': 'Home', '其他': 'Other',
+                    '薪水': 'Salary', '奖金': 'Bonus', '红包': 'Red Packet', '投资': 'Investment', '报销': 'Reimbursement',
+                    'Breakfast': 'Breakfast', 'Lunch': 'Lunch', 'Dinner': 'Dinner', 'Fuel': 'Fuel', 'Shopping': 'Shopping', 'Entertainment': 'Entertainment', 'Home': 'Home', 'Other': 'Other',
+                    'Salary': 'Salary', 'Bonus': 'Bonus', 'Red Packet': 'Red Packet', 'Investment': 'Investment', 'Reimbursement': 'Reimbursement'
                 }
             };
 
-            // 翻译分类名称
             function translateCategory(catName, targetLang) {
                 if (!catName) return catName;
                 const translations = CATEGORY_TRANSLATIONS[targetLang];
@@ -2605,14 +2787,12 @@
                 return translations[catName] || catName;
             }
 
-            // 批量翻译分类数组
             function translateCategories(cats, targetLang) {
                 return cats.map(cat => translateCategory(cat, targetLang));
             }
 
             let currentLanguage = 'zh-CN';
 
-            // 翻译函数
             function t(key, variables = {}) {
                 const lang = LANGUAGES[currentLanguage] || LANGUAGES['zh-CN'];
                 let text = lang[key];
@@ -2625,88 +2805,24 @@
                 return text;
             }
 
-            // === 多货币配置 ===
+            // ==================== 多货币配置 ====================
             const CURRENCIES = {
-                MYR: {
-                    symbol: 'RM',
-                    rate: 1,
-                    decimalPlaces: 2
-                },
-                CNY: {
-                    symbol: '¥',
-                    rate: 1.55,
-                    decimalPlaces: 2
-                },
-                USD: {
-                    symbol: '$',
-                    rate: 0.22,
-                    decimalPlaces: 2
-                },
-                SGD: {
-                    symbol: 'S$',
-                    rate: 0.29,
-                    decimalPlaces: 2
-                },
-                TWD: {
-                    symbol: 'NT$',
-                    rate: 6.95,
-                    decimalPlaces: 0
-                },
-                JPY: {
-                    symbol: '¥',
-                    rate: 32.5,
-                    decimalPlaces: 0
-                },
-                KRW: {
-                    symbol: '₩',
-                    rate: 290,
-                    decimalPlaces: 0
-                },
-                EUR: {
-                    symbol: '€',
-                    rate: 0.20,
-                    decimalPlaces: 2
-                },
-                GBP: {
-                    symbol: '£',
-                    rate: 0.17,
-                    decimalPlaces: 2
-                },
-                AUD: {
-                    symbol: 'A$',
-                    rate: 0.33,
-                    decimalPlaces: 2
-                },
-                THB: {
-                    symbol: '฿',
-                    rate: 7.8,
-                    decimalPlaces: 2
-                },
-                IDR: {
-                    symbol: 'Rp',
-                    rate: 3400,
-                    decimalPlaces: 0
-                },
-                INR: {
-                    symbol: '₹',
-                    rate: 18.2,
-                    decimalPlaces: 2
-                },
-                HKD: {
-                    symbol: 'HK$',
-                    rate: 1.72,
-                    decimalPlaces: 2
-                },
-                VND: {
-                    symbol: '₫',
-                    rate: 5550,
-                    decimalPlaces: 0
-                },
-                PHP: {
-                    symbol: '₱',
-                    rate: 12.3,
-                    decimalPlaces: 2
-                }
+                MYR: { symbol: 'RM', rate: 1, decimalPlaces: 2 },
+                CNY: { symbol: '¥', rate: 1.55, decimalPlaces: 2 },
+                USD: { symbol: '$', rate: 0.22, decimalPlaces: 2 },
+                SGD: { symbol: 'S$', rate: 0.29, decimalPlaces: 2 },
+                TWD: { symbol: 'NT$', rate: 6.95, decimalPlaces: 0 },
+                JPY: { symbol: '¥', rate: 32.5, decimalPlaces: 0 },
+                KRW: { symbol: '₩', rate: 290, decimalPlaces: 0 },
+                EUR: { symbol: '€', rate: 0.20, decimalPlaces: 2 },
+                GBP: { symbol: '£', rate: 0.17, decimalPlaces: 2 },
+                AUD: { symbol: 'A$', rate: 0.33, decimalPlaces: 2 },
+                THB: { symbol: '฿', rate: 7.8, decimalPlaces: 2 },
+                IDR: { symbol: 'Rp', rate: 3400, decimalPlaces: 0 },
+                INR: { symbol: '₹', rate: 18.2, decimalPlaces: 2 },
+                HKD: { symbol: 'HK$', rate: 1.72, decimalPlaces: 2 },
+                VND: { symbol: '₫', rate: 5550, decimalPlaces: 0 },
+                PHP: { symbol: '₱', rate: 12.3, decimalPlaces: 2 }
             };
 
             let displayCurrency = 'MYR';
@@ -2737,7 +2853,7 @@
                 return `${symbol}${convertToDisplayAmount(amount).toFixed(decimals)}`;
             }
 
-            // === IndexedDB 管理类 ===
+            // ==================== IndexedDB 管理类 ====================
             class IndexedDBManager {
                 constructor() {
                     this.dbName = 'AccountingBookDB';
@@ -2757,25 +2873,15 @@
                         request.onupgradeneeded = (event) => {
                             const db = event.target.result;
                             if (!db.objectStoreNames.contains('entries')) {
-                                const entriesStore = db.createObjectStore('entries', {
-                                    keyPath: 'id'
-                                });
-                                entriesStore.createIndex('date', 'date', {
-                                    unique: false
-                                });
-                                entriesStore.createIndex('timestamp', 'timestamp', {
-                                    unique: false
-                                });
+                                const entriesStore = db.createObjectStore('entries', { keyPath: 'id' });
+                                entriesStore.createIndex('date', 'date', { unique: false });
+                                entriesStore.createIndex('timestamp', 'timestamp', { unique: false });
                             }
                             if (!db.objectStoreNames.contains('settings')) {
-                                db.createObjectStore('settings', {
-                                    keyPath: 'key'
-                                });
+                                db.createObjectStore('settings', { keyPath: 'key' });
                             }
                             if (!db.objectStoreNames.contains('categories')) {
-                                db.createObjectStore('categories', {
-                                    keyPath: 'key'
-                                });
+                                db.createObjectStore('categories', { keyPath: 'key' });
                             }
                         };
                     });
@@ -2818,40 +2924,25 @@
                     const db = await this.open();
                     return new Promise((resolve) => {
                         if (!items || items.length === 0) {
-                            resolve({
-                                success: 0,
-                                failed: 0,
-                                errors: []
-                            });
+                            resolve({ success: 0, failed: 0, errors: [] });
                             return;
                         }
                         const transaction = db.transaction(storeName, 'readwrite');
                         const store = transaction.objectStore(storeName);
-                        let successCount = 0,
-                            failedCount = 0;
+                        let successCount = 0, failedCount = 0;
                         const errors = [];
-                        transaction.oncomplete = () => resolve({
-                            success: successCount,
-                            failed: failedCount,
-                            errors
-                        });
+                        transaction.oncomplete = () => resolve({ success: successCount, failed: failedCount, errors });
                         items.forEach((item, index) => {
                             try {
                                 const request = store.put(item);
                                 request.onsuccess = () => successCount++;
                                 request.onerror = () => {
                                     failedCount++;
-                                    errors.push({
-                                        index,
-                                        id: item.id
-                                    });
+                                    errors.push({ index, id: item.id });
                                 };
                             } catch (err) {
                                 failedCount++;
-                                errors.push({
-                                    index,
-                                    error: err.message
-                                });
+                                errors.push({ index, error: err.message });
                             }
                         });
                     });
@@ -2931,7 +3022,7 @@
                 else amountInput.value = "";
             });
 
-            // === 全局变量 ===
+            // ==================== 全局变量 ====================
             let entries = [];
             let expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
             let incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
@@ -2948,6 +3039,7 @@
             let isClearing = false;
             let deferredPrompt = null;
             let renderCalendarTimer = null;
+            let showLunar = false; // 农历显示开关，默认关闭
 
             function cleanupTimers() {
                 if (renderCalendarTimer) {
@@ -2974,7 +3066,7 @@
                 darkMode: false
             };
 
-            // === 工具函数 ===
+            // ==================== 工具函数 ====================
             function getLocalDate() {
                 const now = new Date();
                 return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -3035,7 +3127,7 @@
                 return `${y}-${m}-${d}`;
             }
 
-            // === 模态框管理器 ===
+            // ==================== 模态框管理器 ====================
             class ModalManager {
                 constructor() {
                     this.currentModal = null;
@@ -3087,7 +3179,7 @@
 
             const modalManager = new ModalManager();
 
-            // === 检测浏览器类型 ===
+            // ==================== 检测浏览器类型 ====================
             function detectBrowser() {
                 const ua = navigator.userAgent;
                 if (/Edg/.test(ua)) return 'edge';
@@ -3130,8 +3222,7 @@
                 }
                 if (!deferredPrompt) {
                     const browser = detectBrowser();
-                    let instructions = '',
-                        title = t('installTitle');
+                    let instructions = '', title = t('installTitle');
                     if (browser === 'chrome' || browser === 'edge' || browser === 'samsung') {
                         instructions = `<div style="background:rgba(0,0,0,0.05);padding:16px;border-radius:16px;margin-top:12px;"><div style="font-weight:500;margin-bottom:12px;">${t('chromeSteps')}</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;"><span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">1</span><span>${t('step1Chrome')}</span></div><div style="display:flex;align-items:center;gap:12px;"><span style="background:rgba(0,0,0,0.1);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;">2</span><span>${t('step2Chrome')}</span></div></div>`;
                     } else if (browser === 'ios' || browser === 'safari') {
@@ -3145,9 +3236,7 @@
                 }
                 try {
                     deferredPrompt.prompt();
-                    const {
-                        outcome
-                    } = await deferredPrompt.userChoice;
+                    const { outcome } = await deferredPrompt.userChoice;
                     if (outcome === 'accepted') {
                         showToast('✅ ' + t('addToHome'));
                         deferredPrompt = null;
@@ -3164,7 +3253,7 @@
 
             window.installPWA = installPWA;
 
-            // === HSL 颜色转换 ===
+            // ==================== HSL 颜色转换 ====================
             function hslToHex(h, s, l) {
                 s /= 100;
                 l /= 100;
@@ -3172,31 +3261,12 @@
                 const x = c * (1 - Math.abs((h / 60) % 2 - 1));
                 const m = l - c / 2;
                 let r, g, b;
-                if (h < 60) {
-                    r = c;
-                    g = x;
-                    b = 0;
-                } else if (h < 120) {
-                    r = x;
-                    g = c;
-                    b = 0;
-                } else if (h < 180) {
-                    r = 0;
-                    g = c;
-                    b = x;
-                } else if (h < 240) {
-                    r = 0;
-                    g = x;
-                    b = c;
-                } else if (h < 300) {
-                    r = x;
-                    g = 0;
-                    b = c;
-                } else {
-                    r = c;
-                    g = 0;
-                    b = x;
-                }
+                if (h < 60) { r = c; g = x; b = 0; }
+                else if (h < 120) { r = x; g = c; b = 0; }
+                else if (h < 180) { r = 0; g = c; b = x; }
+                else if (h < 240) { r = 0; g = x; b = c; }
+                else if (h < 300) { r = x; g = 0; b = c; }
+                else { r = c; g = 0; b = x; }
                 const toHex = (v) => Math.round((v + m) * 255).toString(16).padStart(2, '0');
                 return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
             }
@@ -3205,34 +3275,23 @@
                 let r = parseInt(hex.slice(1, 3), 16) / 255;
                 let g = parseInt(hex.slice(3, 5), 16) / 255;
                 let b = parseInt(hex.slice(5, 7), 16) / 255;
-                const max = Math.max(r, g, b),
-                    min = Math.min(r, g, b);
+                const max = Math.max(r, g, b), min = Math.min(r, g, b);
                 let h, s, l = (max + min) / 2;
                 if (max === min) h = s = 0;
                 else {
                     const d = max - min;
                     s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
                     switch (max) {
-                        case r:
-                            h = (g - b) / d + (g < b ? 6 : 0);
-                            break;
-                        case g:
-                            h = (b - r) / d + 2;
-                            break;
-                        case b:
-                            h = (r - g) / d + 4;
-                            break;
+                        case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+                        case g: h = (b - r) / d + 2; break;
+                        case b: h = (r - g) / d + 4; break;
                     }
                     h *= 60;
                 }
-                return {
-                    h: Math.round(h),
-                    s: Math.round(s * 100),
-                    l: Math.round(l * 100)
-                };
+                return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) };
             }
 
-            // === UI 设置 ===
+            // ==================== UI 设置 ====================
             function applyUISettings() {
                 if (applyTimeout) clearTimeout(applyTimeout);
                 applyTimeout = setTimeout(() => {
@@ -3263,10 +3322,7 @@
 
             async function saveSettings() {
                 try {
-                    await dbManager.put('settings', {
-                        key: 'uiSettings',
-                        value: uiSettings
-                    });
+                    await dbManager.put('settings', { key: 'uiSettings', value: uiSettings });
                     applyUISettings();
                 } catch (e) {
                     console.error('保存设置失败:', e);
@@ -3275,10 +3331,7 @@
 
             async function saveCurrencySetting() {
                 try {
-                    await dbManager.put('settings', {
-                        key: 'displayCurrency',
-                        value: displayCurrency
-                    });
+                    await dbManager.put('settings', { key: 'displayCurrency', value: displayCurrency });
                 } catch (e) {
                     console.error('保存货币设置失败:', e);
                 }
@@ -3286,12 +3339,17 @@
 
             async function saveLanguageSetting() {
                 try {
-                    await dbManager.put('settings', {
-                        key: 'displayLanguage',
-                        value: currentLanguage
-                    });
+                    await dbManager.put('settings', { key: 'displayLanguage', value: currentLanguage });
                 } catch (e) {
                     console.error('保存语言设置失败:', e);
+                }
+            }
+
+            async function saveLunarSetting() {
+                try {
+                    await dbManager.put('settings', { key: 'showLunar', value: showLunar });
+                } catch (e) {
+                    console.error('保存农历设置失败:', e);
                 }
             }
 
@@ -3316,13 +3374,10 @@
                 showToast(uiSettings.darkMode ? t('darkModeOn') : t('lightModeOn'));
             }
 
-            // === 缓存操作 ===
+            // ==================== 缓存操作 ====================
             function addToCache(entry) {
                 const monthKey = entry.date.slice(0, 7);
-                if (!monthStatsCache[monthKey]) monthStatsCache[monthKey] = {
-                    expense: 0,
-                    income: 0
-                };
+                if (!monthStatsCache[monthKey]) monthStatsCache[monthKey] = { expense: 0, income: 0 };
                 monthStatsCache[monthKey][entry.type] += entry.amount;
                 if (!dateMap[entry.date]) dateMap[entry.date] = [];
                 dateMap[entry.date].push(entry);
@@ -3362,10 +3417,7 @@
                     const monthKey = e.date.slice(0, 7);
                     if (!dateMap[e.date]) dateMap[e.date] = [];
                     dateMap[e.date].push(e);
-                    if (!monthStatsCache[monthKey]) monthStatsCache[monthKey] = {
-                        expense: 0,
-                        income: 0
-                    };
+                    if (!monthStatsCache[monthKey]) monthStatsCache[monthKey] = { expense: 0, income: 0 };
                     monthStatsCache[monthKey][e.type] += e.amount;
                     if (!monthMap[monthKey]) monthMap[monthKey] = [];
                     monthMap[monthKey].push(e);
@@ -3374,7 +3426,7 @@
                 for (const month in monthMap) monthMap[month].sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
             }
 
-            // === 数据管理 ===
+            // ==================== 数据管理 ====================
             async function saveEntry(entry) {
                 try {
                     await dbManager.put('entries', entry);
@@ -3399,14 +3451,8 @@
 
             async function saveCategories() {
                 try {
-                    await dbManager.put('categories', {
-                        key: 'expenseCats',
-                        value: expenseCats
-                    });
-                    await dbManager.put('categories', {
-                        key: 'incomeCats',
-                        value: incomeCats
-                    });
+                    await dbManager.put('categories', { key: 'expenseCats', value: expenseCats });
+                    await dbManager.put('categories', { key: 'incomeCats', value: incomeCats });
                     return true;
                 } catch (error) {
                     console.error('保存分类失败:', error);
@@ -3417,10 +3463,7 @@
 
             async function savePaymentTypes() {
                 try {
-                    await dbManager.put('categories', {
-                        key: 'paymentTypes',
-                        value: paymentTypes
-                    });
+                    await dbManager.put('categories', { key: 'paymentTypes', value: paymentTypes });
                     return true;
                 } catch (error) {
                     console.error('保存支付方式失败:', error);
@@ -3461,10 +3504,7 @@
 
                     const settingsData = await dbManager.get('settings', 'uiSettings');
                     if (settingsData) {
-                        uiSettings = {
-                            ...uiSettings,
-                            ...settingsData.value
-                        };
+                        uiSettings = { ...uiSettings, ...settingsData.value };
                     }
 
                     const expenseCatsData = await dbManager.get('categories', 'expenseCats');
@@ -3496,6 +3536,12 @@
                         currentLanguage = 'zh-CN';
                     }
 
+                    const lunarData = await dbManager.get('settings', 'showLunar');
+                    if (lunarData !== undefined && lunarData !== null) {
+                        showLunar = lunarData.value;
+                    }
+                    updateLunarToggleUI();
+
                     document.getElementById('currencySymbol').textContent = getCurrencySymbol();
                 } catch (e) {
                     console.warn('加载失败', e);
@@ -3504,36 +3550,35 @@
                 updateUILanguage();
             }
 
+            function updateLunarToggleUI() {
+                const toggle = document.getElementById('lunarSwitchToggle');
+                if (toggle) {
+                    if (showLunar) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                }
+            }
+
             function getCurrentCats() {
                 return currentType === 'expense' ? expenseCats : incomeCats;
             }
 
             function getDayStats(date) {
                 const dayEntries = dateMap[date] || [];
-                let expense = 0,
-                    income = 0;
+                let expense = 0, income = 0;
                 for (const e of dayEntries) {
                     if (e.type === 'expense') expense += e.amount;
                     else income += e.amount;
                 }
-                return {
-                    expense,
-                    income,
-                    balance: income - expense
-                };
+                return { expense, income, balance: income - expense };
             }
 
             function getMonthStats(year, month) {
                 const key = `${year}-${String(month + 1).padStart(2, '0')}`;
-                const stats = monthStatsCache[key] || {
-                    expense: 0,
-                    income: 0
-                };
-                return {
-                    expense: stats.expense,
-                    income: stats.income,
-                    balance: stats.income - stats.expense
-                };
+                const stats = monthStatsCache[key] || { expense: 0, income: 0 };
+                return { expense: stats.expense, income: stats.income, balance: stats.income - stats.expense };
             }
 
             function getDateRangeFromEntries(entriesList) {
@@ -3548,9 +3593,7 @@
 
             function getPayTypeStats(list) {
                 const stats = {};
-                paymentTypes.forEach(type => {
-                    stats[type] = 0;
-                });
+                paymentTypes.forEach(type => { stats[type] = 0; });
                 list.forEach(e => {
                     const type = e.payType || paymentTypes[0] || t('cash');
                     if (!stats[type]) stats[type] = 0;
@@ -3558,7 +3601,8 @@
                 });
                 return stats;
             }
-            // === 自定义选择器 ===
+
+            // ==================== 自定义选择器 ====================
             function createCustomSelect(container, options, defaultValue, onChange) {
                 const wrapper = document.createElement('div');
                 wrapper.className = 'custom-select';
@@ -3607,9 +3651,7 @@
                         document.body.appendChild(overlay);
                         setTimeout(() => overlay.classList.add('show'), 10);
                         const selected = dropdown.querySelector('.custom-select-option.selected');
-                        if (selected) selected.scrollIntoView({
-                            block: 'center'
-                        });
+                        if (selected) selected.scrollIntoView({ block: 'center' });
                     } else {
                         wrapper.classList.remove('open');
                         overlay.remove();
@@ -3644,68 +3686,37 @@
                 };
             }
 
-            // === UI 语言更新 ===
+            // ==================== UI 语言更新 ====================
             function updateUILanguage() {
-                // 更新统计卡片
                 document.querySelector('.stat-card.income .stat-label').innerHTML = t('monthIncome');
                 document.querySelector('.stat-card.expense .stat-label').innerHTML = t('monthExpense');
                 document.querySelector('.stat-card.balance .stat-label').innerHTML = t('monthBalance');
-
-                // 更新类型切换
                 document.querySelector('.type-option.expense').innerHTML = t('expense');
                 document.querySelector('.type-option.income').innerHTML = t('income');
-
-                // 更新输入框占位符
                 document.getElementById('amountInput').placeholder = t('amountPlaceholder');
                 document.getElementById('categoryInput').placeholder = t('categoryPlaceholder');
 
-                // 翻译分类数据
                 const targetLang = currentLanguage;
                 expenseCats = translateCategories(expenseCats, targetLang);
                 incomeCats = translateCategories(incomeCats, targetLang);
 
-                // 翻译支付方式
                 const paymentTranslations = {
-                    'zh-CN': {
-                        'Cash': '现金',
-                        'E-Wallet': '电子钱包',
-                        'Credit Card': '信用卡',
-                        'Debit Card': '借记卡',
-                        '现金': '现金',
-                        '电子钱包': '电子钱包',
-                        '信用卡': '信用卡',
-                        '借记卡': '借记卡'
-                    },
-                    'en-US': {
-                        '现金': 'Cash',
-                        '电子钱包': 'E-Wallet',
-                        '信用卡': 'Credit Card',
-                        '借记卡': 'Debit Card',
-                        'Cash': 'Cash',
-                        'E-Wallet': 'E-Wallet',
-                        'Credit Card': 'Credit Card',
-                        'Debit Card': 'Debit Card'
-                    }
+                    'zh-CN': { 'Cash': '现金', 'E-Wallet': '电子钱包', 'Credit Card': '信用卡', 'Debit Card': '借记卡', '现金': '现金', '电子钱包': '电子钱包', '信用卡': '信用卡', '借记卡': '借记卡' },
+                    'en-US': { '现金': 'Cash', '电子钱包': 'E-Wallet', '信用卡': 'Credit Card', '借记卡': 'Debit Card', 'Cash': 'Cash', 'E-Wallet': 'E-Wallet', 'Credit Card': 'Credit Card', 'Debit Card': 'Debit Card' }
                 };
                 const payTrans = paymentTranslations[targetLang] || {};
                 paymentTypes = paymentTypes.map(p => payTrans[p] || p);
 
-                // 保存翻译后的分类和支付方式
                 saveCategories();
                 savePaymentTypes();
 
-                // 更新菜单
                 updateMenuLanguage();
-
-                // 更新星期
                 updateWeekdaysLanguage();
 
-                // 重新渲染
                 renderCategoryDropdown();
                 renderCalendar();
                 renderEntries();
 
-                // 更新备份状态
                 const savedBackupTime = localStorage.getItem('lastBackupTime');
                 if (savedBackupTime) updateBackupStatus(savedBackupTime);
                 else document.getElementById("backupStatus").innerText = t('notBackedUp');
@@ -3714,7 +3725,6 @@
             function updateMenuLanguage() {
                 const installBtn = document.getElementById('installAppBtn');
                 if (installBtn) {
-                    // 完全替换内容，不保留旧图标
                     if (isRunningAsPWA()) installBtn.innerHTML = t('installedApp');
                     else if (deferredPrompt) installBtn.innerHTML = t('installApp');
                     else installBtn.innerHTML = t('addToHome');
@@ -3723,7 +3733,9 @@
                 const darkModeBtn = document.getElementById('darkModeMenuItem');
                 if (darkModeBtn) darkModeBtn.innerHTML = uiSettings.darkMode ? t('lightMode') : t('darkMode');
 
-                // 每个菜单项单独设置，确保图标正确
+                const lunarSwitchItem = document.querySelector('.lunar-switch-item .lunar-switch span');
+                if (lunarSwitchItem) lunarSwitchItem.innerHTML = t('showLunar');
+
                 const menuMappings = [
                     ['settingsMenuItem', 'settings'],
                     ['languageMenuItem', 'language'],
@@ -3741,10 +3753,7 @@
 
                 menuMappings.forEach(([id, key]) => {
                     const el = document.getElementById(id);
-                    if (el) {
-                        // 直接设置完整文本，t() 函数已经包含了图标
-                        el.innerHTML = t(key);
-                    }
+                    if (el) el.innerHTML = t(key);
                 });
             }
 
@@ -3756,7 +3765,7 @@
                 }
             }
 
-            // === 渲染函数 ===
+            // ==================== 渲染函数 ====================
             function renderTopCards() {
                 const stats = getMonthStats(currentYear, currentMonth);
                 const symbol = getCurrencySymbol();
@@ -3797,8 +3806,7 @@
             }
 
             function renderCalendarImmediate() {
-                const year = currentYear,
-                    month = currentMonth;
+                const year = currentYear, month = currentMonth;
                 const firstDay = new Date(year, month, 1);
                 const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
                 const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -3816,6 +3824,10 @@
                         const numDiv = document.createElement('div');
                         numDiv.className = 'day-number';
                         dayDiv.appendChild(numDiv);
+                        const lunarDiv = document.createElement('div');
+                        lunarDiv.className = 'day-lunar';
+                        lunarDiv.style.display = showLunar ? 'block' : 'none';
+                        dayDiv.appendChild(lunarDiv);
                         const expenseSpan = document.createElement('div');
                         expenseSpan.className = 'day-expense';
                         expenseSpan.style.display = 'none';
@@ -3858,8 +3870,7 @@
                     }
 
                     const dayEntries = dateMap[dateStr] || [];
-                    let expense = 0,
-                        income = 0;
+                    let expense = 0, income = 0;
                     for (const e of dayEntries) {
                         if (e.type === 'expense') expense += e.amount;
                         else income += e.amount;
@@ -3874,6 +3885,20 @@
 
                     const numDiv = dayDiv.querySelector('.day-number');
                     numDiv.textContent = dayNum;
+
+                    const lunarDiv = dayDiv.querySelector('.day-lunar');
+                    if (showLunar && isCurrentMonth) {
+                        try {
+                            const lunarDate = new Date(displayYear, displayMonth, dayNum);
+                            const lunar = Lunar.getLunarDate(lunarDate);
+                            lunarDiv.textContent = lunar.dayName;
+                            lunarDiv.style.display = 'block';
+                        } catch (e) {
+                            lunarDiv.style.display = 'none';
+                        }
+                    } else {
+                        lunarDiv.style.display = 'none';
+                    }
 
                     const expenseSpan = dayDiv.querySelector('.day-expense');
                     const incomeSpan = dayDiv.querySelector('.day-income');
@@ -3900,17 +3925,12 @@
                 if (dateObj.toDateString() === today.toDateString()) label = `${t('today')} · ${label}`;
                 document.getElementById('selectedDateLabel').innerHTML = label;
 
-                // 修复日期显示格式
-                const displayYear = y;
-                const displayMonth = parseInt(m);
-                const displayDay = parseInt(d);
-
                 let dateDisplayText;
                 if (currentLanguage === 'zh-CN') {
-                    dateDisplayText = `${displayYear}年${displayMonth}月${displayDay}日`;
+                    dateDisplayText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
                 } else {
                     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    dateDisplayText = `${monthNames[displayMonth - 1]} ${displayDay}, ${displayYear}`;
+                    dateDisplayText = `${monthNames[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
                 }
 
                 document.getElementById('currentYearMonthDay').innerText = dateDisplayText;
@@ -3931,8 +3951,7 @@
                 const dayEl = document.querySelector(`.calendar-day[data-date="${dateStr}"]`);
                 if (!dayEl) return;
                 const dayEntries = dateMap[dateStr] || [];
-                let expense = 0,
-                    income = 0;
+                let expense = 0, income = 0;
                 for (const e of dayEntries) {
                     if (e.type === 'expense') expense += e.amount;
                     else income += e.amount;
@@ -3988,7 +4007,7 @@
                 dropdown.innerHTML = cats.map(c => `<div class="category-item" data-cat="${escapeHtml(c)}" role="option">${escapeHtml(c)}</div>`).join('');
             }
 
-            // === 业务逻辑 ===
+            // ==================== 业务逻辑 ====================
             function closeMenu() {
                 const dropdown = document.getElementById('menuDropdown');
                 dropdown.classList.remove('show');
@@ -4035,9 +4054,9 @@
 
             function choosePayType(callback) {
                 const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${paymentTypes.map(type => {
-          const icon = type === t('cash') ? '💵' : type === t('ewallet') ? '🪙' : type === t('creditCard') ? '💳' : type === t('debitCard') ? '🏧' : '💳';
-          return `<div class="pay-card" data-type="${type}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
-        }).join('')}</div>`;
+                    const icon = type === t('cash') ? '💵' : type === t('ewallet') ? '🪙' : type === t('creditCard') ? '💳' : type === t('debitCard') ? '🏧' : '💳';
+                    return `<div class="pay-card" data-type="${type}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
+                }).join('')}</div>`;
                 const modal = modalManager.create(t('selectPayment'), html);
                 if (!modal) return;
                 modal.querySelectorAll('.pay-card').forEach(btn => {
@@ -4054,22 +4073,22 @@
                 const displayAmount = formatSimpleAmount(amount);
                 const payTypeDisplay = payType ? `${escapeHtml(payType)} · ` : '';
                 const modalHtml = `
-          <div style="padding: 8px 0;">
-            <div style="margin-bottom: 16px; text-align: center;">
-              <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(displayCategory)}</div>
-              <div style="font-size: 14px; color: #64748b;">${payTypeDisplay}${displayAmount}</div>
-            </div>
-            <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #64748b;">${t('addNoteLabel')}</label>
-            <input type="text" id="noteInput" placeholder="${t('notePlaceholder')}" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1); outline: none; font-size: 15px;" autofocus>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">${t('leaveEmpty')}</div>
-          </div>
-        `;
+                    <div style="padding: 8px 0;">
+                        <div style="margin-bottom: 16px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(displayCategory)}</div>
+                            <div style="font-size: 14px; color: #64748b;">${payTypeDisplay}${displayAmount}</div>
+                        </div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #64748b;">${t('addNoteLabel')}</label>
+                        <input type="text" id="noteInput" placeholder="${t('notePlaceholder')}" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1); outline: none; font-size: 15px;" autofocus>
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">${t('leaveEmpty')}</div>
+                    </div>
+                `;
                 const modal = modalManager.create(t('addNote'), modalHtml, `
-          <div style="display: flex; gap: 10px;">
-            <button id="skipNoteBtn" style="flex: 1; padding: 12px; border: none; border-radius: 28px; background: #f1f5f9; color: #64748b; font-size: 15px; cursor: pointer;">${t('skip')}</button>
-            <button id="saveNoteBtn" style="flex: 2; padding: 12px; border: none; border-radius: 28px; background: var(--expense-color); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">${t('saveRecord')}</button>
-          </div>
-        `);
+                    <div style="display: flex; gap: 10px;">
+                        <button id="skipNoteBtn" style="flex: 1; padding: 12px; border: none; border-radius: 28px; background: #f1f5f9; color: #64748b; font-size: 15px; cursor: pointer;">${t('skip')}</button>
+                        <button id="saveNoteBtn" style="flex: 2; padding: 12px; border: none; border-radius: 28px; background: var(--expense-color); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">${t('saveRecord')}</button>
+                    </div>
+                `);
                 if (!modal) return;
                 const noteInput = modal.querySelector('#noteInput');
                 setTimeout(() => noteInput.focus(), 100);
@@ -4115,23 +4134,19 @@
 
             function showPaxSelectionModal(amount, category) {
                 const modalHtml = `
-          <div class="pax-options">
-            ${[1, 2, 3, 4, 5].map(pax => `<div class="pax-option" data-pax="${pax}"><span class="pax-number">${pax}</span><span class="pax-label">${t('servings')}</span></div>`).join('')}
-          </div>
-          <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>${t('confirmServings')}1 ${t('servings')}</button>
-          <button class="pax-skip-btn" id="paxSkipBtn">${t('skipServings')}</button>
-        `;
+                    <div class="pax-options">
+                        ${[1, 2, 3, 4, 5].map(pax => `<div class="pax-option" data-pax="${pax}"><span class="pax-number">${pax}</span><span class="pax-label">${t('servings')}</span></div>`).join('')}
+                    </div>
+                    <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>${t('confirmServings')}1 ${t('servings')}</button>
+                    <button class="pax-skip-btn" id="paxSkipBtn">${t('skipServings')}</button>
+                `;
                 const modal = modalManager.create(`${t('selectServings')} · ${escapeHtml(category)}`, modalHtml);
                 if (!modal) {
                     isAdding = false;
                     return;
                 }
-                modal.querySelector('.modal-close')?.addEventListener('click', () => {
-                    isAdding = false;
-                });
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) isAdding = false;
-                });
+                modal.querySelector('.modal-close')?.addEventListener('click', () => { isAdding = false; });
+                modal.addEventListener('click', (e) => { if (e.target === modal) isAdding = false; });
                 modal.querySelector('.modal-content').classList.add('pax-modal-content');
                 let selectedPax = 1;
                 const paxOptions = modal.querySelectorAll('.pax-option');
@@ -4151,9 +4166,7 @@
                     modalManager.close(modal);
                     document.getElementById('amountInput').blur();
                     document.getElementById('categoryInput').blur();
-                    choosePayType((payType) => {
-                        showNoteModal(amount, category, payType, paxCount);
-                    });
+                    choosePayType((payType) => { showNoteModal(amount, category, payType, paxCount); });
                 };
                 confirmBtn.onclick = () => proceedToPayType(selectedPax);
                 modal.querySelector('#paxSkipBtn').onclick = () => proceedToPayType(null);
@@ -4194,22 +4207,18 @@
                     showNoteModal(amount, category, null, null);
                     return true;
                 }
-                choosePayType((payType) => {
-                    showNoteModal(amount, category, payType, null);
-                });
+                choosePayType((payType) => { showNoteModal(amount, category, payType, null); });
                 return true;
             }
 
             async function editEntry(id) {
                 const entry = entries.find(e => String(e.id) === String(id));
                 if (!entry) return;
-                const oldEntry = {
-                    ...entry
-                };
+                const oldEntry = { ...entry };
                 const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
                 const modal = modalManager.create(t('editRecord'),
                     `<input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;margin-bottom:10px;" aria-label="${t('amount')}">
-           <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;" aria-label="${t('category')}">`,
+                     <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;" aria-label="${t('category')}">`,
                     `<button id="saveEditBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:10px;border-radius:32px;">${t('save')}</button>`
                 );
                 if (!modal) return;
@@ -4317,10 +4326,7 @@
                             const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
-                                targetLi.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'center'
-                                });
+                                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
                             }
                         }, 100);
@@ -4335,226 +4341,62 @@
                             const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
-                                targetLi.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'center'
-                                });
+                                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
                             }
                         }
                     };
                 });
             }
-            
-            
-            // === 首次启动语言选择 ===
-            async function checkFirstRunAndShowLanguagePrompt() {
-                try {
-                    // 检查是否已经设置过语言（首次运行标记）
-                    const hasSetupLanguage = await dbManager.get('settings', 'hasSetupLanguage');
-                    
-                    // 如果已经设置过，直接返回
-                    if (hasSetupLanguage && hasSetupLanguage.value === true) {
-                        return;
-                    }
-                    
-                    // 首次运行，显示语言选择弹窗
-                    showFirstRunLanguageModal();
-                } catch (e) {
-                    // 如果读取失败，也显示弹窗
-                    console.warn('读取语言设置失败，显示首次运行弹窗', e);
-                    showFirstRunLanguageModal();
-                }
-            }
 
-            function showFirstRunLanguageModal() {
+            // ==================== 语言切换 ====================
+            function showLanguageSelector() {
                 const html = `
-                    <div style="text-align: center; padding: 8px 0;">
-                        <div style="font-size: 48px; margin-bottom: 16px;">🌐</div>
-                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 8px;">
-                            选择语言 / Choose Language
-                        </div>
-                        <div style="font-size: 14px; color: #64748b; margin-bottom: 24px;">
-                            请选择您偏好的语言，后续可在菜单中更改<br>
-                            Please select your preferred language, you can change it later in the menu
-                        </div>
-                        
-                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 8px;">
-                            <div class="lang-first-option" data-lang="zh-CN" style="
-                                display: flex;
-                                align-items: center;
-                                padding: 16px 20px;
-                                border-radius: 20px;
-                                background: rgba(194, 65, 58, 0.08);
-                                border: 2px solid var(--expense-color);
-                                cursor: pointer;
-                                transition: all 0.15s;
-                            ">
-                                <span style="font-size: 32px; margin-right: 16px;">🇨🇳</span>
-                                <div style="flex: 1; text-align: left;">
-                                    <div style="font-weight: 600; font-size: 18px;">简体中文</div>
-                                    <div style="font-size: 13px; color: #64748b;">Simplified Chinese</div>
-                                </div>
-                                <span style="color: var(--expense-color); font-size: 24px;">→</span>
-                            </div>
-                            
-                            <div class="lang-first-option" data-lang="en-US" style="
-                                display: flex;
-                                align-items: center;
-                                padding: 16px 20px;
-                                border-radius: 20px;
-                                background: rgba(0, 0, 0, 0.04);
-                                border: 2px solid transparent;
-                                cursor: pointer;
-                                transition: all 0.15s;
-                            ">
-                                <span style="font-size: 32px; margin-right: 16px;">🇺🇸</span>
-                                <div style="flex: 1; text-align: left;">
-                                    <div style="font-weight: 600; font-size: 18px;">English</div>
-                                    <div style="font-size: 13px; color: #64748b;">English (US)</div>
-                                </div>
-                                <span style="color: #64748b; font-size: 24px; opacity: 0.5;">→</span>
+                    <div style="max-height: 400px; overflow-y: auto; padding: 4px 0;">
+                        <div style="margin-bottom: 16px; padding: 14px; background: rgba(0,0,0,0.04); border-radius: 16px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">当前语言 / Current Language</div>
+                            <div style="font-size: 26px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                                <span>${LANGUAGES[currentLanguage].name}</span>
                             </div>
                         </div>
-                        
-                        <div style="font-size: 12px; color: #94a3b8; margin-top: 16px;">
-                            您可以在菜单的「语言」中随时切换<br>
-                            You can switch anytime in the "Language" menu
+                        <div style="margin-bottom: 12px; font-weight: 500; font-size: 15px;">选择语言 / Select Language</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            <div class="lang-option" data-lang="zh-CN" 
+                                 style="display: flex; align-items: center; justify-content: space-between; padding: 16px 16px; 
+                                        border-radius: 16px; cursor: pointer; transition: all 0.15s;
+                                        ${currentLanguage === 'zh-CN' ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <span style="font-size: 28px; width: 50px; text-align: center;">🇨🇳</span>
+                                    <div>
+                                        <div style="font-weight: 500; font-size: 16px;">简体中文</div>
+                                        <div style="font-size: 13px; color: #64748b;">Simplified Chinese</div>
+                                    </div>
+                                </div>
+                                ${currentLanguage === 'zh-CN' ? '<span style="color: var(--expense-color); font-size: 20px;">✓</span>' : ''}
+                            </div>
+                            <div class="lang-option" data-lang="en-US" 
+                                 style="display: flex; align-items: center; justify-content: space-between; padding: 16px 16px; 
+                                        border-radius: 16px; cursor: pointer; transition: all 0.15s;
+                                        ${currentLanguage === 'en-US' ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
+                                <div style="display: flex; align-items: center; gap: 14px;">
+                                    <span style="font-size: 28px; width: 50px; text-align: center;">🇺🇸</span>
+                                    <div>
+                                        <div style="font-weight: 500; font-size: 16px;">English</div>
+                                        <div style="font-size: 13px; color: #64748b;">English (US)</div>
+                                    </div>
+                                </div>
+                                ${currentLanguage === 'en-US' ? '<span style="color: var(--expense-color); font-size: 20px;">✓</span>' : ''}
+                            </div>
                         </div>
                     </div>
                 `;
-                
-                const modal = modalManager.create(
-                    '🌐 欢迎 / Welcome',
-                    html,
-                    `<div style="display: none;"></div>`
-                );
-                
-                if (!modal) return;
-                
-                // 移除关闭按钮，用户必须选择一个语言
-                const closeBtn = modal.querySelector('.modal-close');
-                if (closeBtn) closeBtn.style.display = 'none';
-                
-                // 禁止点击遮罩关闭
-                modal.onclick = (e) => {
-                    if (e.target === modal) {
-                        // 不做任何事，必须选择语言
-                    }
-                };
-                
-                // 绑定语言选择事件
-                modal.querySelectorAll('.lang-first-option').forEach(opt => {
-                    opt.addEventListener('mouseenter', () => {
-                        if (opt.dataset.lang !== currentLanguage) {
-                            opt.style.background = 'rgba(0, 0, 0, 0.06)';
-                        }
-                    });
-                    
-                                        opt.addEventListener('mouseleave', () => {
-                        if (opt.dataset.lang !== currentLanguage) {
-                            // 根据暗色模式设置不同的背景色
-                            if (uiSettings.darkMode) {
-                                opt.style.background = 'rgba(255, 255, 255, 0.06)';
-                            } else {
-                                opt.style.background = 'rgba(0, 0, 0, 0.04)';
-                            }
-                        }
-                    });
-                    
-                    opt.onclick = async () => {
-                        const selectedLang = opt.dataset.lang;
-                        
-                        // 保存语言设置
-                        currentLanguage = selectedLang;
-                        await saveLanguageSetting();
-                        
-                        // 标记已完成首次语言设置
-                        try {
-                            await dbManager.put('settings', {
-                                key: 'hasSetupLanguage',
-                                value: true
-                            });
-                        } catch (e) {
-                            console.warn('保存首次运行标记失败', e);
-                        }
-                        
-                        // 更新 UI 语言
-                        updateUILanguage();
-                        
-                        // 关闭弹窗
-                        modalManager.close(modal);
-                        
-                        // 显示欢迎提示
-                        const welcomeMsg = selectedLang === 'zh-CN' 
-                            ? '🎉 欢迎使用记账本！' 
-                            : '🎉 Welcome to Accounting Book!';
-                        showToast(welcomeMsg);
-                    };
-                });
-                
-                // 适配暗色模式
-                if (uiSettings.darkMode) {
-                    modal.querySelectorAll('.lang-first-option').forEach(opt => {
-                        if (opt.dataset.lang !== currentLanguage) {
-                            opt.style.background = 'rgba(255, 255, 255, 0.06)';
-                        }
-                    });
-                }
-            }
-            
-            // === 语言切换 ===
-            function showLanguageSelector() {
-                const html = `
-    <div style="max-height: 400px; overflow-y: auto; padding: 4px 0;">
-      <div style="margin-bottom: 16px; padding: 14px; background: rgba(0,0,0,0.04); border-radius: 16px;">
-        <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">当前语言 / Current Language</div>
-        <div style="font-size: 26px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-          <span>${LANGUAGES[currentLanguage].name}</span>
-        </div>
-      </div>
-      <div style="margin-bottom: 12px; font-weight: 500; font-size: 15px;">选择语言 / Select Language</div>
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        <div class="lang-option" data-lang="zh-CN" 
-             style="display: flex; align-items: center; justify-content: space-between; padding: 16px 16px; 
-                    border-radius: 16px; cursor: pointer; transition: all 0.15s;
-                    ${currentLanguage === 'zh-CN' ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <span style="font-size: 28px; width: 50px; text-align: center;">🇨🇳</span>
-            <div>
-              <div style="font-weight: 500; font-size: 16px;">简体中文</div>
-              <div style="font-size: 13px; color: #64748b;">Simplified Chinese</div>
-            </div>
-          </div>
-          ${currentLanguage === 'zh-CN' ? '<span style="color: var(--expense-color); font-size: 20px;">✓</span>' : ''}
-        </div>
-        <div class="lang-option" data-lang="en-US" 
-             style="display: flex; align-items: center; justify-content: space-between; padding: 16px 16px; 
-                    border-radius: 16px; cursor: pointer; transition: all 0.15s;
-                    ${currentLanguage === 'en-US' ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
-          <div style="display: flex; align-items: center; gap: 14px;">
-            <span style="font-size: 28px; width: 50px; text-align: center;">🇺🇸</span>
-            <div>
-              <div style="font-weight: 500; font-size: 16px;">English</div>
-              <div style="font-size: 13px; color: #64748b;">English (US)</div>
-            </div>
-          </div>
-          ${currentLanguage === 'en-US' ? '<span style="color: var(--expense-color); font-size: 20px;">✓</span>' : ''}
-        </div>
-      </div>
-    </div>
-  `;
 
                 const modal = modalManager.create('🌐 ' + t('language'), html, `<button id="closeLangBtn" class="close-btn" style="margin-top: 8px;">${t('close')}</button>`);
                 if (!modal) return;
 
                 modal.querySelectorAll('.lang-option').forEach(opt => {
-                    opt.addEventListener('mouseenter', () => {
-                        if (opt.dataset.lang !== currentLanguage) opt.style.background = 'rgba(0,0,0,0.06)';
-                    });
-                    opt.addEventListener('mouseleave', () => {
-                        if (opt.dataset.lang !== currentLanguage) opt.style.background = 'rgba(0,0,0,0.02)';
-                    });
+                    opt.addEventListener('mouseenter', () => { if (opt.dataset.lang !== currentLanguage) opt.style.background = 'rgba(0,0,0,0.06)'; });
+                    opt.addEventListener('mouseleave', () => { if (opt.dataset.lang !== currentLanguage) opt.style.background = 'rgba(0,0,0,0.02)'; });
                     opt.onclick = () => {
                         const newLang = opt.dataset.lang;
                         if (newLang !== currentLanguage) {
@@ -4570,58 +4412,54 @@
                 modal.querySelector('#closeLangBtn').onclick = () => modalManager.close(modal);
             }
 
-            // === 货币切换 ===
+            // ==================== 货币切换 ====================
             function showCurrencySelector() {
                 const currentDisplay = displayCurrency;
                 const html = `
-          <div style="max-height: 450px; overflow-y: auto; padding: 4px 0;">
-            <div style="margin-bottom: 16px; padding: 14px; background: rgba(0,0,0,0.04); border-radius: 16px;">
-              <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">${t('currentCurrency')}</div>
-              <div style="font-size: 26px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
-                <span>${CURRENCIES[currentDisplay].symbol}</span>
-                <span>${t(currentDisplay) || CURRENCIES[currentDisplay].name}</span>
-                <span style="font-size: 14px; font-weight: 400; color: #64748b; margin-left: auto;">${currentDisplay}</span>
-              </div>
-            </div>
-            <div style="margin-bottom: 12px; font-weight: 500; font-size: 15px;">${t('selectCurrency')}</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${Object.entries(CURRENCIES).map(([code, info]) => `
-                <div class="currency-option" data-currency="${code}" 
-                     style="display: flex; align-items: center; justify-content: space-between; padding: 14px 14px; 
-                            border-radius: 16px; cursor: pointer; transition: all 0.15s;
-                            ${code === currentDisplay ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
-                  <div style="display: flex; align-items: center; gap: 14px;">
-                    <span style="font-size: 24px; width: 45px; text-align: center; font-weight: 500;">${info.symbol}</span>
-                    <div>
-                      <div style="font-weight: 500; font-size: 15px;">${t(code) || code}</div>
-                      <div style="font-size: 12px; color: #64748b;">${code}</div>
+                    <div style="max-height: 450px; overflow-y: auto; padding: 4px 0;">
+                        <div style="margin-bottom: 16px; padding: 14px; background: rgba(0,0,0,0.04); border-radius: 16px;">
+                            <div style="font-size: 13px; color: #64748b; margin-bottom: 8px;">${t('currentCurrency')}</div>
+                            <div style="font-size: 26px; font-weight: 600; display: flex; align-items: center; gap: 10px;">
+                                <span>${CURRENCIES[currentDisplay].symbol}</span>
+                                <span>${t(currentDisplay) || CURRENCIES[currentDisplay].name}</span>
+                                <span style="font-size: 14px; font-weight: 400; color: #64748b; margin-left: auto;">${currentDisplay}</span>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px; font-weight: 500; font-size: 15px;">${t('selectCurrency')}</div>
+                        <div style="display: flex; flex-direction: column; gap: 8px;">
+                            ${Object.entries(CURRENCIES).map(([code, info]) => `
+                                <div class="currency-option" data-currency="${code}" 
+                                     style="display: flex; align-items: center; justify-content: space-between; padding: 14px 14px; 
+                                            border-radius: 16px; cursor: pointer; transition: all 0.15s;
+                                            ${code === currentDisplay ? 'background: rgba(194, 65, 58, 0.12); border: 1.5px solid var(--expense-color);' : 'border: 1.5px solid transparent; background: rgba(0,0,0,0.02);'}">
+                                    <div style="display: flex; align-items: center; gap: 14px;">
+                                        <span style="font-size: 24px; width: 45px; text-align: center; font-weight: 500;">${info.symbol}</span>
+                                        <div>
+                                            <div style="font-weight: 500; font-size: 15px;">${t(code) || code}</div>
+                                            <div style="font-size: 12px; color: #64748b;">${code}</div>
+                                        </div>
+                                    </div>
+                                    <div style="text-align: right;">
+                                        <div style="font-size: 12px; color: #64748b;">1 MYR ≈</div>
+                                        <div style="font-weight: 500; font-size: 15px;">${info.symbol}${info.rate.toFixed(info.rate < 1 ? 4 : 2)}</div>
+                                    </div>
+                                    ${code === currentDisplay ? '<span style="color: var(--expense-color); font-size: 20px; margin-left: 10px;">✓</span>' : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div style="margin-top: 18px; padding: 14px; background: rgba(194, 65, 58, 0.08); border-radius: 14px; font-size: 13px;">
+                            <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                                <span>💡</span>
+                                <span style="line-height: 1.4;">${t('rateNote')}</span>
+                            </div>
+                        </div>
                     </div>
-                  </div>
-                  <div style="text-align: right;">
-                    <div style="font-size: 12px; color: #64748b;">1 MYR ≈</div>
-                    <div style="font-weight: 500; font-size: 15px;">${info.symbol}${info.rate.toFixed(info.rate < 1 ? 4 : 2)}</div>
-                  </div>
-                  ${code === currentDisplay ? '<span style="color: var(--expense-color); font-size: 20px; margin-left: 10px;">✓</span>' : ''}
-                </div>
-              `).join('')}
-            </div>
-            <div style="margin-top: 18px; padding: 14px; background: rgba(194, 65, 58, 0.08); border-radius: 14px; font-size: 13px;">
-              <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
-                <span>💡</span>
-                <span style="line-height: 1.4;">${t('rateNote')}</span>
-              </div>
-            </div>
-          </div>
-        `;
+                `;
                 const modal = modalManager.create(t('currencyTitle'), html, `<button id="closeCurrencyBtn" class="close-btn" style="margin-top: 8px;">${t('close')}</button>`);
                 if (!modal) return;
                 modal.querySelectorAll('.currency-option').forEach(opt => {
-                    opt.addEventListener('mouseenter', () => {
-                        if (opt.dataset.currency !== displayCurrency) opt.style.background = 'rgba(0,0,0,0.06)';
-                    });
-                    opt.addEventListener('mouseleave', () => {
-                        if (opt.dataset.currency !== displayCurrency) opt.style.background = 'rgba(0,0,0,0.02)';
-                    });
+                    opt.addEventListener('mouseenter', () => { if (opt.dataset.currency !== displayCurrency) opt.style.background = 'rgba(0,0,0,0.06)'; });
+                    opt.addEventListener('mouseleave', () => { if (opt.dataset.currency !== displayCurrency) opt.style.background = 'rgba(0,0,0,0.02)'; });
                     opt.onclick = () => {
                         const newCurrency = opt.dataset.currency;
                         if (newCurrency !== displayCurrency) {
@@ -4641,7 +4479,7 @@
                 modal.querySelector('#closeCurrencyBtn').onclick = () => modalManager.close(modal);
             }
 
-            // === 导出笔记 ===
+            // ==================== 导出笔记 ====================
             function exportNote() {
                 const allEntries = entries;
                 if (!allEntries || allEntries.length === 0) {
@@ -4652,28 +4490,23 @@
                 const modal = document.createElement('div');
                 modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
                 modal.innerHTML = `
-          <div class="export-note-modal" style="padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
-            <h3 class="modal-title" style="margin-bottom:16px;font-size:20px;text-align:center;">📄 ${t('exportNote')}</h3>
-            <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">${t('selectMonth')}</p>
-            <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
-            <div style="display:flex;gap:12px;">
-              <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('confirmExport')}</button>
-              <button class="cancel-btn" id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('cancel')}</button>
-            </div>
-          </div>
-        `;
+                    <div class="export-note-modal" style="padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
+                        <h3 class="modal-title" style="margin-bottom:16px;font-size:20px;text-align:center;"> ${t('exportNote')}</h3>
+                        <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">${t('selectMonth')}</p>
+                        <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
+                        <div style="display:flex;gap:12px;">
+                            <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('confirmExport')}</button>
+                            <button class="cancel-btn" id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('cancel')}</button>
+                        </div>
+                    </div>
+                `;
                 document.body.appendChild(modal);
-                const options = [{
-                        value: 'all',
-                        label: `📆 ${t('allMonths')} (${allEntries.length}${t('records')})`
-                    },
+                const options = [
+                    { value: 'all', label: `📆 ${t('allMonths')} (${allEntries.length}${t('records')})` },
                     ...availableMonths.map(month => {
                         const count = allEntries.filter(e => e.date.startsWith(month)).length;
                         const [y, m] = month.split('-');
-                        return {
-                            value: month,
-                            label: `📅 ${m}/${y} (${count}${t('records')})`
-                        };
+                        return { value: month, label: `📅 ${m}/${y} (${count}${t('records')})` };
                     })
                 ];
                 const container = modal.querySelector('#noteMonthContainer');
@@ -4696,17 +4529,11 @@
                         grouped[date].push(item);
                     });
                     const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
-                    let result = '',
-                        totalExpense = 0,
-                        totalIncome = 0,
-                        lastMonth = '';
+                    let result = '', totalExpense = 0, totalIncome = 0, lastMonth = '';
                     const symbol = getCurrencySymbol();
                     const decimals = getDecimalPlaces();
                     sortedDates.forEach(date => {
-                        const parts = date.split('-'),
-                            year = parts[0],
-                            month = parts[1],
-                            currentMonthKey = `${year}-${month}`;
+                        const parts = date.split('-'), year = parts[0], month = parts[1], currentMonthKey = `${year}-${month}`;
                         if (currentMonthKey !== lastMonth) {
                             result += `\n【${parseInt(month)}${t('months')[0].includes('月') ? '月' : ''}】\n`;
                             lastMonth = currentMonthKey;
@@ -4715,9 +4542,7 @@
                         const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
                         sortedDayEntries.forEach((item, index) => {
                             const displayAmount = convertToDisplayAmount(item.amount).toFixed(decimals);
-                            const note = item.note || '',
-                                typeSymbol = item.type === 'income' ? '+' : '-',
-                                pay = item.payType ? ` (${item.payType})` : '';
+                            const note = item.note || '', typeSymbol = item.type === 'income' ? '+' : '-', pay = item.payType ? ` (${item.payType})` : '';
                             result += `${index + 1}）${typeSymbol} ${symbol} ${displayAmount}   ${note}${pay}\n`;
                             if (item.type === 'expense') totalExpense += item.amount;
                             else totalIncome += item.amount;
@@ -4730,17 +4555,13 @@
                     result += `\n═══════════\n${t('totalExpense')}: ${symbol}${displayTotalExpense}\n${t('totalIncome')}: ${symbol}${displayTotalIncome}\n${t('balanceLabel')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n═══════════\n`;
                     const stats = getPayTypeStats(entriesToExport);
                     result += `--${t('paymentStats')}--\n`;
-                    paymentTypes.forEach(type => {
-                        result += `${type}: ${symbol}${convertToDisplayAmount(stats[type] || 0).toFixed(decimals)}\n`;
-                    });
+                    paymentTypes.forEach(type => { result += `${type}: ${symbol}${convertToDisplayAmount(stats[type] || 0).toFixed(decimals)}\n`; });
                     result += `═══════════`;
                     modal.remove();
                     showExportModal(result);
                 };
                 modal.querySelector('#cancelExportNoteBtn').onclick = () => modal.remove();
-                modal.onclick = (e) => {
-                    if (e.target === modal) modal.remove();
-                };
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
             }
 
             function showExportModal(text) {
@@ -4751,18 +4572,17 @@
                 modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
                 const recordCount = text.split('\n').filter(l => l.includes('）')).length;
                 modal.innerHTML = `
-          <div class="export-note-modal" style="padding:20px;border-radius:28px;width:90%;max-width:420px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
-            <h3 class="modal-title" style="margin-bottom:8px;font-size:20px;display:flex;align-items:center;gap:8px;">📄 ${t('exportNote')} <span class="record-badge" style="font-size:13px;background:#e2e8f0;padding:2px 10px;border-radius:30px;color:#475569;">${recordCount} ${t('records')}</span></h3>
-            <textarea id="exportTextArea" style="width:100%;height:280px;border-radius:20px;padding:14px;font-size:13px;font-family:'SF Mono',Monaco,monospace;border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b;resize:vertical;line-height:1.5;" readonly>${escapeHtml(text)}</textarea>
-            <div style="display:flex;gap:12px;margin-top:18px;">
-              <button id="copyExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">📋 ${t('copy')}</button>
-              <button class="cancel-btn" id="closeExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('close')}</button>
-            </div>
-          </div>
-        `;
+                    <div class="export-note-modal" style="padding:20px;border-radius:28px;width:90%;max-width:420px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
+                        <h3 class="modal-title" style="margin-bottom:8px;font-size:20px;display:flex;align-items:center;gap:8px;"> ${t('exportNote')} <span class="record-badge" style="font-size:13px;background:#e2e8f0;padding:2px 10px;border-radius:30px;color:#475569;">${recordCount} ${t('records')}</span></h3>
+                        <textarea id="exportTextArea" style="width:100%;height:280px;border-radius:20px;padding:14px;font-size:13px;font-family:'SF Mono',Monaco,monospace;border:1px solid #e2e8f0;background:#f8fafc;color:#1e293b;resize:vertical;line-height:1.5;" readonly>${escapeHtml(text)}</textarea>
+                        <div style="display:flex;gap:12px;margin-top:18px;">
+                            <button id="copyExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">📋 ${t('copy')}</button>
+                            <button class="cancel-btn" id="closeExportBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('close')}</button>
+                        </div>
+                    </div>
+                `;
                 document.body.appendChild(modal);
-                const copyBtn = modal.querySelector('#copyExportBtn'),
-                    textArea = modal.querySelector('#exportTextArea');
+                const copyBtn = modal.querySelector('#copyExportBtn'), textArea = modal.querySelector('#exportTextArea');
                 copyBtn.onclick = async () => {
                     try {
                         await navigator.clipboard.writeText(text);
@@ -4776,12 +4596,10 @@
                     }
                 };
                 modal.querySelector('#closeExportBtn').onclick = () => modal.remove();
-                modal.onclick = (e) => {
-                    if (e.target === modal) modal.remove();
-                };
+                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
             }
 
-            // === 统计 ===
+            // ==================== 统计 ====================
             function showStatistics() {
                 const stats = getMonthStats(currentYear, currentMonth);
                 const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -4793,27 +4611,27 @@
                 const displayIncome = convertToDisplayAmount(stats.income).toFixed(decimals);
                 const displayBalance = convertToDisplayAmount(Math.abs(stats.balance)).toFixed(decimals);
                 const html = `
-          <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
-          ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
-          <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;">${symbol}${displayExpense}</span></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;">${symbol}${displayIncome}</span></div>
-            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>${t('balanceLabel')}</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
-          </div>
-          <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
-          <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
-            ${paymentTypes.map(type => {
-              const icon = type === t('cash') ? '💵' : type === t('ewallet') ? '🪙' : type === t('creditCard') ? '💳' : type === t('debitCard') ? '🏧' : '💳';
-              const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
-              return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(type)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
-            }).join('')}
-          </div>
-        `;
+                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
+                    ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
+                    <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;">${symbol}${displayExpense}</span></div>
+                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;">${symbol}${displayIncome}</span></div>
+                        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>${t('balanceLabel')}</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
+                    </div>
+                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
+                    <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+                        ${paymentTypes.map(type => {
+                            const icon = type === t('cash') ? '💵' : type === t('ewallet') ? '🪙' : type === t('creditCard') ? '💳' : type === t('debitCard') ? '🏧' : '💳';
+                            const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
+                            return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(type)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
+                        }).join('')}
+                    </div>
+                `;
                 const modal = modalManager.create(`📊 ${currentYear}${t('months')[currentMonth]} ${t('statistics')}`, html, `<button id="closeStatsBtn" class="close-btn">${t('close')}</button>`);
                 if (modal) modal.querySelector('#closeStatsBtn').onclick = () => modalManager.close(modal);
             }
 
-            // === 搜索 ===
+            // ==================== 搜索 ====================
             function showSearch(preset = null) {
                 const today = new Date();
                 const oneYearAgo = new Date();
@@ -4823,13 +4641,13 @@
                 const typeVal = preset?.type || 'all';
                 const symbol = getCurrencySymbol();
                 const html = `
-          <div style="margin-bottom:12px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('keyword')}</label><input type="text" id="searchKeyword" placeholder="${t('enterKeyword')}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div>
-          <div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('startDate')}</label><input type="date" id="searchStartDate" value="${startDateVal}" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('endDate')}</label><input type="date" id="searchEndDate" value="${endDateVal}" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div></div>
-          <div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('minAmount')} (${symbol})</label><input type="number" id="searchMinAmount" placeholder="0" step="0.01" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('maxAmount')} (${symbol})</label><input type="number" id="searchMaxAmount" placeholder="${t('unlimited')}" step="0.01" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div></div>
-          <div style="margin-bottom:16px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:8px;">${t('type')}</label><div style="display:flex;gap:12px;"><label><input type="radio" name="searchType" value="all" ${typeVal === 'all' ? 'checked' : ''}> ${t('all')}</label><label><input type="radio" name="searchType" value="expense" ${typeVal === 'expense' ? 'checked' : ''}> ${t('expense')}</label><label><input type="radio" name="searchType" value="income" ${typeVal === 'income' ? 'checked' : ''}> ${t('income')}</label></div></div>
-          <div style="display:flex;gap:10px;margin-bottom:16px;"><button id="doSearchBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:10px;border-radius:28px;">${t('search_')}</button><button id="resetSearchBtn" style="flex:1;background:#f1f5f9;border:none;padding:10px;border-radius:28px;">${t('reset')}</button></div>
-          <div id="searchResults" style="max-height:300px;overflow-y:auto;border-top:1px solid #e2e8f0;padding-top:12px;"><div style="text-align:center;color:#94a3b8;padding:20px;">${t('enterConditions')}</div></div>
-        `;
+                    <div style="margin-bottom:12px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('keyword')}</label><input type="text" id="searchKeyword" placeholder="${t('enterKeyword')}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('startDate')}</label><input type="date" id="searchStartDate" value="${startDateVal}" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('endDate')}</label><input type="date" id="searchEndDate" value="${endDateVal}" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div></div>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;"><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('minAmount')} (${symbol})</label><input type="number" id="searchMinAmount" placeholder="0" step="0.01" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div><div style="flex:1;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('maxAmount')} (${symbol})</label><input type="number" id="searchMaxAmount" placeholder="${t('unlimited')}" step="0.01" style="width:100%;padding:8px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div></div>
+                    <div style="margin-bottom:16px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:8px;">${t('type')}</label><div style="display:flex;gap:12px;"><label><input type="radio" name="searchType" value="all" ${typeVal === 'all' ? 'checked' : ''}> ${t('all')}</label><label><input type="radio" name="searchType" value="expense" ${typeVal === 'expense' ? 'checked' : ''}> ${t('expense')}</label><label><input type="radio" name="searchType" value="income" ${typeVal === 'income' ? 'checked' : ''}> ${t('income')}</label></div></div>
+                    <div style="display:flex;gap:10px;margin-bottom:16px;"><button id="doSearchBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:10px;border-radius:28px;">${t('search_')}</button><button id="resetSearchBtn" style="flex:1;background:#f1f5f9;border:none;padding:10px;border-radius:28px;">${t('reset')}</button></div>
+                    <div id="searchResults" style="max-height:300px;overflow-y:auto;border-top:1px solid #e2e8f0;padding-top:12px;"><div style="text-align:center;color:#94a3b8;padding:20px;">${t('enterConditions')}</div></div>
+                `;
                 const modal = modalManager.create(t('searchRecords'), html, `<button id="closeSearchBtn" class="close-btn">${t('close')}</button>`);
                 if (!modal) return;
                 const performSearch = () => {
@@ -4877,10 +4695,7 @@
                                     const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
                                     if (targetLi) {
                                         targetLi.classList.add('highlight-entry');
-                                        targetLi.scrollIntoView({
-                                            behavior: 'smooth',
-                                            block: 'center'
-                                        });
+                                        targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
                                     }
                                 }, 100);
@@ -4902,7 +4717,7 @@
                 if (preset) setTimeout(performSearch, 100);
             }
 
-            // === 分类管理 ===
+            // ==================== 分类管理 ====================
             function openCategoryManager(type) {
                 const title = type === 'expense' ? t('manageExpenseTitle') : t('manageIncomeTitle');
                 let dragStartIndex = null;
@@ -4921,11 +4736,11 @@
                         return;
                     }
                     container.innerHTML = currentCats.map((cat, idx) => `
-            <div class="category-list-item" data-index="${idx}" data-cat="${escapeHtml(cat)}" draggable="true">
-              <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(cat)}</span></div>
-              <div style="display:flex;gap:6px;"><button class="edit-cat-btn" data-cat="${escapeHtml(cat)}">${t('edit')}</button><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">${t('delete')}</button></div>
-            </div>
-          `).join('');
+                        <div class="category-list-item" data-index="${idx}" data-cat="${escapeHtml(cat)}" draggable="true">
+                            <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(cat)}</span></div>
+                            <div style="display:flex;gap:6px;"><button class="edit-cat-btn" data-cat="${escapeHtml(cat)}">${t('edit')}</button><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">${t('delete')}</button></div>
+                        </div>
+                    `).join('');
                     const items = container.querySelectorAll('.category-list-item');
                     items.forEach(item => {
                         item.addEventListener('dragstart', (e) => {
@@ -5008,9 +4823,9 @@
                                     if (index !== -1) currentCats[index] = newName;
                                     const updatedEntries = [];
                                     entries.forEach(e => {
-                                        const noteWithoutPax = e.note.replace(/\s*\(\d+${t('servings')}\)$/, '');
+                                        const noteWithoutPax = e.note.replace(new RegExp(`\\s*\\(\\d+${t('servings')}\\)$`), '');
                                         if (e.note === oldName || noteWithoutPax === oldName) {
-                                            const paxMatch = e.note.match(/\((\d+)${t('servings')}\)$/);
+                                            const paxMatch = e.note.match(new RegExp(`\\((\\d+)${t('servings')}\\)$`));
                                             e.note = paxMatch ? `${newName} (${paxMatch[1]}${t('servings')})` : newName;
                                             updatedEntries.push(e);
                                         }
@@ -5065,7 +4880,8 @@
                 };
                 modal.querySelector('#closeCatModal').onclick = () => modalManager.close(modal);
             }
-            // === 支付方式管理 ===
+
+            // ==================== 支付方式管理 ====================
             function openPaymentTypeManager() {
                 const title = t('managePaymentTitle');
                 let dragStartIndex = null;
@@ -5076,11 +4892,11 @@
                         return;
                     }
                     container.innerHTML = currentTypes.map((type, idx) => `
-            <div class="category-list-item" data-index="${idx}" data-type="${escapeHtml(type)}" draggable="true">
-              <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(type)}</span></div>
-              <div style="display:flex;gap:6px;"><button class="edit-cat-btn" data-type="${escapeHtml(type)}">${t('edit')}</button><button class="delete-cat-btn" data-type="${escapeHtml(type)}">${t('delete')}</button></div>
-            </div>
-          `).join('');
+                        <div class="category-list-item" data-index="${idx}" data-type="${escapeHtml(type)}" draggable="true">
+                            <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(type)}</span></div>
+                            <div style="display:flex;gap:6px;"><button class="edit-cat-btn" data-type="${escapeHtml(type)}">${t('edit')}</button><button class="delete-cat-btn" data-type="${escapeHtml(type)}">${t('delete')}</button></div>
+                        </div>
+                    `).join('');
                     const items = container.querySelectorAll('.category-list-item');
                     items.forEach(item => {
                         item.addEventListener('dragstart', (e) => {
@@ -5223,7 +5039,7 @@
                 modal.querySelector('#closePayModal').onclick = () => modalManager.close(modal);
             }
 
-            // === 清空数据 ===
+            // ==================== 清空数据 ====================
             async function clearAllData() {
                 if (isClearing) return;
                 isClearing = true;
@@ -5285,65 +5101,15 @@
                         };
                         finalModal.querySelector('#reallyConfirmBtn').onclick = async () => {
                             modalManager.close(finalModal);
-                                                        try {
-                                // 清空所有 IndexedDB 数据
+                            try {
                                 await dbManager.clear('entries');
-                                await dbManager.clear('settings');
-                                await dbManager.clear('categories');
-                                
-                                // 重置为默认分类和支付方式
-                                await dbManager.put('categories', {
-                                    key: 'expenseCats',
-                                    value: CONSTANTS.DEFAULT_CATS.EXPENSE
-                                });
-                                await dbManager.put('categories', {
-                                    key: 'incomeCats',
-                                    value: CONSTANTS.DEFAULT_CATS.INCOME
-                                });
-                                await dbManager.put('categories', {
-                                    key: 'paymentTypes',
-                                    value: CONSTANTS.DEFAULT_PAYMENT_TYPES
-                                });
-                                
-                                // 重置内存中的数据
+                                await dbManager.put('categories', { key: 'expenseCats', value: CONSTANTS.DEFAULT_CATS.EXPENSE });
+                                await dbManager.put('categories', { key: 'incomeCats', value: CONSTANTS.DEFAULT_CATS.INCOME });
+                                await dbManager.put('categories', { key: 'paymentTypes', value: CONSTANTS.DEFAULT_PAYMENT_TYPES });
                                 entries = [];
                                 expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
                                 incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
                                 paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
-                                
-                                // 重置语言为中文
-                                currentLanguage = 'zh-CN';
-                                
-                                // 重置货币为 MYR
-                                displayCurrency = 'MYR';
-                                document.getElementById('currencySymbol').textContent = getCurrencySymbol();
-                                
-                                // 重置 UI 设置为默认值
-                                uiSettings = {
-                                    cardRadius: 24,
-                                    cardPadding: 16,
-                                    statPadding: 8,
-                                    inputPadding: 12,
-                                    fontSize: 18,
-                                    expenseColor: '#c2413a',
-                                    incomeColor: '#2dd4bf',
-                                    spacingGap: 6,
-                                    bgColor: '#f1f5f9',
-                                    cardBg: '#ffffff',
-                                    darkMode: false
-                                };
-                                
-                                // 应用 UI 设置
-                                applyUISettings();
-                                
-                                // 关闭暗色模式
-                                document.body.classList.remove('dark-mode');
-                                const darkModeMenuItem = document.getElementById('darkModeMenuItem');
-                                if (darkModeMenuItem) darkModeMenuItem.innerHTML = t('darkMode');
-                                
-                                // 清空 localStorage 中的备份时间
-                                localStorage.removeItem('lastBackupTime');
-                                
                                 rebuildStatsCache();
                                 const now = new Date();
                                 currentYear = now.getFullYear();
@@ -5354,20 +5120,12 @@
                                 document.getElementById('categoryInput').value = '';
                                 document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
                                 document.querySelector('.type-option.expense').classList.add('active');
-                                
-                                // 更新 UI 语言
-                                updateUILanguage();
-                                
                                 updateInputColor();
                                 renderCalendar();
                                 renderEntries();
                                 renderCategoryDropdown();
                                 closeCategoryDropdown();
                                 closeMenu();
-                                
-                                // 更新备份状态显示
-                                document.getElementById("backupStatus").innerText = t('notBackedUp');
-                                
                                 showToast(t('dataCleared'));
                             } catch (error) {
                                 console.error('清空失败:', error);
@@ -5380,28 +5138,21 @@
                 };
             }
 
-            // === 导出备份 ===
-            // === 导出备份 ===
+            // ==================== 导出备份 ====================
             function showExportDialog() {
                 const html = `
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            <div><div class="export-section-title">${t('exportRange')}</div><div class="select-box" id="rangeSelect"><div class="select-display"><span class="text">${t('currentMonth')}</span><span class="arrow">▼</span></div><div class="select-options"><div data-value="all">${t('allRecords_')}</div><div data-value="month" class="active">${t('currentMonth')}</div><div data-value="year">${t('currentYear')}</div><div data-value="custom">${t('customRange')}</div></div></div></div>
-            <div id="customBox" style="display:none;"><input type="date" id="startDate" value="${getLocalDate()}"><span style="color:#64748b;">${t('to')}</span><input type="date" id="endDate" value="${getLocalDate()}"></div>
-            <div><div class="export-section-title">${t('exportType')}</div><div class="select-box" id="typeSelect"><div class="select-display"><span class="text">${t('all')}</span><span class="arrow">▼</span></div><div class="select-options"><div data-value="all" class="active">${t('all')}</div><div data-value="expense">${t('expenseOnly')}</div><div data-value="income">${t('incomeOnly')}</div></div></div></div>
-          </div>
-        `;
+                    <div style="display:flex;flex-direction:column;gap:16px;">
+                        <div><div class="export-section-title">${t('exportRange')}</div><div class="select-box" id="rangeSelect"><div class="select-display"><span class="text">${t('currentMonth')}</span><span class="arrow">▼</span></div><div class="select-options"><div data-value="all">${t('allRecords_')}</div><div data-value="month" class="active">${t('currentMonth')}</div><div data-value="year">${t('currentYear')}</div><div data-value="custom">${t('customRange')}</div></div></div></div>
+                        <div id="customBox" style="display:none;"><input type="date" id="startDate" value="${getLocalDate()}"><span style="color:#64748b;">${t('to')}</span><input type="date" id="endDate" value="${getLocalDate()}"></div>
+                        <div><div class="export-section-title">${t('exportType')}</div><div class="select-box" id="typeSelect"><div class="select-display"><span class="text">${t('all')}</span><span class="arrow">▼</span></div><div class="select-options"><div data-value="all" class="active">${t('all')}</div><div data-value="expense">${t('expenseOnly')}</div><div data-value="income">${t('incomeOnly')}</div></div></div></div>
+                    </div>
+                `;
                 const modal = modalManager.create(t('exportTitle'), html, `<button id="confirmExport" style="width:100%;padding:12px;background:var(--expense-color);color:white;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:8px;">${t('confirmExport')}</button><button id="cancelExport" class="btn-cancel">${t('cancel')}</button>`);
                 if (!modal) return;
-                let selectedRange = 'month',
-                    selectedType = 'all';
+                let selectedRange = 'month', selectedType = 'all';
 
                 function setupSelect(boxId, callback) {
-                    const box = modal.querySelector(boxId),
-                        display = box.querySelector('.select-display'),
-                        textSpan = display.querySelector('.text'),
-                        arrow = display.querySelector('.arrow'),
-                        options = box.querySelector('.select-options'),
-                        optionsDivs = options.querySelectorAll('div');
+                    const box = modal.querySelector(boxId), display = box.querySelector('.select-display'), textSpan = display.querySelector('.text'), arrow = display.querySelector('.arrow'), options = box.querySelector('.select-options'), optionsDivs = options.querySelectorAll('div');
                     display.onclick = (e) => {
                         e.stopPropagation();
                         const isOpen = options.style.display === 'block';
@@ -5421,8 +5172,7 @@
                     optionsDivs.forEach(opt => {
                         opt.onclick = (e) => {
                             e.stopPropagation();
-                            const value = opt.dataset.value,
-                                label = opt.innerText;
+                            const value = opt.dataset.value, label = opt.innerText;
                             optionsDivs.forEach(o => o.classList.remove('active'));
                             opt.classList.add('active');
                             textSpan.innerText = label;
@@ -5436,9 +5186,7 @@
                     selectedRange = val;
                     modal.querySelector('#customBox').style.display = val === 'custom' ? 'flex' : 'none';
                 });
-                setupSelect('#typeSelect', (val) => {
-                    selectedType = val;
-                });
+                setupSelect('#typeSelect', (val) => { selectedType = val; });
                 modal.addEventListener('click', (e) => {
                     if (!e.target.closest('.select-box')) {
                         modal.querySelectorAll('.select-options').forEach(opt => {
@@ -5449,8 +5197,7 @@
                     }
                 });
                 modal.querySelector('#confirmExport').onclick = async () => {
-                    const range = selectedRange,
-                        type = selectedType;
+                    const range = selectedRange, type = selectedType;
                     let filtered = await dbManager.getAll('entries');
                     if (range === 'month') {
                         const monthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
@@ -5458,8 +5205,7 @@
                     } else if (range === 'year') {
                         filtered = filtered.filter(e => e.date.startsWith(String(currentYear)));
                     } else if (range === 'custom') {
-                        const start = modal.querySelector('#startDate').value,
-                            end = modal.querySelector('#endDate').value;
+                        const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value;
                         if (!start || !end) {
                             showToast(t('selectDateRange'));
                             return;
@@ -5482,15 +5228,13 @@
                         paymentTypes
                     };
 
-                    // 根据语言生成文件名
                     let fileName;
                     if (currentLanguage === 'zh-CN') {
                         fileName = '记账本备份';
                         if (range === 'month') fileName += `_${currentYear}年${currentMonth + 1}月`;
                         else if (range === 'year') fileName += `_${currentYear}年`;
                         else if (range === 'custom') {
-                            const start = modal.querySelector('#startDate').value,
-                                end = modal.querySelector('#endDate').value;
+                            const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value;
                             fileName += `_${start}_至_${end}`;
                         } else fileName += '_全部记录';
                         if (type === 'expense') fileName += '_仅支出';
@@ -5500,8 +5244,7 @@
                         if (range === 'month') fileName += `_${String(currentMonth + 1).padStart(2, '0')}_${currentYear}`;
                         else if (range === 'year') fileName += `_${currentYear}`;
                         else if (range === 'custom') {
-                            const start = modal.querySelector('#startDate').value,
-                                end = modal.querySelector('#endDate').value;
+                            const start = modal.querySelector('#startDate').value, end = modal.querySelector('#endDate').value;
                             fileName += `_${start}_to_${end}`;
                         } else fileName += '_All';
                         if (type === 'expense') fileName += '_Expense';
@@ -5509,9 +5252,7 @@
                     }
                     fileName += '.json';
 
-                    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-                        type: 'application/json'
-                    });
+                    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
                     a.download = fileName;
@@ -5531,11 +5272,8 @@
             }
 
             function updateBackupStatus(lastBackupTime) {
-                const now = new Date(),
-                    last = new Date(lastBackupTime);
-                const diffMs = now - last,
-                    diffDays = Math.floor(diffMs / 86400000),
-                    diffHours = Math.floor(diffMs / 3600000);
+                const now = new Date(), last = new Date(lastBackupTime);
+                const diffMs = now - last, diffDays = Math.floor(diffMs / 86400000), diffHours = Math.floor(diffMs / 3600000);
                 const el = document.getElementById("backupStatus");
                 if (!el) return;
                 if (diffDays === 0) el.innerText = diffHours === 0 ? t('justBackedUp') : `💾 ${diffHours} ${t('hoursAgo')}`;
@@ -5543,7 +5281,7 @@
                 else el.innerText = `💾 ${diffDays} ${t('daysAgo')}`;
             }
 
-            // === 导入备份 ===
+            // ==================== 导入备份 ====================
             function showImportDialog() {
                 const fileInput = document.createElement('input');
                 fileInput.type = 'file';
@@ -5559,8 +5297,7 @@
                             showToast(t('invalidFile'));
                             return;
                         }
-                        let validEntries = [],
-                            invalidCount = 0;
+                        let validEntries = [], invalidCount = 0;
                         for (const entry of data.entries) {
                             if (validateEntry(entry)) validEntries.push(entry);
                             else invalidCount++;
@@ -5569,46 +5306,32 @@
                         if (validEntries.length === 0) throw new Error(t('noValidRecords'));
                         data.entries = validEntries;
                         const monthsInFile = [...new Set(data.entries.map(e => e.date.slice(0, 7)))].sort();
-                        const totalExpense = calculateTotalByType(data.entries, 'expense'),
-                            totalIncome = calculateTotalByType(data.entries, 'income');
+                        const totalExpense = calculateTotalByType(data.entries, 'expense'), totalIncome = calculateTotalByType(data.entries, 'income');
                         const symbol = getCurrencySymbol();
                         const decimals = getDecimalPlaces();
                         const modalHtml = `
-              <div class="import-options">
-                <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
-                  <div><strong>${t('file')}</strong> ${escapeHtml(file.name)}</div><div><strong>${t('recordCount')}</strong> ${data.entries.length}</div>
-                  <div><strong>${t('dateRange')}</strong> ${getDateRangeFromEntries(data.entries)}</div><div><strong>${t('totalExpense')}</strong> ${symbol}${convertToDisplayAmount(totalExpense).toFixed(decimals)}</div><div><strong>${t('totalIncome')}</strong> ${symbol}${convertToDisplayAmount(totalIncome).toFixed(decimals)}</div>
-                </div>
-                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">${t('importMode')}</label><div id="importModeContainer"></div></div>
-                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">${t('selectMonth')}</label><div id="importMonthContainer"></div></div>
-                <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">${t('importTip')}</div>
-              </div>
-            `;
+                            <div class="import-options">
+                                <div style="background:rgba(0,0,0,0.05);padding:12px;border-radius:12px;margin-bottom:16px;">
+                                    <div><strong>${t('file')}</strong> ${escapeHtml(file.name)}</div><div><strong>${t('recordCount')}</strong> ${data.entries.length}</div>
+                                    <div><strong>${t('dateRange')}</strong> ${getDateRangeFromEntries(data.entries)}</div><div><strong>${t('totalExpense')}</strong> ${symbol}${convertToDisplayAmount(totalExpense).toFixed(decimals)}</div><div><strong>${t('totalIncome')}</strong> ${symbol}${convertToDisplayAmount(totalIncome).toFixed(decimals)}</div>
+                                </div>
+                                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">${t('importMode')}</label><div id="importModeContainer"></div></div>
+                                <div style="margin-bottom:16px;"><label style="display:block;margin-bottom:8px;font-weight:500;">${t('selectMonth')}</label><div id="importMonthContainer"></div></div>
+                                <div style="background:#fff3cd;padding:12px;border-radius:12px;font-size:12px;">${t('importTip')}</div>
+                            </div>
+                        `;
                         const modal = modalManager.create(t('importTitle'), modalHtml, `<button id="confirmImport" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:28px;margin-top:8px;">${t('confirmImport')}</button><button id="cancelImport" style="width:100%;background:rgba(0,0,0,0.05);border:none;padding:12px;border-radius:28px;margin-top:8px;">${t('cancel')}</button>`);
                         if (modal) {
-                            const modeOptions = [{
-                                value: 'merge',
-                                label: t('mergeMode')
-                            }, {
-                                value: 'replace',
-                                label: t('replaceMode')
-                            }];
+                            const modeOptions = [{ value: 'merge', label: t('mergeMode') }, { value: 'replace', label: t('replaceMode') }];
                             const modeSelect = createCustomSelect(modal.querySelector('#importModeContainer'), modeOptions, 'merge', () => {});
-                            const monthOptions = [{
-                                value: 'all',
-                                label: `${t('allMonths')} (${data.entries.length})`
-                            }, ...monthsInFile.map(month => {
+                            const monthOptions = [{ value: 'all', label: `${t('allMonths')} (${data.entries.length})` }, ...monthsInFile.map(month => {
                                 const count = data.entries.filter(e => e.date.startsWith(month)).length;
                                 const [y, m] = month.split('-');
-                                return {
-                                    value: month,
-                                    label: `${m}/${y} (${count})`
-                                };
+                                return { value: month, label: `${m}/${y} (${count})` };
                             })];
                             const monthSelect = createCustomSelect(modal.querySelector('#importMonthContainer'), monthOptions, 'all', () => {});
                             modal.querySelector('#confirmImport').onclick = async () => {
-                                const mode = modeSelect.getValue(),
-                                    selectedMonth = monthSelect.getValue();
+                                const mode = modeSelect.getValue(), selectedMonth = monthSelect.getValue();
                                 let entriesToImport = [...data.entries];
                                 if (selectedMonth !== 'all') entriesToImport = entriesToImport.filter(e => e.date.startsWith(selectedMonth));
                                 if (entriesToImport.length > CONSTANTS.MAX_ENTRIES) {
@@ -5621,9 +5344,7 @@
                                     modalManager.close(modal);
                                     return;
                                 }
-                                let importedCount = 0,
-                                    skippedCount = 0,
-                                    failedCount = 0;
+                                let importedCount = 0, skippedCount = 0, failedCount = 0;
                                 if (mode === 'replace') {
                                     await dbManager.clear('entries');
                                     const result = await dbManager.putAll('entries', entriesToImport);
@@ -5643,8 +5364,7 @@
                                     }
                                     showToast(`${t('mergeSuccess')} ${importedCount}` + (skippedCount > 0 ? `, ${t('skipped')} ${skippedCount}` : '') + (failedCount > 0 ? `, ${failedCount} ${t('failed')}` : ''));
                                 }
-                                let newCats = 0,
-                                    newPays = 0;
+                                let newCats = 0, newPays = 0;
                                 if (data.expenseCats) {
                                     for (const cat of data.expenseCats) {
                                         if (!expenseCats.includes(cat)) {
@@ -5694,23 +5414,13 @@
                 fileInput.click();
             }
 
-            // === 事件绑定 ===
+            // ==================== 事件绑定 ====================
             function bindEvents() {
-                const amountInput = document.getElementById('amountInput'),
-                    categoryInput = document.getElementById('categoryInput');
+                const amountInput = document.getElementById('amountInput'), categoryInput = document.getElementById('categoryInput');
                 amountInput.addEventListener('input', function() {
                     let val = this.value;
-                    if (val === '') {
-                        this._lastValid = '';
-                        updateInputColor();
-                        return;
-                    }
-                    if (val === '.') {
-                        this.value = '0.';
-                        this._lastValid = '0.';
-                        updateInputColor();
-                        return;
-                    }
+                    if (val === '') { this._lastValid = ''; updateInputColor(); return; }
+                    if (val === '.') { this.value = '0.'; this._lastValid = '0.'; updateInputColor(); return; }
                     val = val.replace(/[^\d.]/g, '');
                     const dotCount = (val.match(/\./g) || []).length;
                     if (dotCount > 1) {
@@ -5739,20 +5449,14 @@
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         if (parseFloat(amountInput.value) > 0 && categoryInput.value.trim()) addRecord();
-                        else {
-                            showToast(t('enterAmount'));
-                            amountInput.focus();
-                        }
+                        else { showToast(t('enterAmount')); amountInput.focus(); }
                     }
                 });
                 categoryInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
                         e.preventDefault();
                         if (categoryInput.value.trim() && parseFloat(amountInput.value) > 0) addRecord();
-                        else {
-                            showToast(t('enterCategory'));
-                            categoryInput.focus();
-                        }
+                        else { showToast(t('enterCategory')); categoryInput.focus(); }
                     }
                 });
                 document.getElementById('calendarGrid').addEventListener('click', (e) => {
@@ -5767,9 +5471,7 @@
                 document.getElementById('prevMonth').onclick = () => changeMonth(-1);
                 document.getElementById('nextMonth').onclick = () => changeMonth(1);
                 const swipeArea = document.getElementById('swipeArea');
-                let touchStartX = 0,
-                    touchStartY = 0,
-                    isSwiping = false;
+                let touchStartX = 0, touchStartY = 0, isSwiping = false;
                 swipeArea.addEventListener('touchstart', (e) => {
                     touchStartX = e.changedTouches[0].screenX;
                     touchStartY = e.changedTouches[0].screenY;
@@ -5778,8 +5480,7 @@
                 swipeArea.addEventListener('touchend', (e) => {
                     if (!isSwiping) return;
                     isSwiping = false;
-                    const diffX = e.changedTouches[0].screenX - touchStartX,
-                        diffY = e.changedTouches[0].screenY - touchStartY;
+                    const diffX = e.changedTouches[0].screenX - touchStartX, diffY = e.changedTouches[0].screenY - touchStartY;
                     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > CONSTANTS.SWIPE_THRESHOLD) {
                         changeMonth(diffX > 0 ? -1 : 1);
                         navigator.vibrate?.(20);
@@ -5809,15 +5510,11 @@
                         categoryInput.value = item.dataset.cat;
                         closeCategoryDropdown();
                         if (parseFloat(amountInput.value) > 0) addRecord();
-                        else {
-                            amountInput.focus();
-                            showToast(t('enterAmount'));
-                        }
+                        else { amountInput.focus(); showToast(t('enterAmount')); }
                     }
                 });
                 document.getElementById('entriesList').addEventListener('click', async (e) => {
-                    const editBtn = e.target.closest('.edit-btn'),
-                        deleteBtn = e.target.closest('.delete-btn');
+                    const editBtn = e.target.closest('.edit-btn'), deleteBtn = e.target.closest('.delete-btn');
                     if (editBtn) editEntry(editBtn.dataset.id);
                     else if (deleteBtn) {
                         const modal = modalManager.create(t('deleteRecord'), `<div style="text-align:center;padding:8px 0;">${t('confirmDelete')}<br><br>${t('deleteWarning')}</div>`, `<div style="display:flex;gap:12px;"><button id="confirmDeleteBtn" style="flex:1;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;">${t('delete')}</button><button id="cancelDeleteBtn" style="flex:1;background:#e2e8f0;border:none;padding:12px;border-radius:32px;">${t('cancel')}</button></div>`);
@@ -5831,62 +5528,33 @@
                     }
                 });
                 document.getElementById('viewMoreBtn').onclick = showAllEntriesModal;
-                document.getElementById('exportNoteBtn').onclick = () => {
-                    exportNote();
-                    closeMenu();
+                document.getElementById('exportNoteBtn').onclick = () => { exportNote(); closeMenu(); };
+                document.getElementById('installAppBtn').onclick = () => { installPWA(); closeMenu(); };
+                document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
+                document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); closeMenu(); };
+                
+                // 农历开关
+                const lunarToggle = document.getElementById('lunarSwitchToggle');
+                const lunarMenuItem = document.getElementById('lunarSwitchMenuItem');
+                lunarMenuItem.onclick = (e) => {
+                    e.stopPropagation();
+                    showLunar = !showLunar;
+                    updateLunarToggleUI();
+                    saveLunarSetting();
+                    renderCalendar();
+                    showToast(showLunar ? t('lunarOn') : t('lunarOff'));
                 };
-                document.getElementById('installAppBtn').onclick = () => {
-                    installPWA();
-                    closeMenu();
-                };
-                document.getElementById('settingsMenuItem').onclick = () => {
-                    openSettingsPanel();
-                    closeMenu();
-                };
-                document.getElementById('darkModeMenuItem').onclick = () => {
-                    toggleDarkMode();
-                    closeMenu();
-                };
-                document.getElementById('languageMenuItem').onclick = () => {
-                    showLanguageSelector();
-                    closeMenu();
-                };
-                document.getElementById('currencyMenuItem').onclick = () => {
-                    showCurrencySelector();
-                    closeMenu();
-                };
-                document.getElementById('statisticsMenuItem').onclick = () => {
-                    showStatistics();
-                    closeMenu();
-                };
-                document.getElementById('searchMenuItem').onclick = () => {
-                    showSearch();
-                    closeMenu();
-                };
-                document.getElementById('manageExpenseCategories').onclick = () => {
-                    openCategoryManager('expense');
-                    closeMenu();
-                };
-                document.getElementById('manageIncomeCategories').onclick = () => {
-                    openCategoryManager('income');
-                    closeMenu();
-                };
-                document.getElementById('managePaymentTypes').onclick = () => {
-                    openPaymentTypeManager();
-                    closeMenu();
-                };
-                document.getElementById('exportMenuItem').onclick = () => {
-                    showExportDialog();
-                    closeMenu();
-                };
-                document.getElementById('importMenuItem').onclick = () => {
-                    showImportDialog();
-                    closeMenu();
-                };
-                document.getElementById('clearDataMenuItem').onclick = () => {
-                    clearAllData();
-                    closeMenu();
-                };
+                
+                document.getElementById('languageMenuItem').onclick = () => { showLanguageSelector(); closeMenu(); };
+                document.getElementById('currencyMenuItem').onclick = () => { showCurrencySelector(); closeMenu(); };
+                document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); closeMenu(); };
+                document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
+                document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); closeMenu(); };
+                document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
+                document.getElementById('managePaymentTypes').onclick = () => { openPaymentTypeManager(); closeMenu(); };
+                document.getElementById('exportMenuItem').onclick = () => { showExportDialog(); closeMenu(); };
+                document.getElementById('importMenuItem').onclick = () => { showImportDialog(); closeMenu(); };
+                document.getElementById('clearDataMenuItem').onclick = () => { clearAllData(); closeMenu(); };
                 document.querySelectorAll('.type-option').forEach(opt => {
                     opt.onclick = () => {
                         document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
@@ -5896,39 +5564,25 @@
                         updateInputColor();
                     };
                 });
-                document.querySelector('.stat-card.income').onclick = () => showSearch({
-                    type: 'income'
-                });
-                document.querySelector('.stat-card.expense').onclick = () => showSearch({
-                    type: 'expense'
-                });
-                document.querySelector('.stat-card.balance').onclick = () => showSearch({
-                    type: 'all'
-                });
+                document.querySelector('.stat-card.income').onclick = () => showSearch({ type: 'income' });
+                document.querySelector('.stat-card.expense').onclick = () => showSearch({ type: 'expense' });
+                document.querySelector('.stat-card.balance').onclick = () => showSearch({ type: 'all' });
             }
 
-            // === 设置面板 ===
+            // ==================== 设置面板 ====================
             function openSettingsPanel() {
-                if (!window._tempColors) window._tempColors = {
-                    expenseColor: uiSettings.expenseColor,
-                    incomeColor: uiSettings.incomeColor,
-                    cardBg: uiSettings.cardBg,
-                    bgColor: uiSettings.bgColor
-                };
-                const expenseHsl = hexToHsl(uiSettings.expenseColor),
-                    incomeHsl = hexToHsl(uiSettings.incomeColor),
-                    cardBgHsl = hexToHsl(uiSettings.cardBg),
-                    bgHsl = hexToHsl(uiSettings.bgColor);
+                if (!window._tempColors) window._tempColors = { expenseColor: uiSettings.expenseColor, incomeColor: uiSettings.incomeColor, cardBg: uiSettings.cardBg, bgColor: uiSettings.bgColor };
+                const expenseHsl = hexToHsl(uiSettings.expenseColor), incomeHsl = hexToHsl(uiSettings.incomeColor), cardBgHsl = hexToHsl(uiSettings.cardBg), bgHsl = hexToHsl(uiSettings.bgColor);
                 const html = `
-          <div class="settings-item"><label class="settings-label">🎨 ${t('expense')} ${t('color')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="expenseHue" min="0" max="360" value="${expenseHsl.h}"><div class="color-preview-block" id="expensePreview" style="background:${uiSettings.expenseColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="expenseSat" min="0" max="100" value="${expenseHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="expenseLight" min="20" max="80" value="${expenseHsl.l}"></div></div></div>
-          <div class="settings-item"><label class="settings-label">🎨 ${t('income')} ${t('color')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="incomeHue" min="0" max="360" value="${incomeHsl.h}"><div class="color-preview-block" id="incomePreview" style="background:${uiSettings.incomeColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="incomeSat" min="0" max="100" value="${incomeHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="incomeLight" min="20" max="80" value="${incomeHsl.l}"></div></div></div>
-          <div class="settings-item"><label class="settings-label">🎨 ${t('cardBg')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="cardBgHue" min="0" max="360" value="${cardBgHsl.h}"><div class="color-preview-block" id="cardBgPreview" style="background:${uiSettings.cardBg}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="cardBgSat" min="0" max="100" value="${cardBgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="cardBgLight" min="20" max="100" value="${cardBgHsl.l}"></div></div></div>
-          <div class="settings-item"><label class="settings-label">🎨 ${t('bgColor')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="bgHue" min="0" max="360" value="${bgHsl.h}"><div class="color-preview-block" id="bgPreview" style="background:${uiSettings.bgColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="bgSat" min="0" max="100" value="${bgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="bgLight" min="20" max="100" value="${bgHsl.l}"></div></div></div>
-          <div class="settings-item"><label class="settings-label">📏 ${t('spacing')}</label><input type="range" id="spacingGap" min="6" max="18" value="${uiSettings.spacingGap}"><div class="settings-value" id="spacingValue">${uiSettings.spacingGap}px</div></div>
-          <div class="settings-item"><label class="settings-label">📦 ${t('padding')}</label><input type="range" id="cardPadding" min="6" max="20" value="${uiSettings.cardPadding}"><div class="settings-value" id="paddingValue">${uiSettings.cardPadding}px</div></div>
-          <div class="settings-item"><label class="settings-label">🔤 ${t('fontSize')}</label><input type="range" id="fontSize" min="12" max="22" value="${uiSettings.fontSize}"><div class="settings-value" id="fontValue">${uiSettings.fontSize}px</div></div>
-          <button class="reset-btn" id="resetSettingsBtn">↺ ${t('resetDefault')}</button>
-        `;
+                    <div class="settings-item"><label class="settings-label">🎨 ${t('expense')} ${t('color')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="expenseHue" min="0" max="360" value="${expenseHsl.h}"><div class="color-preview-block" id="expensePreview" style="background:${uiSettings.expenseColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="expenseSat" min="0" max="100" value="${expenseHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="expenseLight" min="20" max="80" value="${expenseHsl.l}"></div></div></div>
+                    <div class="settings-item"><label class="settings-label">🎨 ${t('income')} ${t('color')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="incomeHue" min="0" max="360" value="${incomeHsl.h}"><div class="color-preview-block" id="incomePreview" style="background:${uiSettings.incomeColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="incomeSat" min="0" max="100" value="${incomeHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="incomeLight" min="20" max="80" value="${incomeHsl.l}"></div></div></div>
+                    <div class="settings-item"><label class="settings-label">🎨 ${t('cardBg')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="cardBgHue" min="0" max="360" value="${cardBgHsl.h}"><div class="color-preview-block" id="cardBgPreview" style="background:${uiSettings.cardBg}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="cardBgSat" min="0" max="100" value="${cardBgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="cardBgLight" min="20" max="100" value="${cardBgHsl.l}"></div></div></div>
+                    <div class="settings-item"><label class="settings-label">🎨 ${t('bgColor')}</label><div class="hsl-group"><div class="hsl-row"><span class="hsl-sub-label">H</span><input type="range" id="bgHue" min="0" max="360" value="${bgHsl.h}"><div class="color-preview-block" id="bgPreview" style="background:${uiSettings.bgColor}"></div></div><div class="hsl-row"><span class="hsl-sub-label">S</span><input type="range" id="bgSat" min="0" max="100" value="${bgHsl.s}"></div><div class="hsl-row"><span class="hsl-sub-label">L</span><input type="range" id="bgLight" min="20" max="100" value="${bgHsl.l}"></div></div></div>
+                    <div class="settings-item"><label class="settings-label">📏 ${t('spacing')}</label><input type="range" id="spacingGap" min="6" max="18" value="${uiSettings.spacingGap}"><div class="settings-value" id="spacingValue">${uiSettings.spacingGap}px</div></div>
+                    <div class="settings-item"><label class="settings-label">📦 ${t('padding')}</label><input type="range" id="cardPadding" min="6" max="20" value="${uiSettings.cardPadding}"><div class="settings-value" id="paddingValue">${uiSettings.cardPadding}px</div></div>
+                    <div class="settings-item"><label class="settings-label">🔤 ${t('fontSize')}</label><input type="range" id="fontSize" min="12" max="22" value="${uiSettings.fontSize}"><div class="settings-value" id="fontValue">${uiSettings.fontSize}px</div></div>
+                    <button class="reset-btn" id="resetSettingsBtn">↺ ${t('resetDefault')}</button>
+                `;
                 const modal = modalManager.create(t('settings'), html, `<button id="closeSettingsBtn" class="close-btn">${t('close')}</button>`);
                 if (!modal) return;
                 const updateExpense = () => {
@@ -5980,17 +5634,9 @@
                 };
                 modal.querySelector('#resetSettingsBtn').onclick = () => {
                     uiSettings = {
-                        cardRadius: 24,
-                        cardPadding: 16,
-                        statPadding: 8,
-                        inputPadding: 12,
-                        fontSize: 18,
-                        expenseColor: '#c2413a',
-                        incomeColor: '#2dd4bf',
-                        spacingGap: 6,
-                        bgColor: '#f1f5f9',
-                        cardBg: '#ffffff',
-                        darkMode: uiSettings.darkMode
+                        cardRadius: 24, cardPadding: 16, statPadding: 8, inputPadding: 12, fontSize: 18,
+                        expenseColor: '#c2413a', incomeColor: '#2dd4bf', spacingGap: 6,
+                        bgColor: '#f1f5f9', cardBg: '#ffffff', darkMode: uiSettings.darkMode
                     };
                     applyUISettings();
                     modalManager.close(modal);
@@ -6017,20 +5663,13 @@
             function initBackToTop() {
                 const btn = document.getElementById('floatBackTop');
                 window.addEventListener('scroll', () => btn.classList.toggle('show', window.scrollY > 300));
-                btn.onclick = () => window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+                btn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
             }
 
             function initServiceWorker() {
                 if ('serviceWorker' in navigator) {
                     window.addEventListener('load', async () => {
-                        try {
-                            await navigator.serviceWorker.register('./sw.js', {
-                                scope: './'
-                            });
-                        } catch (e) {}
+                        try { await navigator.serviceWorker.register('./sw.js', { scope: './' }); } catch (e) {}
                     });
                 }
                 window.addEventListener('beforeinstallprompt', (e) => {
@@ -6042,8 +5681,8 @@
                 window.addEventListener('online', () => showToast(t('online')));
             }
 
-            // === 初始化 ===
-                        window.onload = async function() {
+            // ==================== 初始化 ====================
+            window.onload = async function() {
                 await load();
                 rebuildStatsCache();
                 bindEvents();
@@ -6054,23 +5693,12 @@
                 initBackToTop();
                 initServiceWorker();
                 updateInstallMenuText();
-                
                 const savedBackupTime = localStorage.getItem('lastBackupTime');
                 savedBackupTime ? updateBackupStatus(savedBackupTime) : document.getElementById("backupStatus").innerText = t('notBackedUp');
-                
                 document.getElementById('loadingOverlay').style.opacity = '0';
                 setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 300);
-                
-                // === 首次运行显示语言选择 ===
-                // 延迟一点显示，确保加载动画已消失
-                setTimeout(() => {
-                    checkFirstRunAndShowLanguagePrompt();
-                }, 400);
-                
                 window.addEventListener('beforeunload', cleanupTimers);
-                document.addEventListener('visibilitychange', () => {
-                    if (document.hidden) cleanupTimers();
-                });
+                document.addEventListener('visibilitychange', () => { if (document.hidden) cleanupTimers(); });
             };
         })();
     </script>
