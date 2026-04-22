@@ -155,7 +155,7 @@
         }
 
         #currentYearMonthDay {
-            font-weight: 600;
+            font-weight: 650;
             font-size: calc(var(--font-size-base) * 1);
             color: #0f172a;
         }
@@ -1969,12 +1969,6 @@
                         <div class="menu-item" id="installAppBtn" role="menuitem">📱 安装应用</div>
                         <div class="menu-item" id="settingsMenuItem" role="menuitem">🎨 界面设置</div>
                         <div class="menu-item" id="darkModeMenuItem" role="menuitem">🌙 暗色模式</div>
-                        <div class="menu-item lunar-switch-item" id="lunarSwitchMenuItem" role="menuitem">
-                            <div class="lunar-switch">
-                                <span>📅 显示农历</span>
-                                <div class="lunar-switch-toggle" id="lunarSwitchToggle"></div>
-                            </div>
-                        </div>
                         <div class="menu-item" id="languageMenuItem" role="menuitem">🌐 语言 / Language</div>
                         <div class="menu-item" id="currencyMenuItem" role="menuitem">💱 切换货币</div>
                         <div class="menu-item" id="statisticsMenuItem" role="menuitem">📊 月度统计</div>
@@ -2080,86 +2074,89 @@ const Lunar = (function() {
 
     // 公历日期转农历
     function solarToLunar(date) {
-        // 获取年月日
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        
-        // 1900年1月31日为农历1900年正月初一
-        const baseYear = 1900;
-        const baseMonth = 1;
-        const baseDay = 31;
-        
-        let offset = 0;
-        // 计算从1900年1月31日到输入日期的天数
-        for (let y = baseYear; y < year; y++) {
-            offset += 365;
-            if ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0)) {
-                offset += 1;
-            }
+    // 获取年月日
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    
+    // 1900年1月31日为农历1900年正月初一
+    const baseYear = 1900;
+    const baseMonth = 1;
+    const baseDay = 31;
+    
+    let offset = 0;
+    // 计算从1900年1月31日到输入日期的天数
+    for (let y = baseYear; y < year; y++) {
+        offset += 365;
+        if ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0)) {
+            offset += 1;
         }
-        
-        // 累加当年经过的月份天数
-        const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-        if ((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)) {
-            monthDays[1] = 29;
-        }
-        for (let m = 1; m < month; m++) {
-            offset += monthDays[m - 1];
-        }
-        offset += day - baseDay;
-        
-        // 确定农历年份
-        let lunarYear = baseYear;
-        let daysInLunarYear = getYearDays(lunarYear);
-        while (offset >= daysInLunarYear) {
-            offset -= daysInLunarYear;
-            lunarYear++;
-            daysInLunarYear = getYearDays(lunarYear);
-        }
-        
-        // 确定农历月份和日期
-        let lunarMonth = 1;
-        let isLeap = false;
-        const leapMonth = getLeapMonth(lunarYear);
-        
-        for (let m = 1; m <= 12; m++) {
-            let daysInMonth;
-            
-            // 处理闰月
-            if (leapMonth > 0 && m === leapMonth + 1 && !isLeap) {
-                isLeap = true;
-                m--;
-                daysInMonth = getLeapDays(lunarYear);
-            } else {
-                daysInMonth = getMonthDays(lunarYear, m);
-            }
-            
-            if (offset < daysInMonth) {
-                lunarMonth = m;
-                break;
-            }
-            
-            offset -= daysInMonth;
-            
-            if (leapMonth === m && isLeap) {
-                isLeap = false;
-            }
-        }
-        
-        const lunarDay = offset + 1;
-        
-        // 获取农历日期名称
-        const dayName = lunarDayNames[lunarDay - 1];
-        
-        return {
-            year: lunarYear,
-            month: lunarMonth,
-            day: lunarDay,
-            isLeap: isLeap,
-            dayName: dayName
-        };
     }
+    
+    // 累加当年经过的月份天数
+    const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    if ((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)) {
+        monthDays[1] = 29;
+    }
+    for (let m = 1; m < month; m++) {
+        offset += monthDays[m - 1];
+    }
+    offset += day - baseDay;
+    
+    // 确定农历年份
+    let lunarYear = baseYear;
+    let daysInLunarYear = getYearDays(lunarYear);
+    while (offset >= daysInLunarYear) {
+        offset -= daysInLunarYear;
+        lunarYear++;
+        daysInLunarYear = getYearDays(lunarYear);
+    }
+    
+    // 确定农历月份和日期
+    let lunarMonth = 1;
+    let isLeap = false;
+    const leapMonth = getLeapMonth(lunarYear);
+    
+    for (let m = 1; m <= 12; m++) {
+        let daysInMonth;
+        
+        // 处理闰月
+        if (leapMonth > 0 && m === leapMonth + 1 && !isLeap) {
+            isLeap = true;
+            m--;
+            daysInMonth = getLeapDays(lunarYear);
+        } else {
+            daysInMonth = getMonthDays(lunarYear, m);
+        }
+        
+        if (offset < daysInMonth) {
+            lunarMonth = m;
+            break;
+        }
+        
+        offset -= daysInMonth;
+        
+        if (leapMonth === m && isLeap) {
+            isLeap = false;
+        }
+    }
+    
+    const lunarDay = offset + 1;
+    
+    // 获取农历日期名称
+    const dayName = lunarDayNames[lunarDay - 1];
+    // 获取农历月份名称
+    const monthName = (isLeap ? '闰' : '') + lunarMonthNames[lunarMonth - 1];
+    
+    return {
+        year: lunarYear,
+        month: lunarMonth,
+        day: lunarDay,
+        isLeap: isLeap,
+        monthName: monthName,
+        dayName: dayName
+    };
+}
 
     function getLeapMonth(year) {
         return lunarInfo[year - 1900] & 0xf;
@@ -2228,7 +2225,6 @@ const Lunar = (function() {
                     income: '💰 收入',
                     amountPlaceholder: '0.00',
                     categoryPlaceholder: '输入或选择分类',
-                    showLunar: '📅 显示农历',
                     installApp: '📱 安装应用',
                     installedApp: '✅ 已安装应用',
                     addToHome: '📱 添加到主屏幕',
@@ -2502,7 +2498,7 @@ const Lunar = (function() {
                     income: '💰 Income',
                     amountPlaceholder: '0.00',
                     categoryPlaceholder: 'Enter or select category',
-                    showLunar: '📅 Show Lunar',
+                    
                     installApp: '📱 Install App',
                     installedApp: '✅ Installed',
                     addToHome: '📱 Add to Home',
@@ -3039,7 +3035,7 @@ const Lunar = (function() {
             let isClearing = false;
             let deferredPrompt = null;
             let renderCalendarTimer = null;
-            let showLunar = false; // 农历显示开关，默认关闭
+            let showLunar = true;
 
             function cleanupTimers() {
                 if (renderCalendarTimer) {
@@ -3345,14 +3341,6 @@ const Lunar = (function() {
                 }
             }
 
-            async function saveLunarSetting() {
-                try {
-                    await dbManager.put('settings', { key: 'showLunar', value: showLunar });
-                } catch (e) {
-                    console.error('保存农历设置失败:', e);
-                }
-            }
-
             function loadSettings() {
                 applyUISettings();
                 if (uiSettings.darkMode) {
@@ -3536,29 +3524,12 @@ const Lunar = (function() {
                         currentLanguage = 'zh-CN';
                     }
 
-                    const lunarData = await dbManager.get('settings', 'showLunar');
-                    if (lunarData !== undefined && lunarData !== null) {
-                        showLunar = lunarData.value;
-                    }
-                    updateLunarToggleUI();
-
                     document.getElementById('currencySymbol').textContent = getCurrencySymbol();
                 } catch (e) {
                     console.warn('加载失败', e);
                 }
                 loadSettings();
                 updateUILanguage();
-            }
-
-            function updateLunarToggleUI() {
-                const toggle = document.getElementById('lunarSwitchToggle');
-                if (toggle) {
-                    if (showLunar) {
-                        toggle.classList.add('active');
-                    } else {
-                        toggle.classList.remove('active');
-                    }
-                }
             }
 
             function getCurrentCats() {
@@ -3806,138 +3777,143 @@ const Lunar = (function() {
             }
 
             function renderCalendarImmediate() {
-                const year = currentYear, month = currentMonth;
-                const firstDay = new Date(year, month, 1);
-                const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const prevMonthDays = new Date(year, month, 0).getDate();
-                const grid = document.getElementById('calendarGrid');
-                const todayStr = getLocalDate();
+    const year = currentYear, month = currentMonth;
+    const firstDay = new Date(year, month, 1);
+    const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const grid = document.getElementById('calendarGrid');
+    const todayStr = getLocalDate();
 
-                if (grid.children.length !== 42) {
-                    grid.innerHTML = '';
-                    for (let i = 0; i < 42; i++) {
-                        const dayDiv = document.createElement('div');
-                        dayDiv.className = 'calendar-day';
-                        dayDiv.setAttribute('role', 'gridcell');
-                        dayDiv.setAttribute('tabindex', '0');
-                        const numDiv = document.createElement('div');
-                        numDiv.className = 'day-number';
-                        dayDiv.appendChild(numDiv);
-                        const lunarDiv = document.createElement('div');
-                        lunarDiv.className = 'day-lunar';
-                        lunarDiv.style.display = showLunar ? 'block' : 'none';
-                        dayDiv.appendChild(lunarDiv);
-                        const expenseSpan = document.createElement('div');
-                        expenseSpan.className = 'day-expense';
-                        expenseSpan.style.display = 'none';
-                        dayDiv.appendChild(expenseSpan);
-                        const incomeSpan = document.createElement('div');
-                        incomeSpan.className = 'day-income';
-                        incomeSpan.style.display = 'none';
-                        dayDiv.appendChild(incomeSpan);
-                        grid.appendChild(dayDiv);
-                    }
-                }
+    if (grid.children.length !== 42) {
+        grid.innerHTML = '';
+        for (let i = 0; i < 42; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            dayDiv.setAttribute('role', 'gridcell');
+            dayDiv.setAttribute('tabindex', '0');
+            const numDiv = document.createElement('div');
+            numDiv.className = 'day-number';
+            dayDiv.appendChild(numDiv);
+            const lunarDiv = document.createElement('div');
+            lunarDiv.className = 'day-lunar';
+            lunarDiv.style.display = 'none';  // 始终隐藏
+            dayDiv.appendChild(lunarDiv);
+            const expenseSpan = document.createElement('div');
+            expenseSpan.className = 'day-expense';
+            expenseSpan.style.display = 'none';
+            dayDiv.appendChild(expenseSpan);
+            const incomeSpan = document.createElement('div');
+            incomeSpan.className = 'day-income';
+            incomeSpan.style.display = 'none';
+            dayDiv.appendChild(incomeSpan);
+            grid.appendChild(dayDiv);
+        }
+    }
 
-                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-                const prevMonth = month === 0 ? 11 : month - 1;
-                const prevYear = month === 0 ? year - 1 : year;
-                const nextMonth = month === 11 ? 0 : month + 1;
-                const nextYear = month === 11 ? year + 1 : year;
+    const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
 
-                for (let i = 0; i < 42; i++) {
-                    const dayDiv = grid.children[i];
-                    let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
-                    if (i < startOffset) {
-                        dayNum = prevMonthDays - (startOffset - i) + 1;
-                        isCurrentMonth = false;
-                        displayYear = prevYear;
-                        displayMonth = prevMonth;
-                        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    } else if (i >= startOffset + daysInMonth) {
-                        dayNum = i - (startOffset + daysInMonth) + 1;
-                        isCurrentMonth = false;
-                        displayYear = nextYear;
-                        displayMonth = nextMonth;
-                        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    } else {
-                        dayNum = i - startOffset + 1;
-                        isCurrentMonth = true;
-                        displayYear = year;
-                        displayMonth = month;
-                        dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
-                    }
+    for (let i = 0; i < 42; i++) {
+        const dayDiv = grid.children[i];
+        let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
+        if (i < startOffset) {
+            dayNum = prevMonthDays - (startOffset - i) + 1;
+            isCurrentMonth = false;
+            displayYear = prevYear;
+            displayMonth = prevMonth;
+            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        } else if (i >= startOffset + daysInMonth) {
+            dayNum = i - (startOffset + daysInMonth) + 1;
+            isCurrentMonth = false;
+            displayYear = nextYear;
+            displayMonth = nextMonth;
+            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        } else {
+            dayNum = i - startOffset + 1;
+            isCurrentMonth = true;
+            displayYear = year;
+            displayMonth = month;
+            dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
+        }
 
-                    const dayEntries = dateMap[dateStr] || [];
-                    let expense = 0, income = 0;
-                    for (const e of dayEntries) {
-                        if (e.type === 'expense') expense += e.amount;
-                        else income += e.amount;
-                    }
+        const dayEntries = dateMap[dateStr] || [];
+        let expense = 0, income = 0;
+        for (const e of dayEntries) {
+            if (e.type === 'expense') expense += e.amount;
+            else income += e.amount;
+        }
 
-                    const classList = dayDiv.classList;
-                    classList.toggle('selected', dateStr === selectedDate);
-                    classList.toggle('today', dateStr === todayStr);
-                    classList.toggle('other-month', !isCurrentMonth);
-                    dayDiv.setAttribute('data-date', dateStr);
-                    dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
+        const classList = dayDiv.classList;
+        classList.toggle('selected', dateStr === selectedDate);
+        classList.toggle('today', dateStr === todayStr);
+        classList.toggle('other-month', !isCurrentMonth);
+        dayDiv.setAttribute('data-date', dateStr);
+        dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
 
-                    const numDiv = dayDiv.querySelector('.day-number');
-                    numDiv.textContent = dayNum;
+        const numDiv = dayDiv.querySelector('.day-number');
+        numDiv.textContent = dayNum;
 
-                    const lunarDiv = dayDiv.querySelector('.day-lunar');
-                    if (showLunar && isCurrentMonth) {
-                        try {
-                            const lunarDate = new Date(displayYear, displayMonth, dayNum);
-                            const lunar = Lunar.getLunarDate(lunarDate);
-                            lunarDiv.textContent = lunar.dayName;
-                            lunarDiv.style.display = 'block';
-                        } catch (e) {
-                            lunarDiv.style.display = 'none';
-                        }
-                    } else {
-                        lunarDiv.style.display = 'none';
-                    }
+        const lunarDiv = dayDiv.querySelector('.day-lunar');
+        // 农历格子显示已禁用
+        lunarDiv.style.display = 'none';
 
-                    const expenseSpan = dayDiv.querySelector('.day-expense');
-                    const incomeSpan = dayDiv.querySelector('.day-income');
-                    if (isCurrentMonth) {
-                        if (expense > 0) {
-                            expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
-                            expenseSpan.style.display = 'block';
-                        } else expenseSpan.style.display = 'none';
-                        if (income > 0) {
-                            incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
-                            incomeSpan.style.display = 'block';
-                        } else incomeSpan.style.display = 'none';
-                    } else {
-                        expenseSpan.style.display = 'none';
-                        incomeSpan.style.display = 'none';
-                    }
-                }
+        const expenseSpan = dayDiv.querySelector('.day-expense');
+        const incomeSpan = dayDiv.querySelector('.day-income');
+        if (isCurrentMonth) {
+            if (expense > 0) {
+                expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
+                expenseSpan.style.display = 'block';
+            } else expenseSpan.style.display = 'none';
+            if (income > 0) {
+                incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
+                incomeSpan.style.display = 'block';
+            } else incomeSpan.style.display = 'none';
+        } else {
+            expenseSpan.style.display = 'none';
+            incomeSpan.style.display = 'none';
+        }
+    }
 
-                const [y, m, d] = selectedDate.split('-');
-                const dateObj = new Date(y, m - 1, d);
-                const weekdays = t('weekdays');
-                let label = weekdays[dateObj.getDay()];
-                const today = new Date();
-                if (dateObj.toDateString() === today.toDateString()) label = `${t('today')} · ${label}`;
-                document.getElementById('selectedDateLabel').innerHTML = label;
+        const [y, m, d] = selectedDate.split('-');
+    const dateObj = new Date(y, m - 1, d);
+    const weekdays = t('weekdays');
+    let label = weekdays[dateObj.getDay()];
+    const today = new Date();
+    if (dateObj.toDateString() === today.toDateString()) label = `${t('today')} · ${label}`;
+    document.getElementById('selectedDateLabel').innerHTML = label;
 
-                let dateDisplayText;
-                if (currentLanguage === 'zh-CN') {
-                    dateDisplayText = `${y}年${parseInt(m)}月${parseInt(d)}日`;
-                } else {
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    dateDisplayText = `${monthNames[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
-                }
+    if (currentLanguage === 'zh-CN') {
+        const yearNum = y;
+        const monthNum = parseInt(m);
+        const dayNum = parseInt(d);
+        
+        let html = `<span style="font-weight:700;">${yearNum}</span><span style="font-weight:500;">年</span>` +
+                   `<span style="font-weight:700;">${monthNum}</span><span style="font-weight:500;">月</span>` +
+                   `<span style="font-weight:700;">${dayNum}</span><span style="font-weight:500;">日</span>`;
+        
+        // 中文模式下，始终显示农历（因为 showLunar 始终为 true）
+        try {
+            const lunarDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+            const lunar = Lunar.getLunarDate(lunarDate);
+            html += ` · ${lunar.monthName}月${lunar.dayName}`;
+        } catch (e) {
+            console.warn('获取农历失败:', e);
+        }
+        
+        document.getElementById('currentYearMonthDay').innerHTML = html;
+    } else {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const dateDisplayText = `${monthNames[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
+        document.getElementById('currentYearMonthDay').innerText = dateDisplayText;
+    }
 
-                document.getElementById('currentYearMonthDay').innerText = dateDisplayText;
-
-                renderTopCards();
-                renderSelectedDayTotal();
-            }
+    renderTopCards();
+    renderSelectedDayTotal();
+    }
 
             function renderCalendar() {
                 if (renderCalendarTimer) return;
@@ -4627,7 +4603,15 @@ const Lunar = (function() {
                         }).join('')}
                     </div>
                 `;
-                const modal = modalManager.create(`📊 ${currentYear}${t('months')[currentMonth]} ${t('statistics')}`, html, `<button id="closeStatsBtn" class="close-btn">${t('close')}</button>`);
+                // 根据语言格式化标题
+let statsTitle;
+if (currentLanguage === 'zh-CN') {
+    statsTitle = `📊 ${currentYear}年${currentMonth + 1}月 ${t('statistics')}`;
+} else {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    statsTitle = `📊 ${monthNames[currentMonth]} ${currentYear} ${t('statistics')}`;
+}
+const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" class="close-btn">${t('close')}</button>`);
                 if (modal) modal.querySelector('#closeStatsBtn').onclick = () => modalManager.close(modal);
             }
 
@@ -5532,18 +5516,6 @@ const Lunar = (function() {
                 document.getElementById('installAppBtn').onclick = () => { installPWA(); closeMenu(); };
                 document.getElementById('settingsMenuItem').onclick = () => { openSettingsPanel(); closeMenu(); };
                 document.getElementById('darkModeMenuItem').onclick = () => { toggleDarkMode(); closeMenu(); };
-                
-                // 农历开关
-                const lunarToggle = document.getElementById('lunarSwitchToggle');
-                const lunarMenuItem = document.getElementById('lunarSwitchMenuItem');
-                lunarMenuItem.onclick = (e) => {
-                    e.stopPropagation();
-                    showLunar = !showLunar;
-                    updateLunarToggleUI();
-                    saveLunarSetting();
-                    renderCalendar();
-                    showToast(showLunar ? t('lunarOn') : t('lunarOff'));
-                };
                 
                 document.getElementById('languageMenuItem').onclick = () => { showLanguageSelector(); closeMenu(); };
                 document.getElementById('currencyMenuItem').onclick = () => { showCurrencySelector(); closeMenu(); };
