@@ -1912,6 +1912,7 @@
                         <div class="menu-item" id="manageExpenseCategories" role="menuitem">📝 管理支出分类</div>
                         <div class="menu-item" id="manageIncomeCategories" role="menuitem">💰 管理收入分类</div>
                         <div class="menu-item" id="managePaymentTypes" role="menuitem">💳 管理支付方式</div>
+                        <div class="menu-item" id="manageIncomePaymentTypes" role="menuitem">💲 管理收款方式</div>
                         <div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
                         <div class="menu-item" id="importMenuItem" role="menuitem">📥 导入备份（可选月份）</div>
@@ -2204,24 +2205,26 @@ const Lunar = (function() {
 
             // ==================== 常量定义 ====================
             const CONSTANTS = {
-                STORAGE_KEYS: {
-                    ENTRIES: 'book_v1_main',
-                    EXPENSE_CATS: 'book_expense_cats_v1',
-                    INCOME_CATS: 'book_income_cats_v1',
-                    PAYMENT_TYPES: 'book_payment_types_v1',
-                    SETTINGS: 'book_ui_settings_v1'
-                },
-                DEFAULT_CATS: {
-                    EXPENSE: ['早餐', '午餐', '晚餐', '打油', '购物', '娱乐', '居家', '其他'],
-                    INCOME: ['薪水', '奖金', '红包', '投资', '报销', '其他']
-                },
-                DEFAULT_PAYMENT_TYPES: ['现金', '电子钱包', '信用卡', '借记卡'],
-                DELETE_CONFIRM_WORD: 'DELETE',
-                MAX_ENTRIES: 5000,
-                SWIPE_THRESHOLD: 50,
-                MAX_AMOUNT: 1000000,
-                MAX_NOTE_LENGTH: 100
-            };
+    STORAGE_KEYS: {
+        ENTRIES: 'book_v1_main',
+        EXPENSE_CATS: 'book_expense_cats_v1',
+        INCOME_CATS: 'book_income_cats_v1',
+        PAYMENT_TYPES: 'book_payment_types_v1',
+        INCOME_PAYMENT_TYPES: 'book_income_payment_types_v1',
+        SETTINGS: 'book_ui_settings_v1'
+    },
+    DEFAULT_CATS: {
+        EXPENSE: ['早餐', '午餐', '晚餐', '打油', '购物', '娱乐', '居家', '其他'],
+        INCOME: ['薪水', '奖金', '红包', '投资', '报销', '其他']
+    },
+    DEFAULT_PAYMENT_TYPES: ['现金', '电子钱包', '信用卡', '借记卡'],
+    DEFAULT_INCOME_PAYMENT_TYPES: ['现金', '电子钱包', '银行转账', '其他'],
+    DELETE_CONFIRM_WORD: 'DELETE',
+    MAX_ENTRIES: 5000,
+    SWIPE_THRESHOLD: 50,
+    MAX_AMOUNT: 1000000,
+    MAX_NOTE_LENGTH: 100
+};
 
             // ==================== 多语言配置 ====================
             const LANGUAGES = {
@@ -3033,10 +3036,11 @@ const Lunar = (function() {
 
             // ==================== 全局变量 ====================
             let entries = [];
-            let expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
-            let incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
-            let paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
-            let monthStatsCache = {};
+let expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
+let incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
+let paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
+let incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
+let monthStatsCache = {};
             let dateMap = {};
             let monthMap = {};
             let currentYear = new Date().getFullYear();
@@ -3471,6 +3475,17 @@ const Lunar = (function() {
                     return false;
                 }
             }
+            
+            async function saveIncomePaymentTypes() {
+    try {
+        await dbManager.put('categories', { key: 'incomePaymentTypes', value: incomePaymentTypes });
+        return true;
+    } catch (error) {
+        console.error('保存收款方式失败:', error);
+        showToast(t('saveFailed'));
+        return false;
+    }
+}
 
             async function enforceMaxEntries() {
                 try {
@@ -3496,53 +3511,60 @@ const Lunar = (function() {
             }
 
             async function load() {
-                try {
-                    const loadedEntries = await dbManager.getAll('entries');
-                    if (loadedEntries && loadedEntries.length > 0) {
-                        entries = loadedEntries.filter(validateEntry);
-                    }
+    try {
+        const loadedEntries = await dbManager.getAll('entries');
+        if (loadedEntries && loadedEntries.length > 0) {
+            entries = loadedEntries.filter(validateEntry);
+        }
 
-                    const settingsData = await dbManager.get('settings', 'uiSettings');
-                    if (settingsData) {
-                        uiSettings = { ...uiSettings, ...settingsData.value };
-                    }
+        const settingsData = await dbManager.get('settings', 'uiSettings');
+        if (settingsData) {
+            uiSettings = { ...uiSettings, ...settingsData.value };
+        }
 
-                    const expenseCatsData = await dbManager.get('categories', 'expenseCats');
-                    if (expenseCatsData) {
-                        expenseCats = expenseCatsData.value;
-                    }
+        const expenseCatsData = await dbManager.get('categories', 'expenseCats');
+        if (expenseCatsData) {
+            expenseCats = expenseCatsData.value;
+        }
 
-                    const incomeCatsData = await dbManager.get('categories', 'incomeCats');
-                    if (incomeCatsData) {
-                        incomeCats = incomeCatsData.value;
-                    }
+        const incomeCatsData = await dbManager.get('categories', 'incomeCats');
+        if (incomeCatsData) {
+            incomeCats = incomeCatsData.value;
+        }
 
-                    const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
-                    if (paymentTypesData) {
-                        paymentTypes = paymentTypesData.value;
-                    }
+        const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
+        if (paymentTypesData) {
+            paymentTypes = paymentTypesData.value;
+        }
 
-                    const currencyData = await dbManager.get('settings', 'displayCurrency');
-                    if (currencyData) {
-                        displayCurrency = currencyData.value;
-                    } else {
-                        displayCurrency = 'MYR';
-                    }
+        const incomePaymentTypesData = await dbManager.get('categories', 'incomePaymentTypes');
+        if (incomePaymentTypesData) {
+            incomePaymentTypes = incomePaymentTypesData.value;
+        } else {
+            incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
+        }
 
-                    const langData = await dbManager.get('settings', 'displayLanguage');
-                    if (langData) {
-                        currentLanguage = langData.value;
-                    } else {
-                        currentLanguage = 'zh-CN';
-                    }
+        const currencyData = await dbManager.get('settings', 'displayCurrency');
+        if (currencyData) {
+            displayCurrency = currencyData.value;
+        } else {
+            displayCurrency = 'MYR';
+        }
 
-                    document.getElementById('currencySymbol').textContent = getCurrencySymbol();
-                } catch (e) {
-                    console.warn('加载失败', e);
-                }
-                loadSettings();
-                updateUILanguage();
-            }
+        const langData = await dbManager.get('settings', 'displayLanguage');
+        if (langData) {
+            currentLanguage = langData.value;
+        } else {
+            currentLanguage = 'zh-CN';
+        }
+
+        document.getElementById('currencySymbol').textContent = getCurrencySymbol();
+    } catch (e) {
+        console.warn('加载失败', e);
+    }
+    loadSettings();
+    updateUILanguage();
+}
 
             function getCurrentCats() {
                 return currentType === 'expense' ? expenseCats : incomeCats;
@@ -4032,20 +4054,30 @@ let label = weekdays[dateObj.getDay()];
             }
 
             function choosePayType(callback) {
-                const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${paymentTypes.map(type => {
-                    const icon = type === t('cash') ? '💵' : type === t('ewallet') ? '🪙' : type === t('creditCard') ? '💳' : type === t('debitCard') ? '🏧' : '💳';
-                    return `<div class="pay-card" data-type="${type}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
-                }).join('')}</div>`;
-                const modal = modalManager.create(t('selectPayment'), html);
-                if (!modal) return;
-                modal.querySelectorAll('.pay-card').forEach(btn => {
-                    btn.onclick = () => {
-                        const type = btn.dataset.type;
-                        modalManager.close(modal);
-                        callback(type);
-                    };
-                });
-            }
+    const types = currentType === 'expense' ? paymentTypes : incomePaymentTypes;
+    const title = currentType === 'expense' ? t('selectPayment') : '💲 选择收款方式';
+    
+    const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${types.map(type => {
+        let icon = '💳';
+        if (type === '现金' || type === 'Cash') icon = '💵';
+        else if (type === '电子钱包' || type === 'E-Wallet') icon = '🪙';
+        else if (type === '信用卡' || type === 'Credit Card') icon = '💳';
+        else if (type === '借记卡' || type === 'Debit Card') icon = '🏧';
+        else if (type === '银行转账' || type === 'Bank Transfer') icon = '🏦';
+        else if (type === '其他' || type === 'Other') icon = '📌';
+        return `<div class="pay-card" data-type="${type}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
+    }).join('')}</div>`;
+    
+    const modal = modalManager.create(title, html);
+    if (!modal) return;
+    modal.querySelectorAll('.pay-card').forEach(btn => {
+        btn.onclick = () => {
+            const type = btn.dataset.type;
+            modalManager.close(modal);
+            callback(type);
+        };
+    });
+}
 
             function showNoteModal(amount, category, payType, paxInfo = null) {
                 const displayCategory = paxInfo ? `${category} (${paxInfo}${t('servings')})` : category;
@@ -4167,30 +4199,30 @@ let label = weekdays[dateObj.getDay()];
             }
 
             async function addRecord() {
-                if (isAdding) {
-                    showToast(t('waitProcessing'));
-                    return false;
-                }
-                const amount = getValidAmount();
-                if (amount === null) return false;
-                const category = getCategory();
-                const mealCategories = [t('breakfast'), t('lunch'), t('dinner'), '早餐', '午餐', '晚餐'];
-                isAdding = true;
-                if (currentType === 'expense' && mealCategories.includes(category)) {
-                    showPaxSelectionModal(amount, category);
-                    return true;
-                }
-                document.getElementById('amountInput').blur();
-                document.getElementById('categoryInput').blur();
-                if (currentType === 'income') {
-                    showNoteModal(amount, category, null, null);
-                    return true;
-                }
-                choosePayType((payType) => { showNoteModal(amount, category, payType, null); });
-                return true;
-            }
-
-            // 找到 editEntry 函数（约在第 2215 行附近），将其替换为以下增强版本：
+    if (isAdding) {
+        showToast(t('waitProcessing'));
+        return false;
+    }
+    const amount = getValidAmount();
+    if (amount === null) return false;
+    const category = getCategory();
+    const mealCategories = [t('breakfast'), t('lunch'), t('dinner'), '早餐', '午餐', '晚餐'];
+    isAdding = true;
+    if (currentType === 'expense' && mealCategories.includes(category)) {
+        showPaxSelectionModal(amount, category);
+        return true;
+    }
+    document.getElementById('amountInput').blur();
+    document.getElementById('categoryInput').blur();
+    if (currentType === 'income') {
+        choosePayType((payType) => { 
+            showNoteModal(amount, category, payType, null); 
+        });
+        return true;
+    }
+    choosePayType((payType) => { showNoteModal(amount, category, payType, null); });
+    return true;
+}
 
 async function editEntry(id) {
     const entry = entries.find(e => String(e.id) === String(id));
@@ -4198,9 +4230,13 @@ async function editEntry(id) {
     const oldEntry = { ...entry };
     const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
     
-    // 构建支付方式选项 HTML
-    const payTypeOptions = paymentTypes.map(type => 
-        `<option value="${escapeHtml(type)}" ${(entry.payType || paymentTypes[0]) === type ? 'selected' : ''}>${escapeHtml(type)}</option>`
+    // 根据类型选择对应的选项列表
+    const typeOptions = entry.type === 'expense' ? paymentTypes : incomePaymentTypes;
+    const selectLabel = entry.type === 'expense' ? t('selectPayment') : ' 选择收款方式';
+    
+    // 构建支付/收款方式选项 HTML
+    const payTypeOptions = typeOptions.map(type => 
+        `<option value="${escapeHtml(type)}" ${(entry.payType || typeOptions[0]) === type ? 'selected' : ''}>${escapeHtml(type)}</option>`
     ).join('');
     
     const modal = modalManager.create(t('editRecord'),
@@ -4213,7 +4249,7 @@ async function editEntry(id) {
             <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;outline:none;" aria-label="${t('category')}">
         </div>
         <div style="margin-bottom:8px;">
-            <label style="display:block;margin-bottom:4px;font-size:0.8rem;color:#64748b;">💳 ${t('selectPayment')}</label>
+            <label style="display:block;margin-bottom:4px;font-size:0.8rem;color:#64748b;">${entry.type === 'expense' ? '💳' : '💲'} ${selectLabel}</label>
             <select id="editPayType" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;outline:none;background:var(--card-bg);color:inherit;font-size:15px;">
                 ${payTypeOptions}
             </select>
@@ -5079,6 +5115,171 @@ const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" 
                 };
                 modal.querySelector('#closePayModal').onclick = () => modalManager.close(modal);
             }
+            
+            function openIncomePaymentTypeManager() {
+    const title = '💲 管理收款方式';
+    let dragStartIndex = null;
+    
+    const renderPaymentList = (container) => {
+        const currentTypes = [...incomePaymentTypes];
+        if (currentTypes.length === 0) {
+            container.innerHTML = `<div style="text-align:center;padding:16px;">暂无收款方式，请添加</div>`;
+            return;
+        }
+        container.innerHTML = currentTypes.map((type, idx) => `
+            <div class="category-list-item" data-index="${idx}" data-type="${escapeHtml(type)}" draggable="true">
+                <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(type)}</span></div>
+                <div style="display:flex;gap:6px;">
+                    <button class="edit-cat-btn" data-type="${escapeHtml(type)}">编辑</button>
+                    <button class="delete-cat-btn" data-type="${escapeHtml(type)}">删除</button>
+                </div>
+            </div>
+        `).join('');
+        
+        const items = container.querySelectorAll('.category-list-item');
+        items.forEach(item => {
+            item.addEventListener('dragstart', (e) => {
+                dragStartIndex = parseInt(item.getAttribute('data-index'));
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                items.forEach(i => i.classList.remove('drag-over'));
+            });
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                const targetIndex = parseInt(item.getAttribute('data-index'));
+                if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
+                    items.forEach(i => i.classList.remove('drag-over'));
+                    item.classList.add('drag-over');
+                }
+            });
+            item.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                const targetIndex = parseInt(item.getAttribute('data-index'));
+                if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
+                    const [movedItem] = incomePaymentTypes.splice(dragStartIndex, 1);
+                    incomePaymentTypes.splice(targetIndex, 0, movedItem);
+                    await saveIncomePaymentTypes();
+                    renderPaymentList(container);
+                    bindPaymentButtons(container);
+                }
+                items.forEach(i => i.classList.remove('drag-over'));
+                dragStartIndex = null;
+            });
+        });
+    };
+    
+    const bindPaymentButtons = (container) => {
+        container.querySelectorAll('.delete-cat-btn').forEach(btn => {
+            btn.onclick = () => {
+                const typeName = btn.getAttribute('data-type');
+                const usedCount = entries.filter(e => e.type === 'income' && (e.payType || incomePaymentTypes[0]) === typeName).length;
+                const warningMsg = usedCount > 0 ? `<div style="font-size:12px;color:#ef4444;margin-top:8px;">⚠️ ${usedCount} 条记录使用此收款方式</div>` : '';
+                
+                const modalConfirm = modalManager.create('删除收款方式', 
+                    `<div style="text-align:center;"><div style="font-size:16px;margin-bottom:6px;">确定删除「${escapeHtml(typeName)}」吗？</div>${warningMsg}</div>`,
+                    `<div style="display:flex;gap:10px;"><button id="cancelDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#f1f5f9;">取消</button><button id="confirmDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#ef4444;color:white;">删除</button></div>`);
+                
+                if (modalConfirm) {
+                    modalConfirm.querySelector('#cancelDelete').onclick = () => modalManager.close(modalConfirm);
+                    modalConfirm.querySelector('#confirmDelete').onclick = async () => {
+                        incomePaymentTypes = incomePaymentTypes.filter(t => t !== typeName);
+                        if (incomePaymentTypes.length === 0) incomePaymentTypes = ['现金'];
+                        const defaultType = incomePaymentTypes[0];
+                        
+                        const updatedEntries = [];
+                        entries.forEach(e => {
+                            if (e.type === 'income' && e.payType === typeName) {
+                                e.payType = defaultType;
+                                updatedEntries.push(e);
+                            }
+                        });
+                        
+                        if (updatedEntries.length) await dbManager.putAll('entries', updatedEntries);
+                        await saveIncomePaymentTypes();
+                        rebuildStatsCache();
+                        renderCalendar();
+                        renderEntries();
+                        renderPaymentList(container);
+                        bindPaymentButtons(container);
+                        modalManager.close(modalConfirm);
+                        showToast(`已删除，${updatedEntries.length}条记录已改为「${defaultType}」`);
+                    };
+                }
+            };
+        });
+        
+        container.querySelectorAll('.edit-cat-btn').forEach(btn => {
+            btn.onclick = () => {
+                const oldName = btn.getAttribute('data-type');
+                const modal = modalManager.create('编辑', 
+                    `<input type="text" id="editPayInput" value="${escapeHtml(oldName)}" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;" autofocus>`, 
+                    `<button id="confirmEditPay" style="width:100%;background:var(--income-color);color:white;border:none;padding:12px;border-radius:28px;">保存</button>`);
+                
+                if (modal) {
+                    const inputEl = modal.querySelector('#editPayInput');
+                    setTimeout(() => inputEl.focus(), 100);
+                    modal.querySelector('#confirmEditPay').onclick = async () => {
+                        const newName = inputEl.value.trim();
+                        if (!newName) { showToast('收款方式不能为空'); return; }
+                        if (incomePaymentTypes.includes(newName)) { showToast('收款方式已存在'); return; }
+                        
+                        const index = incomePaymentTypes.indexOf(oldName);
+                        if (index !== -1) incomePaymentTypes[index] = newName;
+                        
+                        const updatedEntries = [];
+                        entries.forEach(e => {
+                            if (e.type === 'income' && e.payType === oldName) {
+                                e.payType = newName;
+                                updatedEntries.push(e);
+                            }
+                        });
+                        
+                        if (updatedEntries.length) await dbManager.putAll('entries', updatedEntries);
+                        await saveIncomePaymentTypes();
+                        rebuildStatsCache();
+                        renderCalendar();
+                        renderEntries();
+                        renderPaymentList(container);
+                        bindPaymentButtons(container);
+                        modalManager.close(modal);
+                        showToast(`已修改收款方式，${updatedEntries.length}条记录已更新`);
+                    };
+                }
+            };
+        });
+    };
+    
+    const html = `<div id="paymentList" style="max-height:280px;overflow-y:auto;"></div>
+        <div class="add-cat-input"><input type="text" id="newPaymentName" placeholder="新收款方式名称"><button id="addPaymentBtn">➕ 添加</button></div>
+        <div style="font-size:0.7rem;color:#94a3b8;margin-top:12px;text-align:center;">💡 提示：按住左侧 ☰ 可拖拽排序</div>`;
+    
+    const modal = modalManager.create(title, html, `<button id="closePayModal" class="close-btn">关闭</button>`);
+    if (!modal) return;
+    
+    const listContainer = modal.querySelector('#paymentList');
+    renderPaymentList(listContainer);
+    bindPaymentButtons(listContainer);
+    
+    modal.querySelector('#addPaymentBtn').onclick = async () => {
+        const newType = modal.querySelector('#newPaymentName').value.trim();
+        if (!newType) { showToast('收款方式不能为空'); return; }
+        if (incomePaymentTypes.includes(newType)) { showToast('收款方式已存在'); return; }
+        
+        incomePaymentTypes.push(newType);
+        if (await saveIncomePaymentTypes()) {
+            modal.querySelector('#newPaymentName').value = '';
+            renderPaymentList(listContainer);
+            bindPaymentButtons(listContainer);
+            showToast(`✅ 已添加「${newType}」`);
+        } else showToast('❌ 添加失败');
+    };
+    
+    modal.querySelector('#closePayModal').onclick = () => modalManager.close(modal);
+}
 
             // ==================== 清空数据 ====================
             async function clearAllData() {
@@ -5578,9 +5779,10 @@ const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" 
                 document.getElementById('currencyMenuItem').onclick = () => { showCurrencySelector(); closeMenu(); };
                 document.getElementById('statisticsMenuItem').onclick = () => { showStatistics(); closeMenu(); };
                 document.getElementById('searchMenuItem').onclick = () => { showSearch(); closeMenu(); };
-                document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); closeMenu(); };
+                                document.getElementById('manageExpenseCategories').onclick = () => { openCategoryManager('expense'); closeMenu(); };
                 document.getElementById('manageIncomeCategories').onclick = () => { openCategoryManager('income'); closeMenu(); };
                 document.getElementById('managePaymentTypes').onclick = () => { openPaymentTypeManager(); closeMenu(); };
+                document.getElementById('manageIncomePaymentTypes').onclick = () => { openIncomePaymentTypeManager(); closeMenu(); };
                 document.getElementById('exportMenuItem').onclick = () => { showExportDialog(); closeMenu(); };
                 document.getElementById('importMenuItem').onclick = () => { showImportDialog(); closeMenu(); };
                 document.getElementById('clearDataMenuItem').onclick = () => { clearAllData(); closeMenu(); };
