@@ -2269,6 +2269,7 @@ const Lunar = (function() {
                     manageExpenseCats: '📝 管理支出分类',
                     manageIncomeCats: '💰 管理收入分类',
                     managePaymentTypes: '💳 管理支付方式',
+                    manageIncomePaymentTypes: '💲 管理收款方式',
                     exportNote: '📄 导出笔记（以文字分享）',
                     exportBackup: '📤 导出备份（可选月份）',
                     importBackup: '📥 导入备份（可选月份）',
@@ -2474,8 +2475,7 @@ const Lunar = (function() {
                     wrongCode: '确认码错误，操作已取消',
                     currencyTitle: '💱 切换货币',
                     currentCurrency: '当前显示货币',
-                    selectCurrency: '选择货币（汇率以 MYR 为基准）',
-                    rateNote: '汇率仅供参考，实际以市场汇率为准。数据以马来西亚林吉特 (MYR) 为基准存储，切换货币仅改变显示方式。',
+                    selectCurrency: '选择货币',
                     installedTitle: '✅ 已安装',
                     usingInstalled: '您正在使用已安装的应用',
                     runningStandalone: '当前已在独立应用模式下运行',
@@ -2543,6 +2543,7 @@ const Lunar = (function() {
                     manageExpenseCats: '📝 Manage Expense Categories',
                     manageIncomeCats: '💰 Manage Income Categories',
                     managePaymentTypes: '💳 Manage Payment Methods',
+                    manageIncomePaymentTypes: '💲 Manage Income Payment Methods',
                     exportNote: '📄 Export Note',
                     exportBackup: '📤 Export Backup',
                     importBackup: '📥 Import Backup',
@@ -2765,7 +2766,7 @@ const Lunar = (function() {
                     suggestBrowser: 'Use Chrome, Edge, or Safari',
                     amount: 'Amount',
                     category: 'Category',
-                    MYR: 'Malaysian Ringgit',
+                    MYR: 'Malaysia Ringgit',
                     CNY: 'Chinese Yuan',
                     USD: 'US Dollar',
                     SGD: 'Singapore Dollar',
@@ -2834,46 +2835,38 @@ const Lunar = (function() {
 
             // ==================== 多货币配置 ====================
             const CURRENCIES = {
-                MYR: { symbol: 'RM', rate: 1, decimalPlaces: 2 },
-                CNY: { symbol: '¥', rate: 1.55, decimalPlaces: 2 },
-                USD: { symbol: '$', rate: 0.22, decimalPlaces: 2 },
-                SGD: { symbol: 'S$', rate: 0.29, decimalPlaces: 2 },
-                TWD: { symbol: 'NT$', rate: 6.95, decimalPlaces: 0 },
-                JPY: { symbol: '¥', rate: 32.5, decimalPlaces: 0 },
-                KRW: { symbol: '₩', rate: 290, decimalPlaces: 0 },
-                EUR: { symbol: '€', rate: 0.20, decimalPlaces: 2 },
-                GBP: { symbol: '£', rate: 0.17, decimalPlaces: 2 },
-                AUD: { symbol: 'A$', rate: 0.33, decimalPlaces: 2 },
-                THB: { symbol: '฿', rate: 7.8, decimalPlaces: 2 },
-                IDR: { symbol: 'Rp', rate: 3400, decimalPlaces: 0 },
-                INR: { symbol: '₹', rate: 18.2, decimalPlaces: 2 },
-                HKD: { symbol: 'HK$', rate: 1.72, decimalPlaces: 2 },
-                VND: { symbol: '₫', rate: 5550, decimalPlaces: 0 },
-                PHP: { symbol: '₱', rate: 12.3, decimalPlaces: 2 }
-            };
+    MYR: { symbol: 'RM' },
+    CNY: { symbol: '¥' },
+    USD: { symbol: '$' },
+    SGD: { symbol: 'S$' },
+    TWD: { symbol: 'NT$' },
+    JPY: { symbol: '¥' },
+    KRW: { symbol: '₩' },
+    EUR: { symbol: '€' },
+    GBP: { symbol: '£' },
+    AUD: { symbol: 'A$' },
+    THB: { symbol: '฿' },
+    IDR: { symbol: 'Rp' },
+    INR: { symbol: '₹' },
+    HKD: { symbol: 'HK$' },
+    VND: { symbol: '₫' },
+    PHP: { symbol: '₱' }
+};
 
             let displayCurrency = 'MYR';
 
             function convertToDisplayAmount(myrAmount) {
-                if (displayCurrency === 'MYR') return myrAmount;
-                const rate = CURRENCIES[displayCurrency]?.rate || 1;
-                return myrAmount * rate;
-            }
-
+    return myrAmount;
+}
             function convertToStorageAmount(displayAmount) {
-                if (displayCurrency === 'MYR') return displayAmount;
-                const rate = CURRENCIES[displayCurrency]?.rate || 1;
-                return displayAmount / rate;
-            }
-
+    return displayAmount;
+}
             function getCurrencySymbol() {
                 return CURRENCIES[displayCurrency]?.symbol || 'RM';
             }
-
             function getDecimalPlaces() {
-                return CURRENCIES[displayCurrency]?.decimalPlaces || 2;
-            }
-
+    return 2;
+}
             function formatSimpleAmount(amount) {
                 const symbol = getCurrencySymbol();
                 const decimals = getDecimalPlaces();
@@ -3787,19 +3780,20 @@ dropdown.style.touchAction = 'pan-y';
                 if (darkModeBtn) darkModeBtn.innerHTML = uiSettings.darkMode ? t('lightMode') : t('darkMode');
 
                 const menuMappings = [
-                    ['settingsMenuItem', 'settings'],
-                    ['languageMenuItem', 'language'],
-                    ['currencyMenuItem', 'currency'],
-                    ['statisticsMenuItem', 'statistics'],
-                    ['searchMenuItem', 'search'],
-                    ['manageExpenseCategories', 'manageExpenseCats'],
-                    ['manageIncomeCategories', 'manageIncomeCats'],
-                    ['managePaymentTypes', 'managePaymentTypes'],
-                    ['exportNoteBtn', 'exportNote'],
-                    ['exportMenuItem', 'exportBackup'],
-                    ['importMenuItem', 'importBackup'],
-                    ['clearDataMenuItem', 'clearData']
-                ];
+    ['settingsMenuItem', 'settings'],
+    ['languageMenuItem', 'language'],
+    ['currencyMenuItem', 'currency'],
+    ['statisticsMenuItem', 'statistics'],
+    ['searchMenuItem', 'search'],
+    ['manageExpenseCategories', 'manageExpenseCats'],
+    ['manageIncomeCategories', 'manageIncomeCats'],
+    ['managePaymentTypes', 'managePaymentTypes'],
+['manageIncomePaymentTypes', 'manageIncomePaymentTypes'],
+    ['exportNoteBtn', 'exportNote'],
+    ['exportMenuItem', 'exportBackup'],
+    ['importMenuItem', 'importBackup'],
+    ['clearDataMenuItem', 'clearData']
+];
 
                 menuMappings.forEach(([id, key]) => {
                     const el = document.getElementById(id);
@@ -4812,20 +4806,16 @@ const cleanup = () => {
                                             <div style="font-size: 12px; color: #64748b;">${code}</div>
                                         </div>
                                     </div>
-                                    <div style="text-align: right;">
-                                        <div style="font-size: 12px; color: #64748b;">1 MYR ≈</div>
-                                        <div style="font-weight: 500; font-size: 15px;">${info.symbol}${info.rate.toFixed(info.rate < 1 ? 4 : 2)}</div>
-                                    </div>
                                     ${code === currentDisplay ? '<span style="color: var(--expense-color); font-size: 20px; margin-left: 10px;">✓</span>' : ''}
                                 </div>
                             `).join('')}
                         </div>
-                        <div style="margin-top: 18px; padding: 14px; background: rgba(194, 65, 58, 0.08); border-radius: 14px; font-size: 13px;">
-                            <div style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
-                                <span>💡</span>
-                                <span style="line-height: 1.4;">${t('rateNote')}</span>
-                            </div>
-                        </div>
+                        <div style="margin-top: 18px; padding: 14px; background: rgba(0,0,0,0.04); border-radius: 14px; font-size: 13px;">
+    <div style="display: flex; align-items: flex-start; gap: 8px;">
+        <span>💡</span>
+        <span style="line-height: 1.4; color: #64748b;">切换货币符号仅改变显示方式，不影响实际金额数值。</span>
+    </div>
+</div>
                     </div>
                 `;
                 const modal = modalManager.create(t('currencyTitle'), html, `<button id="closeCurrencyBtn" class="close-btn" style="margin-top: 8px;">${t('close')}</button>`);
@@ -4844,7 +4834,7 @@ const cleanup = () => {
                             renderCalendar();
                             renderEntries();
                             updateInputColor();
-                            showToast(`${t('switchedTo')} ${t(newCurrency) || newCurrency} (${getCurrencySymbol()})`);
+                            showToast(`${t('switchedTo')} ${getCurrencySymbol()}`);
                         }
                         modalManager.close(modal);
                     };
