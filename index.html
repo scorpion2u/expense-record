@@ -4190,55 +4190,95 @@ let label = weekdays[dateObj.getDay()];
                 return true;
             }
 
-            async function editEntry(id) {
-                const entry = entries.find(e => String(e.id) === String(id));
-                if (!entry) return;
-                const oldEntry = { ...entry };
-                const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
-                const modal = modalManager.create(t('editRecord'),
-                    `<input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;margin-bottom:10px;" aria-label="${t('amount')}">
-                     <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;" aria-label="${t('category')}">`,
-                    `<button id="saveEditBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:10px;border-radius:32px;">${t('save')}</button>`
-                );
-                if (!modal) return;
-                modal.querySelector('#saveEditBtn').onclick = async () => {
-                    const newDisplayAmount = parseFloat(document.getElementById('editAmount').value);
-                    if (!newDisplayAmount || newDisplayAmount <= 0) {
-                        showToast(t('enterValidAmount'));
-                        return;
-                    }
-                    const newAmount = convertToStorageAmount(newDisplayAmount);
-                    if (newAmount > CONSTANTS.MAX_AMOUNT) {
-                        showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
-                        return;
-                    }
-                    let newCat = document.getElementById('editCategory').value.trim();
-                    if (!newCat) newCat = entry.type === 'expense' ? t('uncategorizedExpense') : t('uncategorizedIncome');
-                    entry.amount = newAmount;
-                    entry.note = newCat;
-                    entry.timestamp = Date.now();
-                    entry.time = new Date().toTimeString().slice(0, 5);
-                    const success = await saveEntry(entry);
-                    if (!success) {
-                        modalManager.close(modal);
-                        return;
-                    }
-                    updateCache(oldEntry, entry);
-                    updateSingleDay(entry.date);
-                    if (entry.date === selectedDate) renderEntries();
-                    renderCategoryDropdown();
-                    if (entry.type !== currentType) {
-                        currentType = entry.type;
-                        document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
-                        document.querySelector(`.type-option.${entry.type}`).classList.add('active');
-                        renderCategoryDropdown();
-                        updateInputColor();
-                    }
-                    modalManager.close(modal);
-                    showToast(t('modified'));
-                };
-            }
+            // 找到 editEntry 函数（约在第 2215 行附近），将其替换为以下增强版本：
 
+async function editEntry(id) {
+    const entry = entries.find(e => String(e.id) === String(id));
+    if (!entry) return;
+    const oldEntry = { ...entry };
+    const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
+    
+    // 构建支付方式选项 HTML
+    const payTypeOptions = paymentTypes.map(type => 
+        `<option value="${escapeHtml(type)}" ${(entry.payType || paymentTypes[0]) === type ? 'selected' : ''}>${escapeHtml(type)}</option>`
+    ).join('');
+    
+    const modal = modalManager.create(t('editRecord'),
+        `<div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-size:0.8rem;color:#64748b;">${t('amount')}</label>
+            <input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;outline:none;" aria-label="${t('amount')}">
+        </div>
+        <div style="margin-bottom:12px;">
+            <label style="display:block;margin-bottom:4px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
+            <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;outline:none;" aria-label="${t('category')}">
+        </div>
+        <div style="margin-bottom:8px;">
+            <label style="display:block;margin-bottom:4px;font-size:0.8rem;color:#64748b;">💳 ${t('selectPayment')}</label>
+            <select id="editPayType" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;outline:none;background:var(--card-bg);color:inherit;font-size:15px;">
+                ${payTypeOptions}
+            </select>
+        </div>`,
+        `<button id="saveEditBtn" style="width:100%;background:var(--expense-color);color:white;border:none;padding:12px;border-radius:32px;font-size:16px;font-weight:600;">${t('save')}</button>`
+    );
+    
+    if (!modal) return;
+    
+    modal.querySelector('#saveEditBtn').onclick = async () => {
+        const newDisplayAmount = parseFloat(document.getElementById('editAmount').value);
+        if (!newDisplayAmount || newDisplayAmount <= 0) {
+            showToast(t('enterValidAmount'));
+            return;
+        }
+        const newAmount = convertToStorageAmount(newDisplayAmount);
+        if (newAmount > CONSTANTS.MAX_AMOUNT) {
+            showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
+            return;
+        }
+        let newCat = document.getElementById('editCategory').value.trim();
+        if (!newCat) newCat = entry.type === 'expense' ? t('uncategorizedExpense') : t('uncategorizedIncome');
+        
+        const newPayType = document.getElementById('editPayType').value;
+        
+        entry.amount = newAmount;
+        entry.note = newCat;
+        entry.payType = newPayType;
+        entry.timestamp = Date.now();
+        entry.time = new Date().toTimeString().slice(0, 5);
+        
+        const success = await saveEntry(entry);
+        if (!success) {
+            modalManager.close(modal);
+            return;
+        }
+        updateCache(oldEntry, entry);
+        updateSingleDay(entry.date);
+        if (entry.date === selectedDate) renderEntries();
+        renderCategoryDropdown();
+        if (entry.type !== currentType) {
+            currentType = entry.type;
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+            document.querySelector(`.type-option.${entry.type}`).classList.add('active');
+            renderCategoryDropdown();
+            updateInputColor();
+        }
+        modalManager.close(modal);
+        showToast(t('modified'));
+    };
+    
+    // 支持回车保存
+    modal.querySelector('#editAmount').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            modal.querySelector('#saveEditBtn').click();
+        }
+    });
+    modal.querySelector('#editCategory').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            modal.querySelector('#saveEditBtn').click();
+        }
+    });
+}
             async function deleteEntry(id, showToastMessage = true) {
                 const entryToDelete = entries.find(e => String(e.id) === String(id));
                 if (!entryToDelete) return false;
