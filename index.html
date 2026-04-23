@@ -5460,14 +5460,15 @@ const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" 
                         showToast(t('noDataMatch'));
                         return;
                     }
-                    const exportData = {
+                                        const exportData = {
                         source: 'main',
                         version: '1.0',
                         exportDate: new Date().toISOString(),
                         entries: filtered,
                         expenseCats,
                         incomeCats,
-                        paymentTypes
+                        paymentTypes,
+                       incomePaymentTypes
                     };
 
                     let fileName;
