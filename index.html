@@ -3050,15 +3050,15 @@ const Lunar = (function() {
             let renderCalendarTimer = null;
 
             function cleanupTimers() {
-                if (renderCalendarTimer) {
-                    clearTimeout(renderCalendarTimer);
-                    renderCalendarTimer = null;
-                }
-                if (applyTimeout) {
-                    clearTimeout(applyTimeout);
-                    applyTimeout = null;
-                }
-            }
+    if (renderCalendarTimer) {
+        clearTimeout(renderCalendarTimer);
+        renderCalendarTimer = null;
+    }
+    if (applyTimeout) {
+        clearTimeout(applyTimeout);
+        applyTimeout = null;
+    }
+}
 
             let uiSettings = {
                 cardRadius: 24,
@@ -3880,11 +3880,10 @@ const expenseSpan = document.createElement('div');
     }
 
                                 const [y, m, d] = selectedDate.split('-');
-    // 使用 ISO 字符串 + 中午12点，避免任何时区偏移问题
-    const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
-    const weekdays = t('weekdays');
-    let label = weekdays[dateObj.getDay()];
-    // 获取今天的日期（本地日期字符串 + 中午12点）
+// 使用 T12:00:00 固定中午时间，避免时区偏移导致的日期错误
+const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
+const weekdays = t('weekdays');
+let label = weekdays[dateObj.getDay()];
     const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
     if (dateObj.toDateString() === todayForCompare.toDateString()) {
         label = `${t('today')} · ${label}`;
@@ -4273,61 +4272,75 @@ const expenseSpan = document.createElement('div');
             }
 
             function showAllEntriesModal() {
-                const dayEntries = dateMap[selectedDate] || [];
-                if (!dayEntries.length) {
-                    showToast(t('noRecords'));
-                    return;
+    const dayEntries = dateMap[selectedDate] || [];
+    if (!dayEntries.length) {
+        showToast(t('noRecords'));
+        return;
+    }
+    let html = '';
+    for (const e of dayEntries) {
+        const sign = e.type === 'expense' ? '-' : '+';
+        const color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
+        const displayAmount = formatSimpleAmount(e.amount);
+        html += `<div class="search-result-item" data-id="${escapeHtml(e.id)}" style="margin-bottom:8px;border-bottom:1px solid #e2e8f0;padding:10px;cursor:pointer;">
+            <div style="flex:1;">
+                <div style="font-weight:500;">${escapeHtml(e.note)}</div>
+                <div style="font-size:0.6rem;color:#94a3b8;">${escapeHtml(e.time)} · ${escapeHtml(e.payType || t('cash'))}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-weight:600;color:${color}">${sign}${displayAmount}</span>
+                <span class="edit-modal" data-id="${escapeHtml(e.id)}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">✏️</span>
+                <span class="delete-modal" data-id="${escapeHtml(e.id)}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">🗑</span>
+            </div>
+        </div>`;
+    }
+    const modal = modalManager.create(`${t('allRecords')} (${dayEntries.length}${t('records')})`, html, `<button id="closeModalBtn" class="close-btn">${t('close')}</button>`);
+    if (!modal) return;
+    modal.querySelector('#closeModalBtn').onclick = () => modalManager.close(modal);
+    
+    // 使用事件委托处理删除
+    modal.querySelector('.modal-body').addEventListener('click', async (e) => {
+        const deleteBtn = e.target.closest('.delete-modal');
+        if (deleteBtn) {
+            e.stopPropagation();
+            const id = deleteBtn.dataset.id;
+            await deleteEntry(id);
+            modalManager.close(modal);
+            return;
+        }
+        
+        const editBtn = e.target.closest('.edit-modal');
+        if (editBtn) {
+            e.stopPropagation();
+            const id = editBtn.dataset.id;
+            modalManager.close(modal);
+            editEntry(id);
+            setTimeout(() => {
+                const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+                if (targetLi) {
+                    targetLi.classList.add('highlight-entry');
+                    targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
                 }
-                let html = '';
-                for (const e of dayEntries) {
-                    const sign = e.type === 'expense' ? '-' : '+';
-                    const color = e.type === 'expense' ? uiSettings.expenseColor : uiSettings.incomeColor;
-                    const displayAmount = formatSimpleAmount(e.amount);
-                    html += `<div class="search-result-item" style="margin-bottom:8px;border-bottom:1px solid #e2e8f0;padding:10px;" data-id="${e.id}"><div style="flex:1;"><div style="font-weight:500;">${escapeHtml(e.note)}</div><div style="font-size:0.6rem;color:#94a3b8;">${escapeHtml(e.time)} · ${escapeHtml(e.payType || t('cash'))}</div></div><div style="display:flex;align-items:center;gap:12px;"><span style="font-weight:600;color:${color}">${sign}${displayAmount}</span><span class="edit-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">✏️</span><span class="delete-modal" data-id="${e.id}" style="cursor:pointer;opacity:0.6;" role="button" tabindex="0">🗑</span></div></div>`;
+            }, 100);
+            return;
+        }
+        
+        // 点击条目本身跳转
+        const item = e.target.closest('.search-result-item');
+        if (item && !e.target.closest('.edit-modal') && !e.target.closest('.delete-modal')) {
+            const id = item.dataset.id;
+            if (id) {
+                const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+                if (targetLi) {
+                    targetLi.classList.add('highlight-entry');
+                    targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
                 }
-                const modal = modalManager.create(`${t('allRecords')} (${dayEntries.length}${t('records')})`, html, `<button id="closeModalBtn" class="close-btn">${t('close')}</button>`);
-                if (!modal) return;
-                modal.querySelector('#closeModalBtn').onclick = () => modalManager.close(modal);
-                modal.querySelectorAll('.delete-modal').forEach(btn => {
-                    btn.onclick = async (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        await deleteEntry(id);
-                        modalManager.close(modal);
-                    };
-                });
-                modal.querySelectorAll('.edit-modal').forEach(btn => {
-                    btn.onclick = (e) => {
-                        e.stopPropagation();
-                        const id = btn.dataset.id;
-                        modalManager.close(modal);
-                        editEntry(id);
-                        setTimeout(() => {
-                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
-                            if (targetLi) {
-                                targetLi.classList.add('highlight-entry');
-                                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
-                            }
-                        }, 100);
-                    };
-                });
-                modal.querySelectorAll('.search-result-item').forEach(item => {
-                    item.style.cursor = 'pointer';
-                    item.onclick = (e) => {
-                        if (e.target.closest('.edit-modal') || e.target.closest('.delete-modal')) return;
-                        const id = item.dataset.id;
-                        if (id) {
-                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
-                            if (targetLi) {
-                                targetLi.classList.add('highlight-entry');
-                                targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                setTimeout(() => targetLi.classList.remove('highlight-entry'), 2000);
-                            }
-                        }
-                    };
-                });
             }
+        }
+    });
+}
 
             // ==================== 语言切换 ====================
             function showLanguageSelector() {
@@ -5201,7 +5214,7 @@ const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" 
                         filtered = filtered.filter(e => e.date >= start && e.date <= end);
                     }
                     if (type !== 'all') filtered = filtered.filter(e => e.type === type);
-                    filtered.sort((a, b) => new Date(`${b.date} ${b.time || '00:00'}`) - new Date(`${a.date} ${a.time || '00:00'}`));
+                    filtered.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     if (!filtered.length) {
                         showToast(t('noDataMatch'));
                         return;
