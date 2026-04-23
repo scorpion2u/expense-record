@@ -283,44 +283,6 @@
             background: rgba(0, 0, 0, 0.03);
         }
 
-        /* 农历开关样式 */
-        .lunar-switch {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .lunar-switch-toggle {
-            width: 44px;
-            height: 24px;
-            background: #cbd5e1;
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .lunar-switch-toggle.active {
-            background: var(--expense-color);
-        }
-
-        .lunar-switch-toggle::after {
-            content: '';
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: transform 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .lunar-switch-toggle.active::after {
-            transform: translateX(20px);
-        }
-
         .input-row {
             display: flex;
             gap: 10px;
@@ -523,16 +485,6 @@
 
         .day-number {
             font-weight: 500;
-        }
-
-        .day-lunar {
-            font-size: calc(var(--font-size-base) * 0.45);
-            color: #9ca3af;
-            margin-top: 1px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
         }
 
         .day-expense {
@@ -981,10 +933,6 @@
                 font-size: calc(var(--font-size-base) * 0.7);
             }
 
-            .day-lunar {
-                font-size: calc(var(--font-size-base) * 0.4);
-            }
-
             .day-expense,
             .day-income {
                 font-size: calc(var(--font-size-base) * 0.45);
@@ -1096,10 +1044,6 @@
             color: #e2e8f0;
         }
 
-        body.dark-mode .day-lunar {
-            color: #64748b;
-        }
-
         body.dark-mode .modal-content {
             background: #1e293b;
             color: #f1f5f9;
@@ -1135,14 +1079,6 @@
         body.dark-mode .hsl-row input[type="range"]::-webkit-slider-thumb {
             background: #1e293b;
             border: 2px solid #64748b;
-        }
-
-        body.dark-mode .lunar-switch-toggle {
-            background: #475569;
-        }
-
-        body.dark-mode .lunar-switch-toggle.active {
-            background: var(--expense-color);
         }
 
         .selected-amount {
@@ -2181,8 +2117,85 @@ const Lunar = (function() {
         return sum + getLeapDays(year);
     }
 
-    return {
+    // 直接基于年月日计算农历，不依赖 Date 对象，避免时区问题
+    function solarToLunarFromYMD(year, month, day) {
+        // 1900年1月31日为农历1900年正月初一
+        const baseYear = 1900;
+        const baseMonth = 1;
+        const baseDay = 31;
+        
+        let offset = 0;
+        // 计算从1900年1月31日到输入日期的天数
+        for (let y = baseYear; y < year; y++) {
+            offset += 365;
+            if ((y % 4 === 0 && y % 100 !== 0) || (y % 400 === 0)) {
+                offset += 1;
+            }
+        }
+        
+        // 累加当年经过的月份天数
+        const monthDays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+        if ((year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0)) {
+            monthDays[1] = 29;
+        }
+        for (let m = 1; m < month; m++) {
+            offset += monthDays[m - 1];
+        }
+        offset += day - baseDay;
+        
+        // 确定农历年份
+        let lunarYear = baseYear;
+        let daysInLunarYear = getYearDays(lunarYear);
+        while (offset >= daysInLunarYear) {
+            offset -= daysInLunarYear;
+            lunarYear++;
+            daysInLunarYear = getYearDays(lunarYear);
+        }
+        
+        // 确定农历月份和日期
+        let lunarMonth = 1;
+        let isLeap = false;
+        const leapMonth = getLeapMonth(lunarYear);
+        
+        for (let m = 1; m <= 12; m++) {
+            let daysInMonth;
+            
+            // 处理闰月
+            if (leapMonth > 0 && m === leapMonth + 1 && !isLeap) {
+                isLeap = true;
+                m--;
+                daysInMonth = getLeapDays(lunarYear);
+            } else {
+                daysInMonth = getMonthDays(lunarYear, m);
+            }
+            
+            if (offset < daysInMonth) {
+                lunarMonth = m;
+                break;
+            }
+            
+            offset -= daysInMonth;
+            
+            if (leapMonth === m && isLeap) {
+                isLeap = false;
+            }
+        }
+        
+        const lunarDay = offset + 1;
+        
+        return {
+            year: lunarYear,
+            month: lunarMonth,
+            day: lunarDay,
+            isLeap: isLeap,
+            monthName: (isLeap ? '闰' : '') + lunarMonthNames[lunarMonth - 1],
+            dayName: lunarDayNames[lunarDay - 1]
+        };
+    }
+
+        return {
         solarToLunar: solarToLunar,
+        solarToLunarFromYMD: solarToLunarFromYMD,
         getLunarDate: function(date) {
             return solarToLunar(date);
         }
@@ -3035,7 +3048,6 @@ const Lunar = (function() {
             let isClearing = false;
             let deferredPrompt = null;
             let renderCalendarTimer = null;
-            let showLunar = true;
 
             function cleanupTimers() {
                 if (renderCalendarTimer) {
@@ -3704,9 +3716,6 @@ const Lunar = (function() {
                 const darkModeBtn = document.getElementById('darkModeMenuItem');
                 if (darkModeBtn) darkModeBtn.innerHTML = uiSettings.darkMode ? t('lightMode') : t('darkMode');
 
-                const lunarSwitchItem = document.querySelector('.lunar-switch-item .lunar-switch span');
-                if (lunarSwitchItem) lunarSwitchItem.innerHTML = t('showLunar');
-
                 const menuMappings = [
                     ['settingsMenuItem', 'settings'],
                     ['languageMenuItem', 'language'],
@@ -3793,13 +3802,9 @@ const Lunar = (function() {
             dayDiv.setAttribute('role', 'gridcell');
             dayDiv.setAttribute('tabindex', '0');
             const numDiv = document.createElement('div');
-            numDiv.className = 'day-number';
-            dayDiv.appendChild(numDiv);
-            const lunarDiv = document.createElement('div');
-            lunarDiv.className = 'day-lunar';
-            lunarDiv.style.display = 'none';  // 始终隐藏
-            dayDiv.appendChild(lunarDiv);
-            const expenseSpan = document.createElement('div');
+numDiv.className = 'day-number';
+dayDiv.appendChild(numDiv);
+const expenseSpan = document.createElement('div');
             expenseSpan.className = 'day-expense';
             expenseSpan.style.display = 'none';
             dayDiv.appendChild(expenseSpan);
@@ -3857,10 +3862,6 @@ const Lunar = (function() {
         const numDiv = dayDiv.querySelector('.day-number');
         numDiv.textContent = dayNum;
 
-        const lunarDiv = dayDiv.querySelector('.day-lunar');
-        // 农历格子显示已禁用
-        lunarDiv.style.display = 'none';
-
         const expenseSpan = dayDiv.querySelector('.day-expense');
         const incomeSpan = dayDiv.querySelector('.day-income');
         if (isCurrentMonth) {
@@ -3878,12 +3879,16 @@ const Lunar = (function() {
         }
     }
 
-        const [y, m, d] = selectedDate.split('-');
-    const dateObj = new Date(y, m - 1, d);
+                                const [y, m, d] = selectedDate.split('-');
+    // 使用 ISO 字符串 + 中午12点，避免任何时区偏移问题
+    const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
     const weekdays = t('weekdays');
     let label = weekdays[dateObj.getDay()];
-    const today = new Date();
-    if (dateObj.toDateString() === today.toDateString()) label = `${t('today')} · ${label}`;
+    // 获取今天的日期（本地日期字符串 + 中午12点）
+    const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
+    if (dateObj.toDateString() === todayForCompare.toDateString()) {
+        label = `${t('today')} · ${label}`;
+    }
     document.getElementById('selectedDateLabel').innerHTML = label;
 
     if (currentLanguage === 'zh-CN') {
@@ -3895,10 +3900,9 @@ const Lunar = (function() {
                    `<span style="font-weight:700;">${monthNum}</span><span style="font-weight:500;">月</span>` +
                    `<span style="font-weight:700;">${dayNum}</span><span style="font-weight:500;">日</span>`;
         
-        // 中文模式下，始终显示农历（因为 showLunar 始终为 true）
+        // 使用不受时区影响的农历计算方法
         try {
-            const lunarDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-            const lunar = Lunar.getLunarDate(lunarDate);
+            const lunar = Lunar.solarToLunarFromYMD(parseInt(y), parseInt(m), parseInt(d));
             html += ` · ${lunar.monthName}月${lunar.dayName}`;
         } catch (e) {
             console.warn('获取农历失败:', e);
@@ -3913,7 +3917,7 @@ const Lunar = (function() {
 
     renderTopCards();
     renderSelectedDayTotal();
-    }
+}
 
             function renderCalendar() {
                 if (renderCalendarTimer) return;
