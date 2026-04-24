@@ -2880,21 +2880,38 @@ const Lunar = (function() {
             }
 
 // 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
+// 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
+// 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
 function translateNote(note, targetLang) {
     if (!note) return note;
     const target = targetLang || currentLanguage;
+    
+    // 已经是目标语言，无需翻译
+    if (target === 'zh-CN') return note;
+    
     // 匹配 "分类名 · 备注" 格式
-    const parts = note.split(' · ');
-    if (parts.length === 2) {
-        return translateCategory(parts[0], target) + ' · ' + parts[1];
+    const dotParts = note.split(' · ');
+    if (dotParts.length === 2) {
+        const translatedCat = translateCategory(dotParts[0], target);
+        return translatedCat + ' · ' + dotParts[1];
     }
-    // 匹配 "分类名 (X人份)" 格式
-    const paxMatch = note.match(/^(.+?)\s*\((\d+)(?:人份|servings)\)$/);
-    if (paxMatch) {
-        const translatedCat = translateCategory(paxMatch[1], target);
+    
+    // 匹配中文 "分类名 (X人份)" 格式
+    const chinesePaxMatch = note.match(/^(.+?)\s*\((\d+)人份\)$/);
+    if (chinesePaxMatch) {
+        const translatedCat = translateCategory(chinesePaxMatch[1], target);
         const servingsText = target === 'zh-CN' ? '人份' : 'servings';
-        return `${translatedCat} (${paxMatch[2]}${servingsText})`;
+        return `${translatedCat} (${chinesePaxMatch[2]} ${servingsText})`;
     }
+    
+    // 匹配英文 "分类名 (X servings)" 格式
+    const englishPaxMatch = note.match(/^(.+?)\s*\((\d+)\s*servings\)$/i);
+    if (englishPaxMatch) {
+        const translatedCat = translateCategory(englishPaxMatch[1], target);
+        const servingsText = target === 'zh-CN' ? '人份' : 'servings';
+        return `${translatedCat} (${englishPaxMatch[2]} ${servingsText})`;
+    }
+    
     // 纯分类名
     return translateCategory(note, target);
 }
@@ -4413,330 +4430,350 @@ const noteInput = modal.querySelector('#noteInput');
             }
 
             async function editEntry(id) {
-                const entry = entries.find(e => String(e.id) === String(id));
-                if (!entry) return;
-                const oldEntry = { ...entry };
-                const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
+    const entry = entries.find(e => String(e.id) === String(id));
+    if (!entry) return;
+    const oldEntry = { ...entry };
+    const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
 
-                const typeOptions = entry.type === 'expense' ? paymentTypes : incomePaymentTypes;
-                const displayTypeOptions = entry.type === 'expense' ? displayPaymentTypes() : displayIncomePaymentTypes();
-                const selectLabel = entry.type === 'expense' ? t('selectPayment') : t('selectIncomePayment');
-                const currentPayType = entry.payType || typeOptions[0] || '现金';
+    const typeOptions = entry.type === 'expense' ? paymentTypes : incomePaymentTypes;
+    const displayTypeOptions = entry.type === 'expense' ? displayPaymentTypes() : displayIncomePaymentTypes();
+    const selectLabel = entry.type === 'expense' ? t('selectPayment') : t('selectIncomePayment');
+    const currentPayType = entry.payType || typeOptions[0] || '现金';
 
-                const modal = modalManager.create(t('editRecord'),
-                    `<div style="margin-bottom:16px;">
-                        <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('amount')}</label>
-                        <input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
-                    </div>
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
-                        <input type="text" id="editCategory" value="${escapeHtml(entry.note)}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('category')}">
-                    </div>
-                    <div style="margin-bottom:8px;">
-                        <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${entry.type === 'expense' ? '💳' : '💰'} ${selectLabel}</label>
-                        <div id="editPayTypeContainer"></div>
-                    </div>`,
-                    `<button id="saveEditBtn" style="width:100%;background:${entry.type === 'expense' ? 'var(--expense-color)' : 'var(--income-color)'};color:white;border:none;padding:14px;border-radius:32px;font-size:16px;font-weight:600;">${t('save')}</button>`
-                );
+    const modal = modalManager.create(t('editRecord'),
+        `<div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('amount')}</label>
+            <input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
+            <input type="text" id="editCategory" value="${escapeHtml(translateNote(entry.note, currentLanguage))}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('category')}">
+        </div>
+        <div style="margin-bottom:8px;">
+            <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${entry.type === 'expense' ? '💳' : '💰'} ${selectLabel}</label>
+            <div id="editPayTypeContainer"></div>
+        </div>`,
+        `<button id="saveEditBtn" style="width:100%;background:${entry.type === 'expense' ? 'var(--expense-color)' : 'var(--income-color)'};color:white;border:none;padding:14px;border-radius:32px;font-size:16px;font-weight:600;">${t('save')}</button>`
+    );
 
-                if (!modal) return;
+    if (!modal) return;
 
-                // 创建带显示值的选项
-                const options = typeOptions.map((storageType, idx) => ({
-                    value: storageType,
-                    label: displayTypeOptions[idx] || storageType
-                }));
-                let selectedPayType = currentPayType;
-                const container = modal.querySelector('#editPayTypeContainer');
+    // 创建带显示值的选项
+    const options = typeOptions.map((storageType, idx) => ({
+        value: storageType,
+        label: displayTypeOptions[idx] || storageType
+    }));
+    let selectedPayType = currentPayType;
+    const container = modal.querySelector('#editPayTypeContainer');
 
-                // 创建 wrapper
-                const wrapper = document.createElement('div');
-                wrapper.className = 'custom-select';
-                wrapper.style.width = '100%';
-                wrapper.style.position = 'relative';
+    // 创建 wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-select';
+    wrapper.style.width = '100%';
+    wrapper.style.position = 'relative';
 
-                const trigger = document.createElement('div');
-                trigger.className = 'custom-select-trigger';
-                trigger.style.padding = '14px 16px';
-                trigger.style.borderRadius = '16px';
-                trigger.style.border = '1px solid rgba(0,0,0,0.1)';
-                trigger.style.background = 'var(--card-bg)';
-                trigger.style.display = 'flex';
-                trigger.style.justifyContent = 'space-between';
-                trigger.style.alignItems = 'center';
-                trigger.style.cursor = 'pointer';
+    const trigger = document.createElement('div');
+    trigger.className = 'custom-select-trigger';
+    trigger.style.padding = '14px 16px';
+    trigger.style.borderRadius = '16px';
+    trigger.style.border = '1px solid rgba(0,0,0,0.1)';
+    trigger.style.background = 'var(--card-bg)';
+    trigger.style.display = 'flex';
+    trigger.style.justifyContent = 'space-between';
+    trigger.style.alignItems = 'center';
+    trigger.style.cursor = 'pointer';
 
-                const selectedText = document.createElement('span');
-                selectedText.className = 'selected-text';
-                const currentDisplayLabel = options.find(o => o.value === selectedPayType);
-                selectedText.textContent = currentDisplayLabel ? currentDisplayLabel.label : translateCategory(selectedPayType, currentLanguage);
+    const selectedText = document.createElement('span');
+    selectedText.className = 'selected-text';
+    const currentDisplayLabel = options.find(o => o.value === selectedPayType);
+    selectedText.textContent = currentDisplayLabel ? currentDisplayLabel.label : translateCategory(selectedPayType, currentLanguage);
 
-                const arrow = document.createElement('span');
-                arrow.className = 'arrow';
-                arrow.innerHTML = '▼';
-                arrow.style.fontSize = '12px';
-                arrow.style.color = '#64748b';
-                arrow.style.transition = 'transform 0.2s';
+    const arrow = document.createElement('span');
+    arrow.className = 'arrow';
+    arrow.innerHTML = '▼';
+    arrow.style.fontSize = '12px';
+    arrow.style.color = '#64748b';
+    arrow.style.transition = 'transform 0.2s';
 
-                trigger.appendChild(selectedText);
-                trigger.appendChild(arrow);
-                wrapper.appendChild(trigger);
-                container.appendChild(wrapper);
+    trigger.appendChild(selectedText);
+    trigger.appendChild(arrow);
+    wrapper.appendChild(trigger);
+    container.appendChild(wrapper);
 
-                // 创建下拉菜单
-                const dropdown = document.createElement('div');
-                dropdown.className = 'custom-select-dropdown';
-                dropdown.style.position = 'absolute';
-                dropdown.style.zIndex = '10000';
-                dropdown.style.maxHeight = '280px';
-                dropdown.style.height = 'auto';
-                dropdown.style.overflowY = 'auto';
-                dropdown.style.overflowX = 'hidden';
-                dropdown.style.webkitOverflowScrolling = 'touch';
-                dropdown.style.transform = 'translateZ(0)';
-                dropdown.style.touchAction = 'pan-y';
-                dropdown.style.background = 'var(--card-bg)';
-                dropdown.style.borderRadius = '16px';
-                dropdown.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
-                dropdown.style.border = '1px solid var(--border-light)';
-                dropdown.style.display = 'none';
+    // 创建下拉菜单
+    const dropdown = document.createElement('div');
+    dropdown.className = 'custom-select-dropdown';
+    dropdown.style.position = 'absolute';
+    dropdown.style.zIndex = '10000';
+    dropdown.style.maxHeight = '280px';
+    dropdown.style.height = 'auto';
+    dropdown.style.overflowY = 'auto';
+    dropdown.style.overflowX = 'hidden';
+    dropdown.style.webkitOverflowScrolling = 'touch';
+    dropdown.style.transform = 'translateZ(0)';
+    dropdown.style.touchAction = 'pan-y';
+    dropdown.style.background = 'var(--card-bg)';
+    dropdown.style.borderRadius = '16px';
+    dropdown.style.boxShadow = '0 8px 24px rgba(0,0,0,0.2)';
+    dropdown.style.border = '1px solid var(--border-light)';
+    dropdown.style.display = 'none';
 
-                // 填充选项
-                options.forEach(opt => {
-                    const optionDiv = document.createElement('div');
-                    optionDiv.className = 'custom-select-option' + (opt.value === selectedPayType ? ' selected' : '');
-                    optionDiv.textContent = opt.label;
-                    optionDiv.dataset.value = opt.value;
-                    optionDiv.style.padding = '14px 16px';
-                    optionDiv.style.cursor = 'pointer';
-                    optionDiv.style.borderBottom = '1px solid var(--border-light)';
+    // 填充选项
+    options.forEach(opt => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = 'custom-select-option' + (opt.value === selectedPayType ? ' selected' : '');
+        optionDiv.textContent = opt.label;
+        optionDiv.dataset.value = opt.value;
+        optionDiv.style.padding = '14px 16px';
+        optionDiv.style.cursor = 'pointer';
+        optionDiv.style.borderBottom = '1px solid var(--border-light)';
 
-                    if (opt.value === selectedPayType) {
-                        optionDiv.style.background = 'rgba(194, 65, 58, 0.1)';
-                        optionDiv.style.color = 'var(--expense-color)';
-                        optionDiv.style.fontWeight = '500';
+        if (opt.value === selectedPayType) {
+            optionDiv.style.background = 'rgba(194, 65, 58, 0.1)';
+            optionDiv.style.color = 'var(--expense-color)';
+            optionDiv.style.fontWeight = '500';
+        }
+
+        optionDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+
+            dropdown.querySelectorAll('.custom-select-option').forEach(o => {
+                o.classList.remove('selected');
+                o.style.background = '';
+                o.style.color = '';
+                o.style.fontWeight = '';
+            });
+            optionDiv.classList.add('selected');
+            optionDiv.style.background = 'rgba(194, 65, 58, 0.1)';
+            optionDiv.style.color = 'var(--expense-color)';
+            optionDiv.style.fontWeight = '500';
+
+            selectedText.textContent = opt.label;
+            selectedPayType = opt.value;
+
+            closeDropdown();
+        });
+
+        dropdown.appendChild(optionDiv);
+    });
+
+    // 遮罩层
+    const overlay = document.createElement('div');
+    overlay.className = 'select-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.right = '0';
+    overlay.style.bottom = '0';
+    overlay.style.zIndex = '9999';
+    overlay.style.background = 'transparent';
+    overlay.style.display = 'none';
+
+    let isOpening = false;
+
+    const openDropdown = () => {
+        document.querySelectorAll('.custom-select-dropdown').forEach(d => {
+            if (d !== dropdown) { d.style.display = 'none'; }
+        });
+        document.querySelectorAll('.select-overlay').forEach(o => {
+            if (o !== overlay) { o.style.display = 'none'; }
+        });
+
+        const modalContent = modal.querySelector('.modal-content');
+        if (!modalContent.contains(dropdown)) {
+            modalContent.appendChild(dropdown);
+        }
+        if (!modalContent.contains(overlay)) {
+            modalContent.appendChild(overlay);
+        }
+
+        modalContent.style.position = 'relative';
+
+        const modalRect = modalContent.getBoundingClientRect();
+        const triggerRect = trigger.getBoundingClientRect();
+
+        dropdown.style.top = (triggerRect.bottom - modalRect.top + 5) + 'px';
+        dropdown.style.left = (triggerRect.left - modalRect.left) + 'px';
+        dropdown.style.width = triggerRect.width + 'px';
+
+        dropdown.style.display = 'block';
+        arrow.style.transform = 'rotate(180deg)';
+        overlay.style.display = 'block';
+
+        isOpening = true;
+        setTimeout(() => { isOpening = false; }, 100);
+
+        const selected = dropdown.querySelector('.custom-select-option.selected');
+        if (selected) {
+            setTimeout(() => selected.scrollIntoView({ block: 'center' }), 50);
+        }
+    };
+
+    const closeDropdown = () => {
+        dropdown.style.display = 'none';
+        arrow.style.transform = 'rotate(0deg)';
+        overlay.style.display = 'none';
+    };
+
+    const globalClickHandler = (e) => {
+        if (isOpening) return;
+        if (trigger.contains(e.target) || dropdown.contains(e.target)) {
+            return;
+        }
+        if (dropdown.style.display === 'block') {
+            closeDropdown();
+        }
+    };
+
+    setTimeout(() => {
+        document.addEventListener('click', globalClickHandler);
+    }, 0);
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (dropdown.style.display === 'block') {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    overlay.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        closeDropdown();
+    });
+
+    dropdown.addEventListener('touchstart', (e) => {
+        e.stopPropagation();
+    });
+
+    dropdown.addEventListener('touchmove', (e) => {
+        e.stopPropagation();
+    });
+
+    window.addEventListener('resize', resizeHandler);
+    window.addEventListener('orientationchange', orientationHandler);
+
+    const cleanup = () => {
+        closeDropdown();
+        document.removeEventListener('click', globalClickHandler);
+        window.removeEventListener('resize', resizeHandler);
+        window.removeEventListener('orientationchange', orientationHandler);
+        if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+
+    const modalCloseBtn = modal.querySelector('.modal-close');
+    if (modalCloseBtn) {
+        const originalClose = modalCloseBtn.onclick;
+        modalCloseBtn.onclick = () => {
+            cleanup();
+            if (originalClose) originalClose();
+        };
+    }
+
+    modal.querySelector('#saveEditBtn').onclick = async () => {
+        const newDisplayAmount = parseFloat(modal.querySelector('#editAmount').value);
+        if (!newDisplayAmount || newDisplayAmount <= 0) {
+            showToast(t('enterValidAmount'));
+            return;
+        }
+        const newAmount = convertToStorageAmount(newDisplayAmount);
+        if (newAmount > CONSTANTS.MAX_AMOUNT) {
+            showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
+            return;
+        }
+        let newCat = modal.querySelector('#editCategory').value.trim();
+        if (!newCat) newCat = entry.type === 'expense' ? '未分类支出' : '未分类收入';
+        
+        // 如果当前是英文模式，尝试将显示值反向映射为中文存储值
+        if (currentLanguage !== 'zh-CN') {
+            const translations = CATEGORY_TRANSLATIONS[currentLanguage];
+            if (translations) {
+                // 处理 "分类名 · 备注" 格式
+                const dotParts = newCat.split(' · ');
+                if (dotParts.length === 2) {
+                    let cnCat = null;
+                    for (const [cn, trans] of Object.entries(translations)) {
+                        if (trans === dotParts[0]) {
+                            cnCat = cn;
+                            break;
+                        }
                     }
-
-                    optionDiv.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        e.preventDefault();
-
-                        dropdown.querySelectorAll('.custom-select-option').forEach(o => {
-                            o.classList.remove('selected');
-                            o.style.background = '';
-                            o.style.color = '';
-                            o.style.fontWeight = '';
-                        });
-                        optionDiv.classList.add('selected');
-                        optionDiv.style.background = 'rgba(194, 65, 58, 0.1)';
-                        optionDiv.style.color = 'var(--expense-color)';
-                        optionDiv.style.fontWeight = '500';
-
-                        selectedText.textContent = opt.label;
-                        selectedPayType = opt.value;
-
-                        closeDropdown();
-                    });
-
-                    dropdown.appendChild(optionDiv);
-                });
-
-                // 遮罩层
-                const overlay = document.createElement('div');
-                overlay.className = 'select-overlay';
-                overlay.style.position = 'absolute';
-                overlay.style.top = '0';
-                overlay.style.left = '0';
-                overlay.style.right = '0';
-                overlay.style.bottom = '0';
-                overlay.style.zIndex = '9999';
-                overlay.style.background = 'transparent';
-                overlay.style.display = 'none';
-
-                let isOpening = false;
-
-                const openDropdown = () => {
-                    document.querySelectorAll('.custom-select-dropdown').forEach(d => {
-                        if (d !== dropdown) { d.style.display = 'none'; }
-                    });
-                    document.querySelectorAll('.select-overlay').forEach(o => {
-                        if (o !== overlay) { o.style.display = 'none'; }
-                    });
-
-                    const modalContent = modal.querySelector('.modal-content');
-                    if (!modalContent.contains(dropdown)) {
-                        modalContent.appendChild(dropdown);
-                    }
-                    if (!modalContent.contains(overlay)) {
-                        modalContent.appendChild(overlay);
-                    }
-
-                    modalContent.style.position = 'relative';
-
-                    const modalRect = modalContent.getBoundingClientRect();
-                    const triggerRect = trigger.getBoundingClientRect();
-
-                    dropdown.style.top = (triggerRect.bottom - modalRect.top + 5) + 'px';
-                    dropdown.style.left = (triggerRect.left - modalRect.left) + 'px';
-                    dropdown.style.width = triggerRect.width + 'px';
-
-                    dropdown.style.display = 'block';
-                    arrow.style.transform = 'rotate(180deg)';
-                    overlay.style.display = 'block';
-
-                    isOpening = true;
-                    setTimeout(() => { isOpening = false; }, 100);
-
-                    const selected = dropdown.querySelector('.custom-select-option.selected');
-                    if (selected) {
-                        setTimeout(() => selected.scrollIntoView({ block: 'center' }), 50);
-                    }
-                };
-
-                const closeDropdown = () => {
-                    dropdown.style.display = 'none';
-                    arrow.style.transform = 'rotate(0deg)';
-                    overlay.style.display = 'none';
-                };
-
-                const globalClickHandler = (e) => {
-                    if (isOpening) return;
-                    if (trigger.contains(e.target) || dropdown.contains(e.target)) {
-                        return;
-                    }
-                    if (dropdown.style.display === 'block') {
-                        closeDropdown();
-                    }
-                };
-
-                setTimeout(() => {
-                    document.addEventListener('click', globalClickHandler);
-                }, 0);
-
-                trigger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-
-                    if (dropdown.style.display === 'block') {
-                        closeDropdown();
-                    } else {
-                        openDropdown();
-                    }
-                });
-
-                overlay.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    closeDropdown();
-                });
-
-                dropdown.addEventListener('touchstart', (e) => {
-                    e.stopPropagation();
-                });
-
-                dropdown.addEventListener('touchmove', (e) => {
-                    e.stopPropagation();
-                });
-
-                const resizeHandler = () => {
-                    if (dropdown.style.display === 'block') {
-                        const modalContent = modal.querySelector('.modal-content');
-                        const modalRect = modalContent.getBoundingClientRect();
-                        const triggerRect = trigger.getBoundingClientRect();
-                        dropdown.style.top = (triggerRect.bottom - modalRect.top + 5) + 'px';
-                        dropdown.style.left = (triggerRect.left - modalRect.left) + 'px';
-                        dropdown.style.width = triggerRect.width + 'px';
-                    }
-                };
-
-                const orientationHandler = () => {
-                    if (dropdown.style.display === 'block') {
-                        setTimeout(() => {
-                            const modalContent = modal.querySelector('.modal-content');
-                            const modalRect = modalContent.getBoundingClientRect();
-                            const triggerRect = trigger.getBoundingClientRect();
-                            dropdown.style.top = (triggerRect.bottom - modalRect.top + 5) + 'px';
-                            dropdown.style.left = (triggerRect.left - modalRect.left) + 'px';
-                            dropdown.style.width = triggerRect.width + 'px';
-                        }, 50);
-                    }
-                };
-
-                window.addEventListener('resize', resizeHandler);
-                window.addEventListener('orientationchange', orientationHandler);
-
-                const cleanup = () => {
-                    closeDropdown();
-                    document.removeEventListener('click', globalClickHandler);
-                    window.removeEventListener('resize', resizeHandler);
-                    window.removeEventListener('orientationchange', orientationHandler);
-                    if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
-                    if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                };
-
-                const modalCloseBtn = modal.querySelector('.modal-close');
-                if (modalCloseBtn) {
-                    const originalClose = modalCloseBtn.onclick;
-                    modalCloseBtn.onclick = () => {
-                        cleanup();
-                        if (originalClose) originalClose();
-                    };
+                    if (cnCat) newCat = cnCat + ' · ' + dotParts[1];
                 }
-
-                modal.querySelector('#saveEditBtn').onclick = async () => {
-                    const newDisplayAmount = parseFloat(modal.querySelector('#editAmount').value);
-                    if (!newDisplayAmount || newDisplayAmount <= 0) {
-                        showToast(t('enterValidAmount'));
-                        return;
+                // 处理 "分类名 (X servings)" 格式
+                else {
+                    const servingsMatch = newCat.match(new RegExp(`^(.+?)\\s*\\(\\d+\\s*${t('servings')}\\)$`));
+                    if (servingsMatch) {
+                        for (const [cn, trans] of Object.entries(translations)) {
+                            if (trans === servingsMatch[1]) {
+                                // 提取数字
+                                const paxMatch = newCat.match(/\((\d+)/);
+                                if (paxMatch) {
+                                    newCat = cn + ' (' + paxMatch[1] + '人份)';
+                                }
+                                break;
+                            }
+                        }
                     }
-                    const newAmount = convertToStorageAmount(newDisplayAmount);
-                    if (newAmount > CONSTANTS.MAX_AMOUNT) {
-                        showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
-                        return;
+                    // 纯分类名
+                    else {
+                        for (const [cn, trans] of Object.entries(translations)) {
+                            if (trans === newCat) {
+                                newCat = cn;
+                                break;
+                            }
+                        }
                     }
-                    let newCat = modal.querySelector('#editCategory').value.trim();
-                    if (!newCat) newCat = entry.type === 'expense' ? '未分类支出' : '未分类收入';
-
-                    entry.amount = newAmount;
-                    entry.note = newCat;
-                    entry.payType = selectedPayType;
-                    entry.timestamp = Date.now();
-                    entry.time = new Date().toTimeString().slice(0, 5);
-
-                    const success = await saveEntry(entry);
-                    cleanup();
-                    if (!success) {
-                        modalManager.close(modal);
-                        return;
-                    }
-                    updateCache(oldEntry, entry);
-                    updateSingleDay(entry.date);
-                    if (entry.date === selectedDate) renderEntries();
-                    renderCategoryDropdown();
-                    if (entry.type !== currentType) {
-                        currentType = entry.type;
-                        document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
-                        document.querySelector(`.type-option.${entry.type}`).classList.add('active');
-                        renderCategoryDropdown();
-                        updateInputColor();
-                    }
-                    modalManager.close(modal);
-                    showToast(t('modified'));
-                };
-
-                modal.querySelector('#editAmount').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        modal.querySelector('#saveEditBtn').click();
-                    }
-                });
-                modal.querySelector('#editCategory').addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        modal.querySelector('#saveEditBtn').click();
-                    }
-                });
+                }
             }
+        }
+
+        entry.amount = newAmount;
+        entry.note = newCat;
+        entry.payType = selectedPayType;
+        entry.timestamp = Date.now();
+        entry.time = new Date().toTimeString().slice(0, 5);
+
+        const success = await saveEntry(entry);
+        cleanup();
+        if (!success) {
+            modalManager.close(modal);
+            return;
+        }
+        updateCache(oldEntry, entry);
+        updateSingleDay(entry.date);
+        if (entry.date === selectedDate) renderEntries();
+        renderCategoryDropdown();
+        if (entry.type !== currentType) {
+            currentType = entry.type;
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('active'));
+            document.querySelector(`.type-option.${entry.type}`).classList.add('active');
+            renderCategoryDropdown();
+            updateInputColor();
+        }
+        modalManager.close(modal);
+        showToast(t('modified'));
+    };
+
+    modal.querySelector('#editAmount').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            modal.querySelector('#saveEditBtn').click();
+        }
+    });
+    modal.querySelector('#editCategory').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            modal.querySelector('#saveEditBtn').click();
+        }
+    });
+}
                         async function deleteEntry(id, showToastMessage = true) {
                 const entryToDelete = entries.find(e => String(e.id) === String(id));
                 if (!entryToDelete) return false;
@@ -4967,97 +5004,125 @@ const noteInput = modal.querySelector('#noteInput');
 
                         // ==================== 导出笔记 ====================
             function exportNote() {
-                const allEntries = entries;
-                if (!allEntries || allEntries.length === 0) {
-                    showToast(t('noDataExport'));
-                    return;
+    const allEntries = entries;
+    if (!allEntries || allEntries.length === 0) {
+        showToast(t('noDataExport'));
+        return;
+    }
+    const availableMonths = [...new Set(allEntries.map(item => item.date.slice(0, 7)))].sort().reverse();
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
+    modal.innerHTML = `
+        <div class="export-note-modal" style="padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
+            <h3 class="modal-title" style="margin-bottom:16px;font-size:20px;text-align:center;"> ${t('exportNote')}</h3>
+            <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">${t('selectMonth')}</p>
+            <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
+            <div style="display:flex;gap:12px;">
+                <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('confirmExport')}</button>
+                <button class="cancel-btn" id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('cancel')}</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    const options = [
+        { value: 'all', label: `📆 ${t('allMonths')} (${allEntries.length}${t('records')})` },
+        ...availableMonths.map(month => {
+            const count = allEntries.filter(e => e.date.startsWith(month)).length;
+            const [y, m] = month.split('-');
+            return { value: month, label: `📅 ${m}/${y} (${count}${t('records')})` };
+        })
+    ];
+    const container = modal.querySelector('#noteMonthContainer');
+    const currentMonthStr = selectedDate.slice(0, 7);
+    const defaultMonth = availableMonths.includes(currentMonthStr) ? currentMonthStr : 'all';
+    const monthSelect = createCustomSelect(container, options, defaultMonth, () => {});
+    modal.querySelector('#confirmExportNoteBtn').onclick = () => {
+        const selectedMonth = monthSelect.getValue();
+        let entriesToExport = [...allEntries];
+        if (selectedMonth !== 'all') entriesToExport = entriesToExport.filter(e => e.date.startsWith(selectedMonth));
+        if (entriesToExport.length === 0) {
+            showToast(t('noRecordsThisMonth'));
+            modal.remove();
+            return;
+        }
+        const grouped = {};
+        entriesToExport.forEach(item => {
+            const date = item.date;
+            if (!grouped[date]) grouped[date] = [];
+            grouped[date].push(item);
+        });
+        const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
+        let result = '', totalExpense = 0, totalIncome = 0, lastMonth = '';
+        const symbol = getCurrencySymbol();
+        const decimals = getDecimalPlaces();
+        const lang = currentLanguage;
+        
+        sortedDates.forEach(date => {
+            const parts = date.split('-'), year = parts[0], month = parts[1], currentMonthKey = `${year}-${month}`;
+            if (currentMonthKey !== lastMonth) {
+                // 根据语言格式化月份标题
+                if (lang === 'zh-CN') {
+                    result += `\n【${parseInt(month)}月】\n`;
+                } else {
+                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                    result += `\n【${monthNames[parseInt(month) - 1]}】\n`;
                 }
-                const availableMonths = [...new Set(allEntries.map(item => item.date.slice(0, 7)))].sort().reverse();
-                const modal = document.createElement('div');
-                modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px);';
-                modal.innerHTML = `
-                    <div class="export-note-modal" style="padding:24px;border-radius:28px;width:85%;max-width:320px;box-shadow:0 25px 40px rgba(0,0,0,0.25);">
-                        <h3 class="modal-title" style="margin-bottom:16px;font-size:20px;text-align:center;"> ${t('exportNote')}</h3>
-                        <p style="font-size:14px;color:#64748b;margin-bottom:16px;text-align:center;">${t('selectMonth')}</p>
-                        <div id="noteMonthContainer" style="margin-bottom:20px;"></div>
-                        <div style="display:flex;gap:12px;">
-                            <button id="confirmExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:var(--expense-color);color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('confirmExport')}</button>
-                            <button class="cancel-btn" id="cancelExportNoteBtn" style="flex:1;padding:12px;border:none;border-radius:40px;background:#64748b;color:white;font-size:15px;font-weight:600;cursor:pointer;">${t('cancel')}</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-                const options = [
-                    { value: 'all', label: `📆 ${t('allMonths')} (${allEntries.length}${t('records')})` },
-                    ...availableMonths.map(month => {
-                        const count = allEntries.filter(e => e.date.startsWith(month)).length;
-                        const [y, m] = month.split('-');
-                        return { value: month, label: `📅 ${m}/${y} (${count}${t('records')})` };
-                    })
-                ];
-                const container = modal.querySelector('#noteMonthContainer');
-                const currentMonthStr = selectedDate.slice(0, 7);
-                const defaultMonth = availableMonths.includes(currentMonthStr) ? currentMonthStr : 'all';
-                const monthSelect = createCustomSelect(container, options, defaultMonth, () => {});
-                modal.querySelector('#confirmExportNoteBtn').onclick = () => {
-                    const selectedMonth = monthSelect.getValue();
-                    let entriesToExport = [...allEntries];
-                    if (selectedMonth !== 'all') entriesToExport = entriesToExport.filter(e => e.date.startsWith(selectedMonth));
-                    if (entriesToExport.length === 0) {
-                        showToast(t('noRecordsThisMonth'));
-                        modal.remove();
-                        return;
-                    }
-                    const grouped = {};
-                    entriesToExport.forEach(item => {
-                        const date = item.date;
-                        if (!grouped[date]) grouped[date] = [];
-                        grouped[date].push(item);
-                    });
-                    const sortedDates = Object.keys(grouped).sort((a, b) => new Date(a) - new Date(b));
-                    let result = '', totalExpense = 0, totalIncome = 0, lastMonth = '';
-                    const symbol = getCurrencySymbol();
-                    const decimals = getDecimalPlaces();
-                    sortedDates.forEach(date => {
-                        const parts = date.split('-'), year = parts[0], month = parts[1], currentMonthKey = `${year}-${month}`;
-                        if (currentMonthKey !== lastMonth) {
-                            result += `\n【${parseInt(month)}${currentLanguage === 'zh-CN' ? '月' : ''}】\n`;
-                            lastMonth = currentMonthKey;
-                        }
-                        result += `\n${parts[2]}/${parts[1]}/${parts[0]}\n`;
-                        const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-                        sortedDayEntries.forEach((item, index) => {
-                            const displayAmount = convertToDisplayAmount(item.amount).toFixed(decimals);
-                            const note = translateCategory(item.note || '', currentLanguage);
-                            const typeSymbol = item.type === 'income' ? '+' : '-';
-                            const pay = item.payType ? ` (${translateCategory(item.payType, currentLanguage)})` : '';
-                            result += `${index + 1}）${typeSymbol} ${symbol} ${displayAmount}   ${note}${pay}\n`;
-                            if (item.type === 'expense') totalExpense += item.amount;
-                            else totalIncome += item.amount;
-                        });
-                    });
-                    const totalBalance = totalIncome - totalExpense;
-                    const displayTotalExpense = convertToDisplayAmount(totalExpense).toFixed(decimals);
-                    const displayTotalIncome = convertToDisplayAmount(totalIncome).toFixed(decimals);
-                    const displayBalance = convertToDisplayAmount(Math.abs(totalBalance)).toFixed(decimals);
-                    result += `\n═══════════\n${t('totalExpense')}: ${symbol}${displayTotalExpense}\n${t('totalIncome')}: ${symbol}${displayTotalIncome}\n${t('balanceLabel')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n═══════════\n`;
-                    const expenseStats = getPayTypeStats(entriesToExport);
-                    const incomeStats = getIncomePayTypeStats(entriesToExport);
-                    result += `--${t('paymentStats')}--\n`;
-                    paymentTypes.forEach(type => {
-                        result += `${translateCategory(type, currentLanguage)}: ${symbol}${convertToDisplayAmount(expenseStats[type] || 0).toFixed(decimals)}\n`;
-                    });
-                    result += `--${t('incomePaymentStats')}--\n`;
-                    incomePaymentTypes.forEach(type => {
-                        result += `${translateCategory(type, currentLanguage)}: ${symbol}${convertToDisplayAmount(incomeStats[type] || 0).toFixed(decimals)}\n`;
-                    });
-                    result += `═══════════`;
-                    modal.remove();
-                    showExportModal(result);
-                };
-                modal.querySelector('#cancelExportNoteBtn').onclick = () => modal.remove();
-                modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+                lastMonth = currentMonthKey;
             }
+            // 根据语言格式化日期
+            if (lang === 'zh-CN') {
+                result += `\n${parts[2]}/${parts[1]}/${parts[0]}\n`;
+            } else {
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                result += `\n${monthNames[parseInt(parts[1]) - 1]} ${parseInt(parts[2])}, ${parts[0]}\n`;
+            }
+            const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+            sortedDayEntries.forEach((item, index) => {
+                const displayAmount = convertToDisplayAmount(item.amount).toFixed(decimals);
+                // 翻译分类和备注
+                const translatedNote = translateNote(item.note || '', lang);
+                const typeSymbol = item.type === 'income' ? '+' : '-';
+                // 翻译支付方式
+                const translatedPay = item.payType ? ` (${translateCategory(item.payType, lang)})` : '';
+                result += `${index + 1}）${typeSymbol} ${symbol} ${displayAmount}   ${translatedNote}${translatedPay}\n`;
+                if (item.type === 'expense') totalExpense += item.amount;
+                else totalIncome += item.amount;
+            });
+        });
+        const totalBalance = totalIncome - totalExpense;
+        const displayTotalExpense = convertToDisplayAmount(totalExpense).toFixed(decimals);
+        const displayTotalIncome = convertToDisplayAmount(totalIncome).toFixed(decimals);
+        const displayBalance = convertToDisplayAmount(Math.abs(totalBalance)).toFixed(decimals);
+        
+        // 使用翻译后的标签
+        result += `\n═══════════\n`;
+        result += `${t('expenseLabel')}: ${symbol}${displayTotalExpense}\n`;
+        result += `${t('incomeLabel')}: ${symbol}${displayTotalIncome}\n`;
+        result += `${t('balanceLabel')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n`;
+        result += `═══════════\n`;
+        
+        const expenseStats = getPayTypeStats(entriesToExport);
+        const incomeStats = getIncomePayTypeStats(entriesToExport);
+        
+        result += `--${t('paymentStats')}--\n`;
+        paymentTypes.forEach(type => {
+            // 翻译支付方式名称
+            const translatedType = translateCategory(type, lang);
+            result += `${translatedType}: ${symbol}${convertToDisplayAmount(expenseStats[type] || 0).toFixed(decimals)}\n`;
+        });
+        result += `--${t('incomePaymentStats')}--\n`;
+        incomePaymentTypes.forEach(type => {
+            // 翻译收款方式名称
+            const translatedType = translateCategory(type, lang);
+            result += `${translatedType}: ${symbol}${convertToDisplayAmount(incomeStats[type] || 0).toFixed(decimals)}\n`;
+        });
+        result += `═══════════`;
+        modal.remove();
+        showExportModal(result);
+    };
+    modal.querySelector('#cancelExportNoteBtn').onclick = () => modal.remove();
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+}
 
             function showExportModal(text) {
                 const existingModal = document.querySelector('.export-modal-overlay');
