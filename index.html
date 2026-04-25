@@ -3,7 +3,7 @@
 
 <head>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -4067,10 +4067,11 @@ function translateNote(note, targetLang) {
                 }
 
                 const [y, m, d] = selectedDate.split('-');
-                const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
-                const weekdays = t('weekdays');
-                let label = weekdays[dateObj.getDay()];
-                const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
+const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
+const weekdays = t('weekdays');
+let label = weekdays[dateObj.getDay()];
+                const [ty, tm, td] = getLocalDate().split('-');
+const todayForCompare = new Date(parseInt(ty), parseInt(tm) - 1, parseInt(td), 12, 0, 0);
                 if (dateObj.toDateString() === todayForCompare.toDateString()) {
                     label = `${t('today')} · ${label}`;
                 }
