@@ -2946,7 +2946,8 @@ function translateNote(note, targetLang) {
     return displayAmount;
 }
             function getCurrencySymbol() {
-                return CURRENCIES[displayCurrency]?.symbol || 'RM';
+                var currency = CURRENCIES[displayCurrency];
+return currency ? currency.symbol : 'RM';
             }
             function getDecimalPlaces() {
     return 2;
@@ -3776,7 +3777,7 @@ function translateNote(note, targetLang) {
                 dropdown.style.touchAction = 'pan-y';
 
                 const defaultOption = options.find(opt => opt.value === defaultValue);
-                selectedText.textContent = defaultOption ? defaultOption.label : options[0]?.label || '';
+                selectedText.textContent = defaultOption ? defaultOption.label : (options[0] ? options[0].label : '');
 
                 options.forEach(opt => {
                     const optionDiv = document.createElement('div');
@@ -4366,7 +4367,8 @@ const noteInput = modal.querySelector('#noteInput');
                     isAdding = false;
                     return;
                 }
-                modal.querySelector('.modal-close')?.addEventListener('click', () => { isAdding = false; });
+                var paxCloseBtn = modal.querySelector('.modal-close');
+if (paxCloseBtn) paxCloseBtn.addEventListener('click', function() { isAdding = false; });
                 modal.addEventListener('click', (e) => { if (e.target === modal) isAdding = false; });
                 modal.querySelector('.modal-content').classList.add('pax-modal-content');
                 let selectedPax = 1;
@@ -4854,7 +4856,8 @@ const noteInput = modal.querySelector('#noteInput');
                         modalManager.close(modal);
                         editEntry(id);
                         setTimeout(() => {
-                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+                            var editBtnEl = document.querySelector('li .edit-btn[data-id="' + id + '"]');
+var targetLi = editBtnEl ? editBtnEl.closest('li') : null;
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
                                 targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4868,7 +4871,8 @@ const noteInput = modal.querySelector('#noteInput');
                     if (item && !e.target.closest('.edit-modal') && !e.target.closest('.delete-modal')) {
                         const id = item.dataset.id;
                         if (id) {
-                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
+                            var editBtnEl2 = document.querySelector('li .edit-btn[data-id="' + id + '"]');
+var targetLi = editBtnEl2 ? editBtnEl2.closest('li') : null;
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
                                 targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -5217,9 +5221,9 @@ const noteInput = modal.querySelector('#noteInput');
                 const today = new Date();
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(today.getFullYear() - 1);
-                const startDateVal = preset?.startDate || formatDateLocal(oneYearAgo);
-                const endDateVal = preset?.endDate || formatDateLocal(today);
-                const typeVal = preset?.type || 'all';
+                const startDateVal = (preset && preset.startDate) ? preset.startDate : formatDateLocal(oneYearAgo);
+const endDateVal = (preset && preset.endDate) ? preset.endDate : formatDateLocal(today);
+const typeVal = (preset && preset.type) ? preset.type : 'all';
                 const symbol = getCurrencySymbol();
                 const html = `
                     <div style="margin-bottom:12px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('keyword')}</label><input type="text" id="searchKeyword" placeholder="${t('enterKeyword')}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div>
@@ -6211,7 +6215,7 @@ const noteInput = modal.querySelector('#noteInput');
 });
                 document.getElementById('calendarGrid').addEventListener('click', (e) => {
                     const day = e.target.closest('.calendar-day');
-                    if (day?.dataset.date) {
+                    if (day && day.dataset.date) {
                         selectedDate = day.dataset.date;
                         [currentYear, currentMonth] = [parseInt(selectedDate.slice(0, 4)), parseInt(selectedDate.slice(5, 7)) - 1];
                         renderCalendar();
@@ -6229,7 +6233,7 @@ const noteInput = modal.querySelector('#noteInput');
                     const diffX = e.changedTouches[0].screenX - touchStartX, diffY = e.changedTouches[0].screenY - touchStartY;
                     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > CONSTANTS.SWIPE_THRESHOLD) {
                         changeMonth(diffX > 0 ? -1 : 1);
-                        navigator.vibrate?.(20);
+                    if (navigator.vibrate) navigator.vibrate(20);
                     }
                 });
                 document.getElementById('menuButton').onclick = (e) => {
