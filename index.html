@@ -3,7 +3,7 @@
 
 <head>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -2946,8 +2946,7 @@ function translateNote(note, targetLang) {
     return displayAmount;
 }
             function getCurrencySymbol() {
-                var currency = CURRENCIES[displayCurrency];
-return currency ? currency.symbol : 'RM';
+                return CURRENCIES[displayCurrency]?.symbol || 'RM';
             }
             function getDecimalPlaces() {
     return 2;
@@ -3777,7 +3776,7 @@ return currency ? currency.symbol : 'RM';
                 dropdown.style.touchAction = 'pan-y';
 
                 const defaultOption = options.find(opt => opt.value === defaultValue);
-                selectedText.textContent = defaultOption ? defaultOption.label : (options[0] ? options[0].label : '');
+                selectedText.textContent = defaultOption ? defaultOption.label : options[0]?.label || '';
 
                 options.forEach(opt => {
                     const optionDiv = document.createElement('div');
@@ -4068,11 +4067,10 @@ return currency ? currency.symbol : 'RM';
                 }
 
                 const [y, m, d] = selectedDate.split('-');
-const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d), 12, 0, 0);
-const weekdays = t('weekdays');
-let label = weekdays[dateObj.getDay()];
-                const [ty, tm, td] = getLocalDate().split('-');
-const todayForCompare = new Date(parseInt(ty), parseInt(tm) - 1, parseInt(td), 12, 0, 0);
+                const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
+                const weekdays = t('weekdays');
+                let label = weekdays[dateObj.getDay()];
+                const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
                 if (dateObj.toDateString() === todayForCompare.toDateString()) {
                     label = `${t('today')} · ${label}`;
                 }
@@ -4367,8 +4365,7 @@ const noteInput = modal.querySelector('#noteInput');
                     isAdding = false;
                     return;
                 }
-                var paxCloseBtn = modal.querySelector('.modal-close');
-if (paxCloseBtn) paxCloseBtn.addEventListener('click', function() { isAdding = false; });
+                modal.querySelector('.modal-close')?.addEventListener('click', () => { isAdding = false; });
                 modal.addEventListener('click', (e) => { if (e.target === modal) isAdding = false; });
                 modal.querySelector('.modal-content').classList.add('pax-modal-content');
                 let selectedPax = 1;
@@ -4856,8 +4853,7 @@ if (paxCloseBtn) paxCloseBtn.addEventListener('click', function() { isAdding = f
                         modalManager.close(modal);
                         editEntry(id);
                         setTimeout(() => {
-                            var editBtnEl = document.querySelector('li .edit-btn[data-id="' + id + '"]');
-var targetLi = editBtnEl ? editBtnEl.closest('li') : null;
+                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
                                 targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -4871,8 +4867,7 @@ var targetLi = editBtnEl ? editBtnEl.closest('li') : null;
                     if (item && !e.target.closest('.edit-modal') && !e.target.closest('.delete-modal')) {
                         const id = item.dataset.id;
                         if (id) {
-                            var editBtnEl2 = document.querySelector('li .edit-btn[data-id="' + id + '"]');
-var targetLi = editBtnEl2 ? editBtnEl2.closest('li') : null;
+                            const targetLi = document.querySelector(`li .edit-btn[data-id="${id}"]`)?.closest('li');
                             if (targetLi) {
                                 targetLi.classList.add('highlight-entry');
                                 targetLi.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -5221,9 +5216,9 @@ var targetLi = editBtnEl2 ? editBtnEl2.closest('li') : null;
                 const today = new Date();
                 const oneYearAgo = new Date();
                 oneYearAgo.setFullYear(today.getFullYear() - 1);
-                const startDateVal = (preset && preset.startDate) ? preset.startDate : formatDateLocal(oneYearAgo);
-const endDateVal = (preset && preset.endDate) ? preset.endDate : formatDateLocal(today);
-const typeVal = (preset && preset.type) ? preset.type : 'all';
+                const startDateVal = preset?.startDate || formatDateLocal(oneYearAgo);
+                const endDateVal = preset?.endDate || formatDateLocal(today);
+                const typeVal = preset?.type || 'all';
                 const symbol = getCurrencySymbol();
                 const html = `
                     <div style="margin-bottom:12px;"><label style="font-size:0.8rem;color:#64748b;display:block;margin-bottom:4px;">${t('keyword')}</label><input type="text" id="searchKeyword" placeholder="${t('enterKeyword')}" style="width:100%;padding:10px;border-radius:28px;border:1px solid #e2e8f0;outline:none;"></div>
@@ -5310,313 +5305,201 @@ const typeVal = (preset && preset.type) ? preset.type : 'all';
                 modal.querySelector('#closeSearchBtn').onclick = () => modalManager.close(modal);
                 if (preset) setTimeout(performSearch, 100);
             }
-                        // ==================== 分类管理（修复版 - 支持移动端拖拽）====================
-function openCategoryManager(type) {
-    const title = type === 'expense' ? t('manageExpenseTitle') : t('manageIncomeTitle');
-    let dragStartIndex = null;
-    let touchStartY = 0;
-    let currentDragItem = null;
-    let placeholder = null;
-    let isDragging = false;
-    let initialY = 0;
-
-    const getCurrentCatsList = () => type === 'expense' ? expenseCats : incomeCats;
-    const saveCatsList = async (newList) => {
-        if (type === 'expense') expenseCats = newList;
-        else incomeCats = newList;
-        const success = await saveCategories();
-        if (success) renderCategoryDropdown();
-        return success;
-    };
-
-    const renderCategoryList = (container) => {
-        const currentCats = [...getCurrentCatsList()];
-        if (currentCats.length === 0) {
-            container.innerHTML = `<div style="text-align:center;padding:16px;">${t('noCategories')}</div>`;
-            return;
-        }
-        const displayCats = translateCategories(currentCats, currentLanguage);
-        container.innerHTML = currentCats.map((cat, idx) => {
-            const displayCat = displayCats[idx] || cat;
-            return `
-                <div class="category-list-item" data-index="${idx}" data-cat="${escapeHtml(cat)}" style="position:relative;transition:transform 0.15s ease;">
-                    <div style="display:flex;align-items:center;flex:1;">
-                        <span class="drag-handle" style="touch-action:none;">☰</span>
-                        <span>${escapeHtml(displayCat)}</span>
-                    </div>
-                    <div style="display:flex;gap:6px;">
-                        <button class="edit-cat-btn" data-cat="${escapeHtml(cat)}">${t('edit')}</button>
-                        <button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">${t('delete')}</button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        // 绑定触摸拖拽事件
-        const items = container.querySelectorAll('.category-list-item');
-        items.forEach(item => {
-            const handle = item.querySelector('.drag-handle');
-            if (!handle) return;
-
-            handle.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                dragStartIndex = parseInt(item.getAttribute('data-index'));
-                currentDragItem = item;
-                isDragging = true;
-                
-                const touch = e.touches[0];
-                initialY = touch.clientY;
-                touchStartY = touch.clientY;
-                
-                // 创建占位元素
-                placeholder = document.createElement('div');
-                placeholder.className = 'category-list-item drag-placeholder';
-                placeholder.style.cssText = `
-                    height: ${item.offsetHeight}px;
-                    background: rgba(0,0,0,0.05);
-                    border: 2px dashed rgba(0,0,0,0.15);
-                    border-radius: 12px;
-                    margin-bottom: 0;
-                `;
-                if (uiSettings.darkMode || document.body.classList.contains('dark-mode')) {
-                    placeholder.style.background = 'rgba(255,255,255,0.08)';
-                    placeholder.style.borderColor = 'rgba(255,255,255,0.2)';
-                }
-                
-                // 设置拖拽元素的样式
-                item.style.position = 'relative';
-                item.style.zIndex = '1000';
-                item.style.opacity = '0.9';
-                item.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
-                item.style.border = '2px solid var(--expense-color)';
-                item.style.background = uiSettings.darkMode ? '#1e293b' : '#ffffff';
-                
-                // 在当前位置插入占位符
-                item.parentNode.insertBefore(placeholder, item.nextSibling);
-            }, { passive: false });
-
-            handle.addEventListener('touchmove', (e) => {
-                if (!isDragging || !currentDragItem) return;
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const touch = e.touches[0];
-                const deltaY = touch.clientY - initialY;
-                
-                // 移动拖拽元素
-                currentDragItem.style.transform = `translateY(${deltaY}px)`;
-                
-                // 检测悬停位置
-                const allItems = container.querySelectorAll('.category-list-item:not(.drag-placeholder)');
-                allItems.forEach(otherItem => {
-                    if (otherItem === currentDragItem) return;
-                    
-                    const rect = otherItem.getBoundingClientRect();
-                    const midY = rect.top + rect.height / 2;
-                    
-                    if (touch.clientY > midY) {
-                        // 在目标元素后面插入占位符
-                        if (placeholder && placeholder.nextSibling !== otherItem.nextSibling) {
-                            otherItem.parentNode.insertBefore(placeholder, otherItem.nextSibling);
-                        }
-                    } else {
-                        // 在目标元素前面插入占位符
-                        if (placeholder && placeholder.previousSibling !== otherItem) {
-                            otherItem.parentNode.insertBefore(placeholder, otherItem);
-                        }
+                        // ==================== 分类管理 ====================
+            function openCategoryManager(type) {
+                const title = type === 'expense' ? t('manageExpenseTitle') : t('manageIncomeTitle');
+                let dragStartIndex = null;
+                const getCurrentCatsList = () => type === 'expense' ? expenseCats : incomeCats;
+                const saveCatsList = async (newList) => {
+                    if (type === 'expense') expenseCats = newList;
+                    else incomeCats = newList;
+                    const success = await saveCategories();
+                    if (success) renderCategoryDropdown();
+                    return success;
+                };
+                const renderCategoryList = (container) => {
+                    const currentCats = [...getCurrentCatsList()];
+                    if (currentCats.length === 0) {
+                        container.innerHTML = `<div style="text-align:center;padding:16px;">${t('noCategories')}</div>`;
+                        return;
                     }
-                });
-            }, { passive: false });
-
-            handle.addEventListener('touchend', (e) => {
-                if (!isDragging || !currentDragItem) return;
-                e.preventDefault();
-                e.stopPropagation();
-                
-                isDragging = false;
-                
-                // 获取新的位置
-                const allMainItems = container.querySelectorAll('.category-list-item:not(.drag-placeholder)');
-                let newIndex = 0;
-                let foundPlaceholder = false;
-                
-                if (placeholder && placeholder.parentNode) {
-                    const children = Array.from(container.children);
-                    const placeholderIndex = children.indexOf(placeholder);
-                    
-                    // 计算新位置（排除占位符）
-                    let realIndex = 0;
-                    for (let i = 0; i < children.length; i++) {
-                        if (children[i] === placeholder) {
-                            foundPlaceholder = true;
-                            newIndex = realIndex;
-                            break;
-                        }
-                        if (children[i].classList.contains('category-list-item') && !children[i].classList.contains('drag-placeholder')) {
-                            realIndex++;
-                        }
-                    }
-                }
-                
-                // 移除拖拽样式和占位符
-                currentDragItem.style.transform = '';
-                currentDragItem.style.zIndex = '';
-                currentDragItem.style.opacity = '';
-                currentDragItem.style.boxShadow = '';
-                currentDragItem.style.border = '';
-                currentDragItem.style.background = '';
-                currentDragItem.style.position = '';
-                
-                if (placeholder && placeholder.parentNode) {
-                    placeholder.parentNode.removeChild(placeholder);
-                }
-                placeholder = null;
-                
-                // 执行排序
-                if (foundPlaceholder && newIndex !== dragStartIndex) {
-                    let currentCats = [...getCurrentCatsList()];
-                    const [movedItem] = currentCats.splice(dragStartIndex, 1);
-                    if (newIndex > dragStartIndex) newIndex--;
-                    currentCats.splice(newIndex, 0, movedItem);
-                    saveCatsList(currentCats);
-                    renderCategoryList(container);
-                    bindCategoryButtons(container);
-                }
-                
-                currentDragItem = null;
-                dragStartIndex = null;
-            }, { passive: false });
-        });
-    };
-
-    const bindCategoryButtons = (container) => {
-        container.querySelectorAll('.delete-cat-btn').forEach(btn => {
-            btn.onclick = () => {
-                const catName = btn.getAttribute('data-cat');
-                const displayCatName = translateCategory(catName, currentLanguage);
-                const modalConfirm = modalManager.create(t('deleteCategory'),
-                    `<div style="text-align:center;"><div style="font-size:16px;margin-bottom:6px;">${t('confirmDeleteCategory')}${escapeHtml(displayCatName)}」？</div><div style="font-size:12px;color:#64748b;">${t('deleteNoAffect')}</div></div>`,
-                    `<div style="display:flex;gap:10px;"><button id="cancelDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#f1f5f9;">${t('cancel')}</button><button id="confirmDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#ef4444;color:white;">${t('delete')}</button></div>`);
-                if (modalConfirm) {
-                    modalConfirm.querySelector('#cancelDelete').onclick = () => modalManager.close(modalConfirm);
-                    modalConfirm.querySelector('#confirmDelete').onclick = async () => {
-                        let currentCats = [...getCurrentCatsList()];
-                        currentCats = currentCats.filter(c => c !== catName);
-                        if (currentCats.length === 0) currentCats = [type === 'expense' ? '未分类支出' : '未分类收入'];
-                        if (await saveCatsList(currentCats)) {
-                            if (document.getElementById('categoryInput').value === translateCategory(catName, currentLanguage)) {
-                                document.getElementById('categoryInput').value = '';
-                            }
-                            renderCategoryList(container);
-                            bindCategoryButtons(container);
-                            renderCategoryDropdown();
-                            modalManager.close(modalConfirm);
-                            showToast(t('categoryDeleted'));
-                        } else showToast(t('deleteFailedMsg'));
-                    };
-                }
-            };
-        });
-        container.querySelectorAll('.edit-cat-btn').forEach(btn => {
-            btn.onclick = () => {
-                const oldName = btn.getAttribute('data-cat');
-                const displayOldName = translateCategory(oldName, currentLanguage);
-                const modal = modalManager.create(t('editRecord'),
-                    `<input type="text" id="editCatInput" value="${escapeHtml(displayOldName)}" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;" autofocus>`,
-                    `<button id="confirmEditCat" style="width:100%;background:var(--income-color);color:white;border:none;padding:12px;border-radius:28px;">${t('save')}</button>`);
-                if (modal) {
-                    const inputEl = modal.querySelector('#editCatInput');
-                    setTimeout(() => inputEl.focus(), 100);
-                    modal.querySelector('#confirmEditCat').onclick = async () => {
-                        const newNameInput = inputEl.value.trim();
-                        if (!newNameInput) {
-                            showToast(t('categoryEmpty'));
-                            return;
-                        }
-                        const currentCats = [...getCurrentCatsList()];
-                        let newName = newNameInput;
-                        if (currentLanguage !== 'zh-CN') {
-                            const translations = CATEGORY_TRANSLATIONS[currentLanguage];
-                            if (translations) {
-                                for (const [cn, trans] of Object.entries(translations)) {
-                                    if (trans === newNameInput) {
-                                        newName = cn;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                        if (currentCats.includes(newName) && newName !== oldName) {
-                            showToast(t('categoryExists'));
-                            return;
-                        }
-                        const index = currentCats.indexOf(oldName);
-                        if (index !== -1) currentCats[index] = newName;
-                        const updatedEntries = [];
-                        entries.forEach(e => {
-                            const noteWithoutPax = e.note.replace(new RegExp(`\\s*\\(\\d+${t('servings')}\\)$`), '');
-                            if (e.note === oldName || noteWithoutPax === oldName) {
-                                const paxMatch = e.note.match(new RegExp(`\\((\\d+)${t('servings')}\\)$`));
-                                e.note = paxMatch ? `${newName} (${paxMatch[1]}${t('servings')})` : newName;
-                                updatedEntries.push(e);
+                    // 显示时翻译
+                    const displayCats = translateCategories(currentCats, currentLanguage);
+                    container.innerHTML = currentCats.map((cat, idx) => {
+                        const displayCat = displayCats[idx] || cat;
+                        return `
+                            <div class="category-list-item" data-index="${idx}" data-cat="${escapeHtml(cat)}" draggable="true">
+                                <div style="display:flex;align-items:center;flex:1;"><span class="drag-handle">☰</span><span>${escapeHtml(displayCat)}</span></div>
+                                <div style="display:flex;gap:6px;"><button class="edit-cat-btn" data-cat="${escapeHtml(cat)}">${t('edit')}</button><button class="delete-cat-btn" data-cat="${escapeHtml(cat)}">${t('delete')}</button></div>
+                            </div>
+                        `;
+                    }).join('');
+                    const items = container.querySelectorAll('.category-list-item');
+                    items.forEach(item => {
+                        item.addEventListener('dragstart', (e) => {
+                            dragStartIndex = parseInt(item.getAttribute('data-index'));
+                            item.classList.add('dragging');
+                            e.dataTransfer.effectAllowed = 'move';
+                        });
+                        item.addEventListener('dragend', () => {
+                            item.classList.remove('dragging');
+                            items.forEach(i => i.classList.remove('drag-over'));
+                        });
+                        item.addEventListener('dragover', (e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            const targetIndex = parseInt(item.getAttribute('data-index'));
+                            if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
+                                items.forEach(i => i.classList.remove('drag-over'));
+                                item.classList.add('drag-over');
                             }
                         });
-                        if (await saveCatsList(currentCats)) {
-                            if (updatedEntries.length) await dbManager.putAll('entries', updatedEntries);
-                            rebuildStatsCache();
-                            renderEntries();
-                            renderCategoryDropdown();
-                            if (document.getElementById('categoryInput').value === displayOldName) {
-                                document.getElementById('categoryInput').value = translateCategory(newName, currentLanguage);
-                            }
-                            renderCategoryList(container);
-                            bindCategoryButtons(container);
-                            modalManager.close(modal);
-                            showToast(`${t('categoryModified')}${updatedEntries.length}${t('recordsUpdated')}`);
-                        } else showToast(t('modifyFailed'));
-                    };
-                    inputEl.addEventListener('keypress', (e) => {
-                        if (e.key === 'Enter') {
+                        item.addEventListener('drop', (e) => {
                             e.preventDefault();
-                            modal.querySelector('#confirmEditCat').click();
-                        }
+                            const targetIndex = parseInt(item.getAttribute('data-index'));
+                            if (dragStartIndex !== null && dragStartIndex !== targetIndex) {
+                                let currentCats = [...getCurrentCatsList()];
+                                const [movedItem] = currentCats.splice(dragStartIndex, 1);
+                                currentCats.splice(targetIndex, 0, movedItem);
+                                saveCatsList(currentCats);
+                                renderCategoryList(container);
+                                bindCategoryButtons(container);
+                            }
+                            items.forEach(i => i.classList.remove('drag-over'));
+                            dragStartIndex = null;
+                        });
                     });
-                }
-            };
-        });
-    };
-
-    const html = `<div id="categoryList" style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateZ(0);"></div><div class="add-cat-input"><input type="text" id="newCategoryName" placeholder="${t('newCategory')}"><button id="addCategoryBtn">${t('add')}</button></div><div style="font-size:0.7rem;color:#94a3b8;margin-top:12px;text-align:center;">${t('dragTip')}</div>`;
-    const modal = modalManager.create(title, html, `<button id="closeCatModal" class="close-btn">${t('close')}</button>`);
-    if (!modal) return;
-    const listContainer = modal.querySelector('#categoryList');
-    renderCategoryList(listContainer);
-    bindCategoryButtons(listContainer);
-    modal.querySelector('#addCategoryBtn').onclick = async () => {
-        const newCatInput = modal.querySelector('#newCategoryName').value.trim();
-        if (!newCatInput) {
-            showToast(t('categoryEmpty'));
-            return;
-        }
-        const currentCats = [...getCurrentCatsList()];
-        const newCat = newCatInput;
-        if (currentCats.includes(newCat)) {
-            showToast(t('categoryExists'));
-            return;
-        }
-        currentCats.push(newCat);
-        if (await saveCatsList(currentCats)) {
-            modal.querySelector('#newCategoryName').value = '';
-            renderCategoryList(listContainer);
-            bindCategoryButtons(listContainer);
-            renderCategoryDropdown();
-            showToast(`${t('categoryAdded')}${translateCategory(newCat, currentLanguage)}」`);
-        } else showToast(t('addFailed'));
-    };
-    modal.querySelector('#closeCatModal').onclick = () => modalManager.close(modal);
-}
+                };
+                const bindCategoryButtons = (container) => {
+                    container.querySelectorAll('.delete-cat-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const catName = btn.getAttribute('data-cat');
+                            const displayCatName = translateCategory(catName, currentLanguage);
+                            const modalConfirm = modalManager.create(t('deleteCategory'),
+                                `<div style="text-align:center;"><div style="font-size:16px;margin-bottom:6px;">${t('confirmDeleteCategory')}${escapeHtml(displayCatName)}」？</div><div style="font-size:12px;color:#64748b;">${t('deleteNoAffect')}</div></div>`,
+                                `<div style="display:flex;gap:10px;"><button id="cancelDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#f1f5f9;">${t('cancel')}</button><button id="confirmDelete" style="flex:1;padding:12px;border:none;border-radius:24px;background:#ef4444;color:white;">${t('delete')}</button></div>`);
+                            if (modalConfirm) {
+                                modalConfirm.querySelector('#cancelDelete').onclick = () => modalManager.close(modalConfirm);
+                                modalConfirm.querySelector('#confirmDelete').onclick = async () => {
+                                    let currentCats = [...getCurrentCatsList()];
+                                    currentCats = currentCats.filter(c => c !== catName);
+                                    if (currentCats.length === 0) currentCats = [type === 'expense' ? '未分类支出' : '未分类收入'];
+                                    if (await saveCatsList(currentCats)) {
+                                        if (document.getElementById('categoryInput').value === translateCategory(catName, currentLanguage)) {
+                                            document.getElementById('categoryInput').value = '';
+                                        }
+                                        renderCategoryList(container);
+                                        bindCategoryButtons(container);
+                                        renderCategoryDropdown();
+                                        modalManager.close(modalConfirm);
+                                        showToast(t('categoryDeleted'));
+                                    } else showToast(t('deleteFailedMsg'));
+                                };
+                            }
+                        };
+                    });
+                    container.querySelectorAll('.edit-cat-btn').forEach(btn => {
+                        btn.onclick = () => {
+                            const oldName = btn.getAttribute('data-cat');
+                            const displayOldName = translateCategory(oldName, currentLanguage);
+                            const modal = modalManager.create(t('editRecord'),
+                                `<input type="text" id="editCatInput" value="${escapeHtml(displayOldName)}" style="width:100%;padding:12px;border-radius:28px;border:1px solid #e2e8f0;" autofocus>`,
+                                `<button id="confirmEditCat" style="width:100%;background:var(--income-color);color:white;border:none;padding:12px;border-radius:28px;">${t('save')}</button>`);
+                            if (modal) {
+                                const inputEl = modal.querySelector('#editCatInput');
+                                setTimeout(() => inputEl.focus(), 100);
+                                modal.querySelector('#confirmEditCat').onclick = async () => {
+                                    const newNameInput = inputEl.value.trim();
+                                    if (!newNameInput) {
+                                        showToast(t('categoryEmpty'));
+                                        return;
+                                    }
+                                    const currentCats = [...getCurrentCatsList()];
+                                    // 新名称直接用输入值（当前语言），如果当前是英文需要找回中文映射
+                                    let newName = newNameInput;
+                                    if (currentLanguage !== 'zh-CN') {
+                                        const translations = CATEGORY_TRANSLATIONS[currentLanguage];
+                                        let found = false;
+                                        if (translations) {
+                                            for (const [cn, trans] of Object.entries(translations)) {
+                                                if (trans === newNameInput) {
+                                                    newName = cn;
+                                                    found = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        // 如果在映射表中找不到，说明是用户自定义的新名称，直接用输入值
+                                    }
+                                    if (currentCats.includes(newName) && newName !== oldName) {
+                                        showToast(t('categoryExists'));
+                                        return;
+                                    }
+                                    const index = currentCats.indexOf(oldName);
+                                    if (index !== -1) currentCats[index] = newName;
+                                    const updatedEntries = [];
+                                    entries.forEach(e => {
+                                        const noteWithoutPax = e.note.replace(new RegExp(`\\s*\\(\\d+${t('servings')}\\)$`), '');
+                                        if (e.note === oldName || noteWithoutPax === oldName) {
+                                            const paxMatch = e.note.match(new RegExp(`\\((\\d+)${t('servings')}\\)$`));
+                                            e.note = paxMatch ? `${newName} (${paxMatch[1]}${t('servings')})` : newName;
+                                            updatedEntries.push(e);
+                                        }
+                                    });
+                                    if (await saveCatsList(currentCats)) {
+                                        if (updatedEntries.length) await dbManager.putAll('entries', updatedEntries);
+                                        rebuildStatsCache();
+                                        renderEntries();
+                                        renderCategoryDropdown();
+                                        if (document.getElementById('categoryInput').value === displayOldName) {
+                                            document.getElementById('categoryInput').value = translateCategory(newName, currentLanguage);
+                                        }
+                                        renderCategoryList(container);
+                                        bindCategoryButtons(container);
+                                        modalManager.close(modal);
+                                        showToast(`${t('categoryModified')}${updatedEntries.length}${t('recordsUpdated')}`);
+                                    } else showToast(t('modifyFailed'));
+                                };
+                                inputEl.addEventListener('keypress', (e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        modal.querySelector('#confirmEditCat').click();
+                                    }
+                                });
+                            }
+                        };
+                    });
+                };
+                const html = `<div id="categoryList" style="max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;transform:translateZ(0);"></div><div class="add-cat-input"><input type="text" id="newCategoryName" placeholder="${t('newCategory')}"><button id="addCategoryBtn">${t('add')}</button></div><div style="font-size:0.7rem;color:#94a3b8;margin-top:12px;text-align:center;">${t('dragTip')}</div>`;
+                const modal = modalManager.create(title, html, `<button id="closeCatModal" class="close-btn">${t('close')}</button>`);
+                if (!modal) return;
+                const listContainer = modal.querySelector('#categoryList');
+                renderCategoryList(listContainer);
+                bindCategoryButtons(listContainer);
+                modal.querySelector('#addCategoryBtn').onclick = async () => {
+                    const newCatInput = modal.querySelector('#newCategoryName').value.trim();
+                    if (!newCatInput) {
+                        showToast(t('categoryEmpty'));
+                        return;
+                    }
+                    const currentCats = [...getCurrentCatsList()];
+                    // 添加时直接用输入值作为存储值
+                    const newCat = newCatInput;
+                    if (currentCats.includes(newCat)) {
+                        showToast(t('categoryExists'));
+                        return;
+                    }
+                    currentCats.push(newCat);
+                    if (await saveCatsList(currentCats)) {
+                        modal.querySelector('#newCategoryName').value = '';
+                        renderCategoryList(listContainer);
+                        bindCategoryButtons(listContainer);
+                        renderCategoryDropdown();
+                        showToast(`${t('categoryAdded')}${translateCategory(newCat, currentLanguage)}」`);
+                    } else showToast(t('addFailed'));
+                };
+                modal.querySelector('#closeCatModal').onclick = () => modalManager.close(modal);
+            }
                         // ==================== 支付方式管理 ====================
             function openPaymentTypeManager() {
                 const title = t('managePaymentTitle');
@@ -6327,7 +6210,7 @@ function openCategoryManager(type) {
 });
                 document.getElementById('calendarGrid').addEventListener('click', (e) => {
                     const day = e.target.closest('.calendar-day');
-                    if (day && day.dataset.date) {
+                    if (day?.dataset.date) {
                         selectedDate = day.dataset.date;
                         [currentYear, currentMonth] = [parseInt(selectedDate.slice(0, 4)), parseInt(selectedDate.slice(5, 7)) - 1];
                         renderCalendar();
@@ -6345,7 +6228,7 @@ function openCategoryManager(type) {
                     const diffX = e.changedTouches[0].screenX - touchStartX, diffY = e.changedTouches[0].screenY - touchStartY;
                     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > CONSTANTS.SWIPE_THRESHOLD) {
                         changeMonth(diffX > 0 ? -1 : 1);
-                    if (navigator.vibrate) navigator.vibrate(20);
+                        navigator.vibrate?.(20);
                     }
                 });
                 document.getElementById('menuButton').onclick = (e) => {
