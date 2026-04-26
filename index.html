@@ -4656,14 +4656,9 @@ const noteInput = modal.querySelector('#noteInput');
         e.stopPropagation();
     });
 
-    window.addEventListener('resize', resizeHandler);
-    window.addEventListener('orientationchange', orientationHandler);
-
     const cleanup = () => {
         closeDropdown();
         document.removeEventListener('click', globalClickHandler);
-        window.removeEventListener('resize', resizeHandler);
-        window.removeEventListener('orientationchange', orientationHandler);
         if (dropdown.parentNode) dropdown.parentNode.removeChild(dropdown);
         if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
     };
@@ -5057,11 +5052,10 @@ const noteInput = modal.querySelector('#noteInput');
         const symbol = getCurrencySymbol();
         const decimals = getDecimalPlaces();
         const lang = currentLanguage;
-        
+
         sortedDates.forEach(date => {
             const parts = date.split('-'), year = parts[0], month = parts[1], currentMonthKey = `${year}-${month}`;
             if (currentMonthKey !== lastMonth) {
-                // 根据语言格式化月份标题
                 if (lang === 'zh-CN') {
                     result += `\n【${parseInt(month)}月】\n`;
                 } else {
@@ -5070,7 +5064,6 @@ const noteInput = modal.querySelector('#noteInput');
                 }
                 lastMonth = currentMonthKey;
             }
-            // 根据语言格式化日期
             if (lang === 'zh-CN') {
                 result += `\n${parts[2]}/${parts[1]}/${parts[0]}\n`;
             } else {
@@ -5080,10 +5073,8 @@ const noteInput = modal.querySelector('#noteInput');
             const sortedDayEntries = grouped[date].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
             sortedDayEntries.forEach((item, index) => {
                 const displayAmount = convertToDisplayAmount(item.amount).toFixed(decimals);
-                // 翻译分类和备注
                 const translatedNote = translateNote(item.note || '', lang);
                 const typeSymbol = item.type === 'income' ? '+' : '-';
-                // 翻译支付方式
                 const translatedPay = item.payType ? ` (${translateCategory(item.payType, lang)})` : '';
                 result += `${index + 1}）${typeSymbol} ${symbol} ${displayAmount}   ${translatedNote}${translatedPay}\n`;
                 if (item.type === 'expense') totalExpense += item.amount;
@@ -5094,26 +5085,71 @@ const noteInput = modal.querySelector('#noteInput');
         const displayTotalExpense = convertToDisplayAmount(totalExpense).toFixed(decimals);
         const displayTotalIncome = convertToDisplayAmount(totalIncome).toFixed(decimals);
         const displayBalance = convertToDisplayAmount(Math.abs(totalBalance)).toFixed(decimals);
-        
-        // 使用翻译后的标签
+
         result += `\n═══════════\n`;
         result += `${t('expenseLabel')}: ${symbol}${displayTotalExpense}\n`;
         result += `${t('incomeLabel')}: ${symbol}${displayTotalIncome}\n`;
         result += `${t('balanceLabel')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n`;
         result += `═══════════\n`;
-        
+
+        // ========== 分类统计 ==========
+        let catExpStats = {};
+        let catIncStats = {};
+
+        expenseCats.forEach(cat => { catExpStats[cat] = 0; });
+        incomeCats.forEach(cat => { catIncStats[cat] = 0; });
+
+        entriesToExport.forEach(e => {
+            const cat = e.note || '';
+            let pureCat = cat;
+            const dotIdx = pureCat.indexOf(' · ');
+            if (dotIdx > 0) pureCat = pureCat.substring(0, dotIdx);
+            const paxMatch = pureCat.match(/^(.+?)\s*\(\d+人份\)$/);
+            if (paxMatch) pureCat = paxMatch[1];
+
+            if (e.type === 'expense') {
+                catExpStats[pureCat] = (catExpStats[pureCat] || 0) + e.amount;
+            } else {
+                catIncStats[pureCat] = (catIncStats[pureCat] || 0) + e.amount;
+            }
+        });
+
+        const hasExpCat = Object.values(catExpStats).some(v => v > 0);
+        const hasIncCat = Object.values(catIncStats).some(v => v > 0);
+
+        if (hasExpCat) {
+            result += `\n--${t('expense')} ${t('category')}--\n`;
+            Object.entries(catExpStats)
+                .filter(([_, v]) => v > 0)
+                .sort((a, b) => b[1] - a[1])
+                .forEach(([cat, amt]) => {
+                    const translatedCat = translateCategory(cat, lang);
+                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
+                });
+        }
+
+        if (hasIncCat) {
+            result += `\n--${t('income')} ${t('category')}--\n`;
+            Object.entries(catIncStats)
+                .filter(([_, v]) => v > 0)
+                .sort((a, b) => b[1] - a[1])
+                .forEach(([cat, amt]) => {
+                    const translatedCat = translateCategory(cat, lang);
+                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
+                });
+        }
+        // ========== 分类统计结束 ==========
+
         const expenseStats = getPayTypeStats(entriesToExport);
         const incomeStats = getIncomePayTypeStats(entriesToExport);
-        
-        result += `--${t('paymentStats')}--\n`;
+
+        result += `\n--${t('paymentStats')}--\n`;
         paymentTypes.forEach(type => {
-            // 翻译支付方式名称
             const translatedType = translateCategory(type, lang);
             result += `${translatedType}: ${symbol}${convertToDisplayAmount(expenseStats[type] || 0).toFixed(decimals)}\n`;
         });
-        result += `--${t('incomePaymentStats')}--\n`;
+        result += `\n--${t('incomePaymentStats')}--\n`;
         incomePaymentTypes.forEach(type => {
-            // 翻译收款方式名称
             const translatedType = translateCategory(type, lang);
             result += `${translatedType}: ${symbol}${convertToDisplayAmount(incomeStats[type] || 0).toFixed(decimals)}\n`;
         });
@@ -5161,55 +5197,125 @@ const noteInput = modal.querySelector('#noteInput');
             }
                         // ==================== 统计 ====================
             function showStatistics() {
-                const stats = getMonthStats(currentYear, currentMonth);
-                const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
-                const monthEntries = monthMap[key] || [];
-                const payStats = getPayTypeStats(monthEntries);
-                const incomePayStats = getIncomePayTypeStats(monthEntries);
-                const symbol = getCurrencySymbol();
-                const decimals = getDecimalPlaces();
-                const displayExpense = convertToDisplayAmount(stats.expense).toFixed(decimals);
-                const displayIncome = convertToDisplayAmount(stats.income).toFixed(decimals);
-                const displayBalance = convertToDisplayAmount(Math.abs(stats.balance)).toFixed(decimals);
+    const stats = getMonthStats(currentYear, currentMonth);
+    const key = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+    const monthEntries = monthMap[key] || [];
+    const payStats = getPayTypeStats(monthEntries);
+    const incomePayStats = getIncomePayTypeStats(monthEntries);
+    const symbol = getCurrencySymbol();
+    const decimals = getDecimalPlaces();
+    const displayExpense = convertToDisplayAmount(stats.expense).toFixed(decimals);
+    const displayIncome = convertToDisplayAmount(stats.income).toFixed(decimals);
+    const displayBalance = convertToDisplayAmount(Math.abs(stats.balance)).toFixed(decimals);
 
-                let statsTitle;
-                if (currentLanguage === 'zh-CN') {
-                    statsTitle = `📊 ${currentYear}年${currentMonth + 1}月 ${t('statistics')}`;
-                } else {
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    statsTitle = `📊 ${monthNames[currentMonth]} ${currentYear} ${t('statistics')}`;
-                }
+    let statsTitle;
+    if (currentLanguage === 'zh-CN') {
+        statsTitle = `📊 ${currentYear}年${currentMonth + 1}月 ${t('statistics')}`;
+    } else {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        statsTitle = `📊 ${monthNames[currentMonth]} ${currentYear} ${t('statistics')}`;
+    }
 
-                const html = `
-                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
-                    ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
-                    <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;">${symbol}${displayExpense}</span></div>
-                        <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;">${symbol}${displayIncome}</span></div>
-                        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>${t('balanceLabel')}</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
-                    </div>
-                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
-                    <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
-                        ${paymentTypes.map(type => {
-                            const displayType = translateCategory(type, currentLanguage);
-                            const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
-                            const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
-                            return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
-                        }).join('')}
-                    </div>
-                    <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('incomePaymentStats')}</div>
-                    <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
-                        ${incomePaymentTypes.map(type => {
-                            const displayType = translateCategory(type, currentLanguage);
-                            const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
-                            const displayPayStat = convertToDisplayAmount(incomePayStats[type] || 0).toFixed(decimals);
-                            return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
-                        }).join('')}
-                    </div>
-                `;
-                const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" class="close-btn">${t('close')}</button>`);
-                if (modal) modal.querySelector('#closeStatsBtn').onclick = () => modalManager.close(modal);
+    // ========== 分类统计 ==========
+    let categoryExpenseStats = {};
+    let categoryIncomeStats = {};
+
+    expenseCats.forEach(cat => { categoryExpenseStats[cat] = 0; });
+    incomeCats.forEach(cat => { categoryIncomeStats[cat] = 0; });
+
+    monthEntries.forEach(e => {
+        const cat = e.note || '';
+        let pureCat = cat;
+        const dotIdx = pureCat.indexOf(' · ');
+        if (dotIdx > 0) pureCat = pureCat.substring(0, dotIdx);
+        const paxMatch = pureCat.match(/^(.+?)\s*\(\d+人份\)$/);
+        if (paxMatch) pureCat = paxMatch[1];
+
+        if (e.type === 'expense') {
+            if (categoryExpenseStats.hasOwnProperty(pureCat)) {
+                categoryExpenseStats[pureCat] += e.amount;
+            } else {
+                categoryExpenseStats[pureCat] = (categoryExpenseStats[pureCat] || 0) + e.amount;
             }
+        } else {
+            if (categoryIncomeStats.hasOwnProperty(pureCat)) {
+                categoryIncomeStats[pureCat] += e.amount;
+            } else {
+                categoryIncomeStats[pureCat] = (categoryIncomeStats[pureCat] || 0) + e.amount;
+            }
+        }
+    });
+
+    let categoryStatsHtml = '';
+    const hasExpenseCatData = Object.values(categoryExpenseStats).some(v => v > 0);
+    const hasIncomeCatData = Object.values(categoryIncomeStats).some(v => v > 0);
+
+    if (hasExpenseCatData) {
+        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📂 ${t('expense')} ${t('category')}</div>`;
+        categoryStatsHtml += `<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">`;
+        const sortedExpense = Object.entries(categoryExpenseStats)
+            .filter(([_, v]) => v > 0)
+            .sort((a, b) => b[1] - a[1]);
+        sortedExpense.forEach(([cat, amount]) => {
+            const displayCat = translateCategory(cat, currentLanguage);
+            const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
+            categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-size:14px;">${escapeHtml(displayCat)}</span>
+                <span style="font-weight:500;color:var(--expense-color);">-${symbol}${displayAmount}</span>
+            </div>`;
+        });
+        categoryStatsHtml += `</div>`;
+    }
+
+    if (hasIncomeCatData) {
+        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📂 ${t('income')} ${t('category')}</div>`;
+        categoryStatsHtml += `<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">`;
+        const sortedIncome = Object.entries(categoryIncomeStats)
+            .filter(([_, v]) => v > 0)
+            .sort((a, b) => b[1] - a[1]);
+        sortedIncome.forEach(([cat, amount]) => {
+            const displayCat = translateCategory(cat, currentLanguage);
+            const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
+            categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <span style="font-size:14px;">${escapeHtml(displayCat)}</span>
+                <span style="font-weight:500;color:var(--income-color);">+${symbol}${displayAmount}</span>
+            </div>`;
+        });
+        categoryStatsHtml += `</div>`;
+    }
+    // ========== 分类统计结束 ==========
+
+    const html = `
+        <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
+        ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
+        <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;">${symbol}${displayExpense}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;">${symbol}${displayIncome}</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>${t('balanceLabel')}</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
+        </div>
+        ${categoryStatsHtml}
+        <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
+        <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
+            ${paymentTypes.map(type => {
+                const displayType = translateCategory(type, currentLanguage);
+                const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
+                const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
+            }).join('')}
+        </div>
+        <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('incomePaymentStats')}</div>
+        <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
+            ${incomePaymentTypes.map(type => {
+                const displayType = translateCategory(type, currentLanguage);
+                const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
+                const displayPayStat = convertToDisplayAmount(incomePayStats[type] || 0).toFixed(decimals);
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
+            }).join('')}
+        </div>
+    `;
+    const modal = modalManager.create(statsTitle, html, `<button id="closeStatsBtn" class="close-btn">${t('close')}</button>`);
+    if (modal) modal.querySelector('#closeStatsBtn').onclick = () => modalManager.close(modal);
+}
 
             // ==================== 搜索 ====================
             function showSearch(preset = null) {
