@@ -2233,8 +2233,8 @@ const Lunar = (function() {
         EXPENSE: ['早餐', '午餐', '晚餐', '打油', '购物', '娱乐', '居家', '其他'],
         INCOME: ['薪水', '奖金', '红包', '投资', '报销', '其他']
     },
-    DEFAULT_PAYMENT_TYPES: ['现金', '电子钱包', '信用卡', '借记卡'],
-    DEFAULT_INCOME_PAYMENT_TYPES: ['现金', '电子钱包', '银行转账', '其他'],
+    DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '信用卡', '借记卡'],
+    DEFAULT_INCOME_PAYMENT_TYPES: ['现金', 'TNG', '银行转账', '其他'],
     DELETE_CONFIRM_WORD: 'DELETE',
     MAX_ENTRIES: 5000,
     SWIPE_THRESHOLD: 50,
@@ -2300,7 +2300,7 @@ const Lunar = (function() {
                     investment: '投资',
                     reimbursement: '报销',
                     cash: '现金',
-                    ewallet: '电子钱包',
+                    ewallet: 'TNG',
                     creditCard: '信用卡',
                     debitCard: '借记卡',
                     bankTransfer: '银行转账',
@@ -2835,7 +2835,7 @@ const Lunar = (function() {
                     '薪水': '薪水', '奖金': '奖金', '红包': '红包', '投资': '投资', '报销': '报销',
                     '未分类支出': '未分类支出', '未分类收入': '未分类收入',
                     // 支付方式
-                    '现金': '现金', '电子钱包': '电子钱包', '信用卡': '信用卡', '借记卡': '借记卡', '银行转账': '银行转账',
+                    '现金': '现金', 'TNG': 'TNG', '信用卡': '信用卡', '借记卡': '借记卡', '银行转账': '银行转账',
                 },
                 'en-US': {
                     // 中文存储值 → 英文显示值
@@ -2843,7 +2843,7 @@ const Lunar = (function() {
                     '薪水': 'Salary', '奖金': 'Bonus', '红包': 'Red Packet', '投资': 'Investment', '报销': 'Reimbursement',
                     '未分类支出': 'Uncategorized Expense', '未分类收入': 'Uncategorized Income',
                     // 支付方式
-                    '现金': 'Cash', '电子钱包': 'E-Wallet', '信用卡': 'Credit Card', '借记卡': 'Debit Card', '银行转账': 'Bank Transfer',
+                    '现金': 'Cash', 'TNG': 'E-Wallet', '信用卡': 'Credit Card', '借记卡': 'Debit Card', '银行转账': 'Bank Transfer',
                 }
             };
 
@@ -4247,7 +4247,7 @@ function translateNote(note, targetLang) {
                     const storageType = idx >= 0 ? storageTypes[idx] : type;
 
                     if (storageType === '现金') icon = '💵';
-                    else if (storageType === '电子钱包') icon = '🪙';
+                    else if (storageType === 'TNG') icon = '🪙';
                     else if (storageType === '信用卡') icon = '💳';
                     else if (storageType === '借记卡') icon = '🏧';
                     else if (storageType === '银行转账') icon = '🏦';
@@ -5298,7 +5298,7 @@ const noteInput = modal.querySelector('#noteInput');
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
             ${paymentTypes.map(type => {
                 const displayType = translateCategory(type, currentLanguage);
-                const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
+                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
                 const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
                 return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
@@ -5307,7 +5307,7 @@ const noteInput = modal.querySelector('#noteInput');
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
             ${incomePaymentTypes.map(type => {
                 const displayType = translateCategory(type, currentLanguage);
-                const icon = type === '现金' ? '💵' : type === '电子钱包' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
+                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
                 const displayPayStat = convertToDisplayAmount(incomePayStats[type] || 0).toFixed(decimals);
                 return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
