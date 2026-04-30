@@ -5133,8 +5133,7 @@ result += `═════════════`;
                 .sort((a, b) => b[1] - a[1])
                 .forEach(([cat, amt]) => {
                     const translatedCat = translateCategory(cat, lang);
-                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
-                    result += `═════════════`;
+                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n═════════════`;
                 });
         }
 
