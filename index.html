@@ -5295,7 +5295,7 @@ result += `═════════════\n`;
     // ========== 分类统计结束 ==========
 
     const html = `
-        <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
+        
         ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('totalExpense')}</span><span style="color:var(--expense-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayExpense}</span></div>
