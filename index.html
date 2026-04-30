@@ -2369,6 +2369,7 @@ const Lunar = (function() {
                     incomeLabel: '💰 收入',
                     balanceLabel: '🧾 结余',
                     paymentStats: '💳 支付方式统计',
+                    categoryStats: '分类统计',
                     incomePaymentStats: '💰 收款方式统计',
                     searchRecords: '🔍 搜索记录',
                     keyword: '关键词（分类/支付方式）',
@@ -2549,6 +2550,7 @@ const Lunar = (function() {
                     expense: '💸 Expense',
                     income: '💰 Income',
                     amountPlaceholder: '0.00',
+                    categoryStats: 'Category Stats',
                     categoryPlaceholder: 'Enter or select category',
                     installApp: '📱 Install App',
                     installedApp: '✅ Installed',
@@ -5125,7 +5127,7 @@ result += `═════════════\n`;
         const hasIncCat = Object.values(catIncStats).some(v => v > 0);
 
         if (hasExpCat) {
-            result += `\n--${t('expense')}${t('category')}统计--\n`;
+            result += `\n--${t('expense')} ${t('categoryStats')}--\n`;
             Object.entries(catExpStats)
                 .filter(([_, v]) => v > 0)
                 .sort((a, b) => b[1] - a[1])
@@ -5136,7 +5138,7 @@ result += `═════════════\n`;
         }
 
         if (hasIncCat) {
-            result += `\n--${t('income')}${t('category')}统计--\n`;
+            result += `\n--${t('income')} ${t('categoryStats')}--\n`;
             Object.entries(catIncStats)
                 .filter(([_, v]) => v > 0)
                 .sort((a, b) => b[1] - a[1])
@@ -5258,7 +5260,7 @@ result += `═════════════\n`;
     const hasIncomeCatData = Object.values(categoryIncomeStats).some(v => v > 0);
 
     if (hasExpenseCatData) {
-        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📂 ${t('expense')} ${t('category')}</div>`;
+        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;"> ${t('expense')} ${t('categoryStats')}</div>`;
         categoryStatsHtml += `<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">`;
         const sortedExpense = Object.entries(categoryExpenseStats)
             .filter(([_, v]) => v > 0)
@@ -5267,16 +5269,16 @@ result += `═════════════\n`;
             const displayCat = translateCategory(cat, currentLanguage);
             const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
             categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-size:14px;">${escapeHtml(displayCat)}</span>
-                <span style="font-weight:500;color:var(--expense-color);">-${symbol}${displayAmount}</span>
-            </div>`;
+    <span style="font-size:0.85rem;">${escapeHtml(displayCat)}</span>
+    <span style="font-weight:500;font-size:0.85rem;color:var(--expense-color);">-${symbol}${displayAmount}</span>
+</div>`;
         });
         categoryStatsHtml += `</div>`;
     }
 
     if (hasIncomeCatData) {
-        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">📂 ${t('income')} ${t('category')}</div>`;
-        categoryStatsHtml += `<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">`;
+        categoryStatsHtml += `<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;"> ${t('income')} ${t('categoryStats')}</div>`;
+        categoryStatsHtml += `<div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">`;
         const sortedIncome = Object.entries(categoryIncomeStats)
             .filter(([_, v]) => v > 0)
             .sort((a, b) => b[1] - a[1]);
@@ -5284,8 +5286,8 @@ result += `═════════════\n`;
             const displayCat = translateCategory(cat, currentLanguage);
             const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
             categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <span style="font-size:14px;">${escapeHtml(displayCat)}</span>
-                <span style="font-weight:500;color:var(--income-color);">+${symbol}${displayAmount}</span>
+                <span style="font-size:0.85rem;">${escapeHtml(displayCat)}</span>
+                <span style="font-weight:500;font-size:0.85rem;color:var(--income-color);">+${symbol}${displayAmount}</span>
             </div>`;
         });
         categoryStatsHtml += `</div>`;
@@ -5296,9 +5298,9 @@ result += `═════════════\n`;
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
         ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;">${symbol}${displayExpense}</span></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span>${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;">${symbol}${displayIncome}</span></div>
-            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span>${t('balanceLabel')}</span><span style="font-weight:bold;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayExpense}</span></div>
+<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayIncome}</span></div>
+<div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span style="font-size:0.85rem;">${t('balanceLabel')}</span><span style="font-weight:bold;font-size:0.85rem;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
         </div>
         ${categoryStatsHtml}
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
@@ -5307,7 +5309,7 @@ result += `═════════════\n`;
                 const displayType = translateCategory(type, currentLanguage);
                 const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
                 const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
-                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
         </div>
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('incomePaymentStats')}</div>
@@ -5316,7 +5318,7 @@ result += `═════════════\n`;
                 const displayType = translateCategory(type, currentLanguage);
                 const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
                 const displayPayStat = convertToDisplayAmount(incomePayStats[type] || 0).toFixed(decimals);
-                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;">${symbol}${displayPayStat}</div></div>`;
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
         </div>
     `;
