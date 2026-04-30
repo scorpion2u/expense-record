@@ -2284,6 +2284,9 @@ const Lunar = (function() {
                     justBackedUp: '💾 刚刚备份',
                     hoursAgo: '小时前备份',
                     daysAgo: '天前备份',
+                    totalExpense: '💸 总支出',
+                    totalIncome: '💰 总收入',
+                    totalBalance: '🧾 总结余',
                     uncategorizedExpense: '未分类支出',
                     uncategorizedIncome: '未分类收入',
                     breakfast: '早餐',
@@ -2574,6 +2577,9 @@ const Lunar = (function() {
                     justBackedUp: '💾 Just backed up',
                     hoursAgo: 'hours ago',
                     daysAgo: 'days ago',
+                    totalExpense: '💸 Total Expense',
+                    totalIncome: '💰 Total Income',
+                    totalBalance: '🧾 Total Balance',
                     uncategorizedExpense: 'Uncategorized Expense',
                     uncategorizedIncome: 'Uncategorized Income',
                     breakfast: 'Breakfast',
@@ -3734,15 +3740,16 @@ function translateNote(note, targetLang) {
             }
 
             function getPayTypeStats(list) {
-                const stats = {};
-                paymentTypes.forEach(type => { stats[type] = 0; });
-                list.forEach(e => {
-                    const type = e.payType || paymentTypes[0] || '现金';
-                    if (!stats[type]) stats[type] = 0;
-                    stats[type] += Number(e.amount || 0);
-                });
-                return stats;
-            }
+    const stats = {};
+    paymentTypes.forEach(type => { stats[type] = 0; });
+    list.forEach(e => {
+        if (e.type !== 'expense') return; // 👈 添加这行，只统计支出
+        const type = e.payType || paymentTypes[0] || '现金';
+        if (!stats[type]) stats[type] = 0;
+        stats[type] += Number(e.amount || 0);
+    });
+    return stats;
+}
 
             function getIncomePayTypeStats(list) {
                 const stats = {};
@@ -5086,11 +5093,11 @@ const noteInput = modal.querySelector('#noteInput');
         const displayTotalIncome = convertToDisplayAmount(totalIncome).toFixed(decimals);
         const displayBalance = convertToDisplayAmount(Math.abs(totalBalance)).toFixed(decimals);
 
-        result += `\n═══════════\n`;
-        result += `${t('expenseLabel')}: ${symbol}${displayTotalExpense}\n`;
-        result += `${t('incomeLabel')}: ${symbol}${displayTotalIncome}\n`;
-        result += `${t('balanceLabel')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n`;
-        result += `═══════════\n`;
+        result += `\n═════════════\n`;
+result += `${t('totalExpense')} ${symbol}${displayTotalExpense}\n`;
+result += `${t('totalIncome')} ${symbol}${displayTotalIncome}\n`;
+result += `${t('totalBalance')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n`;
+result += `═════════════\n`;
 
         // ========== 分类统计 ==========
         let catExpStats = {};
@@ -5118,7 +5125,7 @@ const noteInput = modal.querySelector('#noteInput');
         const hasIncCat = Object.values(catIncStats).some(v => v > 0);
 
         if (hasExpCat) {
-            result += `\n--${t('expense')} ${t('category')}--\n`;
+            result += `\n--${t('expense')}${t('category')}统计--\n`;
             Object.entries(catExpStats)
                 .filter(([_, v]) => v > 0)
                 .sort((a, b) => b[1] - a[1])
@@ -5129,7 +5136,7 @@ const noteInput = modal.querySelector('#noteInput');
         }
 
         if (hasIncCat) {
-            result += `\n--${t('income')} ${t('category')}--\n`;
+            result += `\n--${t('income')}${t('category')}统计--\n`;
             Object.entries(catIncStats)
                 .filter(([_, v]) => v > 0)
                 .sort((a, b) => b[1] - a[1])
