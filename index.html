@@ -5270,7 +5270,7 @@ result += `═════════════\n`;
             const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
             categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
     <span style="font-size:0.85rem;">${escapeHtml(displayCat)}</span>
-    <span style="font-weight:500;font-size:0.85rem;color:var(--expense-color);">-${symbol}${displayAmount}</span>
+    <span style="font-weight:700;font-size:0.85rem;color:var(--expense-color);">-${symbol}${displayAmount}</span>
 </div>`;
         });
         categoryStatsHtml += `</div>`;
@@ -5287,7 +5287,7 @@ result += `═════════════\n`;
             const displayAmount = convertToDisplayAmount(amount).toFixed(decimals);
             categoryStatsHtml += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                 <span style="font-size:0.85rem;">${escapeHtml(displayCat)}</span>
-                <span style="font-weight:500;font-size:0.85rem;color:var(--income-color);">+${symbol}${displayAmount}</span>
+                <span style="font-weight:700;font-size:0.85rem;color:var(--income-color);">+${symbol}${displayAmount}</span>
             </div>`;
         });
         categoryStatsHtml += `</div>`;
@@ -5298,9 +5298,9 @@ result += `═════════════\n`;
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('monthSummary')}</div>
         ${monthEntries.length > 0 ? `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">📌 ${t('monthRecords')} ${monthEntries.length} ${t('recordsCount')}</div>` : `<div style="font-size:0.75rem;color:#94a3b8;margin-bottom:10px;">${t('noRecordsMonth')}</div>`}
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('expenseLabel')}</span><span style="color:var(--expense-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayExpense}</span></div>
-<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('incomeLabel')}</span><span style="color:var(--income-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayIncome}</span></div>
-<div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span style="font-size:0.85rem;">${t('balanceLabel')}</span><span style="font-weight:bold;font-size:0.85rem;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('totalExpense')}</span><span style="color:var(--expense-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayExpense}</span></div>
+<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><span style="font-size:0.85rem;">${t('totalIncome')}</span><span style="color:var(--income-color);font-weight:bold;font-size:0.85rem;">${symbol}${displayIncome}</span></div>
+<div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid rgba(255,255,255,0.1);"><span style="font-size:0.85rem;">${t('totalBalance')}</span><span style="font-weight:bold;font-size:0.85rem;color:${stats.balance >= 0 ? 'var(--income-color)' : 'var(--expense-color)'}">${stats.balance >= 0 ? '+' : '-'}${symbol}${displayBalance}</span></div>
         </div>
         ${categoryStatsHtml}
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('paymentStats')}</div>
