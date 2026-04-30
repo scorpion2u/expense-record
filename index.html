@@ -5095,11 +5095,11 @@ const noteInput = modal.querySelector('#noteInput');
         const displayTotalIncome = convertToDisplayAmount(totalIncome).toFixed(decimals);
         const displayBalance = convertToDisplayAmount(Math.abs(totalBalance)).toFixed(decimals);
 
-        result += `\n═════════════\n`;
+result +=`\n═════════════\n`;
 result += `${t('totalExpense')} ${symbol}${displayTotalExpense}\n`;
 result += `${t('totalIncome')} ${symbol}${displayTotalIncome}\n`;
 result += `${t('totalBalance')}: ${totalBalance >= 0 ? '+' : '-'}${symbol}${displayBalance}\n`;
-result += `═════════════\n`;
+result += `═════════════`;
 
         // ========== 分类统计 ==========
         let catExpStats = {};
@@ -5134,6 +5134,7 @@ result += `═════════════\n`;
                 .forEach(([cat, amt]) => {
                     const translatedCat = translateCategory(cat, lang);
                     result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
+                    result += `═════════════`;
                 });
         }
 
@@ -5145,6 +5146,7 @@ result += `═════════════\n`;
                 .forEach(([cat, amt]) => {
                     const translatedCat = translateCategory(cat, lang);
                     result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
+                    
                 });
         }
         // ========== 分类统计结束 ==========
@@ -5157,12 +5159,12 @@ result += `═════════════\n`;
             const translatedType = translateCategory(type, lang);
             result += `${translatedType}: ${symbol}${convertToDisplayAmount(expenseStats[type] || 0).toFixed(decimals)}\n`;
         });
-        result += `\n--${t('incomePaymentStats')}--\n`;
+        result += `═════════════\n--${t('incomePaymentStats')}--\n`;
         incomePaymentTypes.forEach(type => {
             const translatedType = translateCategory(type, lang);
             result += `${translatedType}: ${symbol}${convertToDisplayAmount(incomeStats[type] || 0).toFixed(decimals)}\n`;
         });
-        result += `═══════════`;
+        result += `═════════════`;
         modal.remove();
         showExportModal(result);
     };
