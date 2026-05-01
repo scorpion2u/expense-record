@@ -2221,6 +2221,8 @@ const Lunar = (function() {
 
             // ==================== 常量定义 ====================
             const CONSTANTS = {
+    APP_VERSION: '1.4', // ← 每次修改后递增版本号
+    
     STORAGE_KEYS: {
         ENTRIES: 'book_v1_main',
         EXPENSE_CATS: 'book_expense_cats_v1',
@@ -2229,12 +2231,19 @@ const Lunar = (function() {
         INCOME_PAYMENT_TYPES: 'book_income_payment_types_v1',
         SETTINGS: 'book_ui_settings_v1'
     },
+    
+    // ===== 默认支出分类 =====
     DEFAULT_CATS: {
-        EXPENSE: ['早餐', '午餐', '晚餐', '面包', '牛奶', '打油', '购物', '娱乐', '居家', '其他'],
+        EXPENSE: ['早餐', '午餐', '晚餐', '面包', '牛奶', '水果', '打油', '购物', '娱乐', '居家', '其他'],
         INCOME: ['薪水', '奖金', '红包', '投资', '报销', '其他']
     },
-    DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '信用卡', '借记卡'],
+    
+    // ===== 默认支出方式 =====
+    DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '借记卡', '信用卡'],
+    
+    // ===== 默认收款方式 =====
     DEFAULT_INCOME_PAYMENT_TYPES: ['现金', 'TNG', '银行转账', '其他'],
+    
     DELETE_CONFIRM_WORD: 'DELETE',
     MAX_ENTRIES: 5000,
     SWIPE_THRESHOLD: 50,
@@ -2294,6 +2303,7 @@ const Lunar = (function() {
                     dinner: '晚餐',
                     bread: '面包',
                     milk: '牛奶',
+                    fruit: '水果',
                     fuel: '打油',
                     shopping: '购物',
                     entertainment: '娱乐',
@@ -2591,6 +2601,7 @@ const Lunar = (function() {
                     dinner: 'Dinner',
                     bread: 'Bread',
                     milk: 'Milk',
+                    fruit: 'Fruit',
                     fuel: 'Fuel',
                     shopping: 'Shopping',
                     entertainment: 'Entertainment',
@@ -2843,19 +2854,19 @@ const Lunar = (function() {
             const CATEGORY_TRANSLATIONS = {
                 'zh-CN': {
                     // 中文显示就是自己
-                    '早餐': '早餐', '午餐': '午餐', '晚餐': '晚餐', '面包': '面包', '牛奶': '牛奶', '购物': '购物', '娱乐': '娱乐', '居家': '居家', '其他': '其他',
+                    '早餐': '早餐', '午餐': '午餐', '晚餐': '晚餐', '面包': '面包', '牛奶': '牛奶', '水果': '水果', '购物': '购物', '娱乐': '娱乐', '居家': '居家', '其他': '其他',
                     '薪水': '薪水', '奖金': '奖金', '红包': '红包', '投资': '投资', '报销': '报销',
                     '未分类支出': '未分类支出', '未分类收入': '未分类收入',
                     // 支付方式
-                    '现金': '现金', 'TNG': 'TNG', '信用卡': '信用卡', '借记卡': '借记卡', '银行转账': '银行转账',
+                    '现金': '现金', 'TNG': 'TNG', '借记卡': '借记卡', '信用卡': '信用卡', '银行转账': '银行转账',
                 },
                 'en-US': {
                     // 中文存储值 → 英文显示值
-                    '早餐': 'Breakfast', '午餐': 'Lunch', '面包': 'Bread', '牛奶': 'Milk', '晚餐': 'Dinner', '打油': 'Fuel', '购物': 'Shopping', '娱乐': 'Entertainment', '居家': 'Home', '其他': 'Other',
+                    '早餐': 'Breakfast', '午餐': 'Lunch', '面包': 'Bread', '牛奶': 'Milk', '水果': 'Fruit', '晚餐': 'Dinner', '打油': 'Fuel', '购物': 'Shopping', '娱乐': 'Entertainment', '居家': 'Home', '其他': 'Other',
                     '薪水': 'Salary', '奖金': 'Bonus', '红包': 'Red Packet', '投资': 'Investment', '报销': 'Reimbursement',
                     '未分类支出': 'Uncategorized Expense', '未分类收入': 'Uncategorized Income',
                     // 支付方式
-                    '现金': 'Cash', 'TNG': 'E-Wallet', '信用卡': 'Credit Card', '借记卡': 'Debit Card', '银行转账': 'Bank Transfer',
+                    '现金': 'Cash', 'TNG': 'E-Wallet', '借记卡': 'Debit Card', '信用卡': 'Credit Card', '银行转账': 'Bank Transfer',
                 }
             };
 
@@ -3664,60 +3675,96 @@ function translateNote(note, targetLang) {
             }
 
             async function load() {
-                try {
-                    const loadedEntries = await dbManager.getAll('entries');
-                    if (loadedEntries && loadedEntries.length > 0) {
-                        entries = loadedEntries.filter(validateEntry);
-                    }
+    try {
+        // 加载记账记录（不受版本影响，始终保持）
+        const loadedEntries = await dbManager.getAll('entries');
+        if (loadedEntries && loadedEntries.length > 0) {
+            entries = loadedEntries.filter(validateEntry);
+        }
 
-                    const settingsData = await dbManager.get('settings', 'uiSettings');
-                    if (settingsData) {
-                        uiSettings = { ...uiSettings, ...settingsData.value };
-                    }
+        // 检查版本号
+        const versionData = await dbManager.get('settings', 'appVersion');
+        const storedVersion = versionData ? versionData.value : '0.0';
+        const isNewVersion = storedVersion !== CONSTANTS.APP_VERSION;
 
-                    const expenseCatsData = await dbManager.get('categories', 'expenseCats');
-                    if (expenseCatsData) {
-                        expenseCats = expenseCatsData.value;
-                    }
-
-                    const incomeCatsData = await dbManager.get('categories', 'incomeCats');
-                    if (incomeCatsData) {
-                        incomeCats = incomeCatsData.value;
-                    }
-
-                    const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
-                    if (paymentTypesData) {
-                        paymentTypes = paymentTypesData.value;
-                    }
-
-                    const incomePaymentTypesData = await dbManager.get('categories', 'incomePaymentTypes');
-                    if (incomePaymentTypesData) {
-                        incomePaymentTypes = incomePaymentTypesData.value;
-                    } else {
-                        incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
-                    }
-
-                    const currencyData = await dbManager.get('settings', 'displayCurrency');
-                    if (currencyData) {
-                        displayCurrency = currencyData.value;
-                    } else {
-                        displayCurrency = 'MYR';
-                    }
-
-                    const langData = await dbManager.get('settings', 'displayLanguage');
-                    if (langData) {
-                        currentLanguage = langData.value;
-                    } else {
-                        currentLanguage = 'zh-CN';
-                    }
-
-                    document.getElementById('currencySymbol').textContent = getCurrencySymbol();
-                } catch (e) {
-                    console.warn('加载失败', e);
-                }
-                loadSettings();
-                updateUILanguage();
+        // ===== 如果版本更新，强制覆盖四类数据 =====
+        if (isNewVersion) {
+            console.log('🔄 检测到新版本 ' + CONSTANTS.APP_VERSION + '，正在更新配置...');
+            
+            // 1. 支出分类 - 完全替换
+            expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
+            await dbManager.put('categories', { key: 'expenseCats', value: expenseCats });
+            console.log('✅ 支出分类已更新:', expenseCats);
+            
+            // 2. 收入分类 - 完全替换
+            incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
+            await dbManager.put('categories', { key: 'incomeCats', value: incomeCats });
+            console.log('✅ 收入分类已更新:', incomeCats);
+            
+            // 3. 支出方式 - 完全替换
+            paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
+            await dbManager.put('categories', { key: 'paymentTypes', value: paymentTypes });
+            console.log('✅ 支出方式已更新:', paymentTypes);
+            
+            // 4. 收款方式 - 完全替换
+            incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
+            await dbManager.put('categories', { key: 'incomePaymentTypes', value: incomePaymentTypes });
+            console.log('✅ 收款方式已更新:', incomePaymentTypes);
+            
+            // 更新版本号
+            await dbManager.put('settings', { key: 'appVersion', value: CONSTANTS.APP_VERSION });
+            console.log('✅ 版本已更新至', CONSTANTS.APP_VERSION);
+            
+        } else {
+            // 版本相同，从数据库加载（保留用户可能的手动修改）
+            const expenseCatsData = await dbManager.get('categories', 'expenseCats');
+            expenseCats = expenseCatsData ? expenseCatsData.value : [...CONSTANTS.DEFAULT_CATS.EXPENSE];
+            
+            const incomeCatsData = await dbManager.get('categories', 'incomeCats');
+            incomeCats = incomeCatsData ? incomeCatsData.value : [...CONSTANTS.DEFAULT_CATS.INCOME];
+            
+            const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
+            paymentTypes = paymentTypesData ? paymentTypesData.value : [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
+            
+            const incomePaymentTypesData = await dbManager.get('categories', 'incomePaymentTypes');
+            if (incomePaymentTypesData) {
+                incomePaymentTypes = incomePaymentTypesData.value;
+            } else {
+                incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
             }
+        }
+
+        // ===== 加载 UI 设置（不受版本影响，始终保持）=====
+        const settingsData = await dbManager.get('settings', 'uiSettings');
+        if (settingsData) {
+            uiSettings = { ...uiSettings, ...settingsData.value };
+        }
+
+        // ===== 加载货币设置（不受版本影响）=====
+        const currencyData = await dbManager.get('settings', 'displayCurrency');
+        if (currencyData) {
+            displayCurrency = currencyData.value;
+        } else {
+            displayCurrency = 'MYR';
+        }
+
+        // ===== 加载语言设置（不受版本影响）=====
+        const langData = await dbManager.get('settings', 'displayLanguage');
+        if (langData) {
+            currentLanguage = langData.value;
+        } else {
+            currentLanguage = 'zh-CN';
+        }
+
+        document.getElementById('currencySymbol').textContent = getCurrencySymbol();
+        
+    } catch (e) {
+        console.warn('加载失败', e);
+    }
+    
+    loadSettings();
+    updateUILanguage();
+}
 
             function getDayStats(date) {
                 const dayEntries = dateMap[date] || [];
@@ -4261,8 +4308,8 @@ function translateNote(note, targetLang) {
 
                     if (storageType === '现金') icon = '💵';
                     else if (storageType === 'TNG') icon = '🪙';
-                    else if (storageType === '信用卡') icon = '💳';
                     else if (storageType === '借记卡') icon = '🏧';
+                    else if (storageType === '信用卡') icon = '💳';
                     else if (storageType === '银行转账') icon = '🏦';
                     else if (storageType === '其他') icon = '📌';
 
@@ -5137,10 +5184,10 @@ result += `═════════════`;
                 .sort((a, b) => b[1] - a[1])
                 .forEach(([cat, amt]) => {
                     const translatedCat = translateCategory(cat, lang);
-                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n═════════════`;
+                    result += `${translatedCat}: ${symbol}${convertToDisplayAmount(amt).toFixed(decimals)}\n`;
                 });
         }
-
+result += `═════════════`;
         if (hasIncCat) {
             result += `\n--${t('income')} ${t('categoryStats')}--\n`;
             Object.entries(catIncStats)
@@ -5312,7 +5359,7 @@ result += `═════════════`;
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
             ${paymentTypes.map(type => {
                 const displayType = translateCategory(type, currentLanguage);
-                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '信用卡' ? '💳' : type === '借记卡' ? '🏧' : type === '银行转账' ? '🏦' : '💳';
+                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '借记卡' ? '🏧' : type === '信用卡' ? '💳' : type === '银行转账' ? '🏦' : '💳';
                 const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
                 return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
