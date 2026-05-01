@@ -2230,7 +2230,7 @@ const Lunar = (function() {
         SETTINGS: 'book_ui_settings_v1'
     },
     DEFAULT_CATS: {
-        EXPENSE: ['早餐', '午餐', '晚餐', '打油', '购物', '娱乐', '居家', '其他'],
+        EXPENSE: ['早餐', '午餐', '晚餐', '面包', '牛奶', '打油', '购物', '娱乐', '居家', '其他'],
         INCOME: ['薪水', '奖金', '红包', '投资', '报销', '其他']
     },
     DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '信用卡', '借记卡'],
@@ -2292,6 +2292,8 @@ const Lunar = (function() {
                     breakfast: '早餐',
                     lunch: '午餐',
                     dinner: '晚餐',
+                    bread: '面包',
+                    milk: '牛奶',
                     fuel: '打油',
                     shopping: '购物',
                     entertainment: '娱乐',
@@ -2587,6 +2589,8 @@ const Lunar = (function() {
                     breakfast: 'Breakfast',
                     lunch: 'Lunch',
                     dinner: 'Dinner',
+                    bread: 'Bread',
+                    milk: 'Milk',
                     fuel: 'Fuel',
                     shopping: 'Shopping',
                     entertainment: 'Entertainment',
@@ -2839,7 +2843,7 @@ const Lunar = (function() {
             const CATEGORY_TRANSLATIONS = {
                 'zh-CN': {
                     // 中文显示就是自己
-                    '早餐': '早餐', '午餐': '午餐', '晚餐': '晚餐', '打油': '打油', '购物': '购物', '娱乐': '娱乐', '居家': '居家', '其他': '其他',
+                    '早餐': '早餐', '午餐': '午餐', '晚餐': '晚餐', '面包': '面包', '牛奶': '牛奶', '购物': '购物', '娱乐': '娱乐', '居家': '居家', '其他': '其他',
                     '薪水': '薪水', '奖金': '奖金', '红包': '红包', '投资': '投资', '报销': '报销',
                     '未分类支出': '未分类支出', '未分类收入': '未分类收入',
                     // 支付方式
@@ -2847,7 +2851,7 @@ const Lunar = (function() {
                 },
                 'en-US': {
                     // 中文存储值 → 英文显示值
-                    '早餐': 'Breakfast', '午餐': 'Lunch', '晚餐': 'Dinner', '打油': 'Fuel', '购物': 'Shopping', '娱乐': 'Entertainment', '居家': 'Home', '其他': 'Other',
+                    '早餐': 'Breakfast', '午餐': 'Lunch', '面包': 'Bread', '牛奶': 'Milk', '晚餐': 'Dinner', '打油': 'Fuel', '购物': 'Shopping', '娱乐': 'Entertainment', '居家': 'Home', '其他': 'Other',
                     '薪水': 'Salary', '奖金': 'Bonus', '红包': 'Red Packet', '投资': 'Investment', '报销': 'Reimbursement',
                     '未分类支出': 'Uncategorized Expense', '未分类收入': 'Uncategorized Income',
                     // 支付方式
