@@ -2336,7 +2336,7 @@ const Lunar = (function() {
                     servings: '人份',
                     confirmServings: '确定 · ',
                     skipServings: '跳过，不记录份数',
-                    addNoteLabel: '📝 添加备注（可选）',
+                    addNoteLabel: ' 添加备注（可选）',
                     notePlaceholder: '在此可为已选择的分类添加备注...',
                     leaveEmpty: '留空则只记录分类名称',
                     skip: '跳过',
@@ -2634,7 +2634,7 @@ const Lunar = (function() {
                     servings: 'servings',
                     confirmServings: 'Confirm · ',
                     skipServings: 'Skip',
-                    addNoteLabel: '📝 Add Note (Optional)',
+                    addNoteLabel: ' Add Note (Optional)',
                     notePlaceholder: 'Add a note for this category...',
                     leaveEmpty: 'Leave empty to record only category name',
                     skip: 'Skip',
@@ -4295,206 +4295,89 @@ function translateNote(note, targetLang) {
             }
 
             function choosePayType(callback) {
-                const types = getCurrentPaymentTypes();
-                const title = currentType === 'expense' ? t('selectPayment') : t('selectIncomePayment');
+    const types = getCurrentPaymentTypes();
+    const title = currentType === 'expense' ? t('selectPayment') : t('selectIncomePayment');
 
-                const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${types.map(type => {
-                    let icon = '💳';
-                    // 用存储值（中文）来判断图标，而不是翻译后的值
-                    const storageTypes = currentType === 'expense' ? paymentTypes : incomePaymentTypes;
-                    const displayTypes = getCurrentPaymentTypes();
-                    const idx = displayTypes.indexOf(type);
-                    const storageType = idx >= 0 ? storageTypes[idx] : type;
+    const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${types.map(type => {
+        let icon = '💳';
+        const storageTypes = currentType === 'expense' ? paymentTypes : incomePaymentTypes;
+        const displayTypes = getCurrentPaymentTypes();
+        const idx = displayTypes.indexOf(type);
+        const storageType = idx >= 0 ? storageTypes[idx] : type;
 
-                    if (storageType === '现金') icon = '💵';
-                    else if (storageType === 'TNG') icon = '🪙';
-                    else if (storageType === '借记卡') icon = '🏧';
-                    else if (storageType === '信用卡') icon = '💳';
-                    else if (storageType === '银行转账') icon = '🏦';
-                    else if (storageType === '其他') icon = '📌';
+        if (storageType === '现金') icon = '💵';
+        else if (storageType === 'TNG') icon = '🪙';
+        else if (storageType === '借记卡') icon = '🏧';
+        else if (storageType === '信用卡') icon = '💳';
+        else if (storageType === '银行转账') icon = '🏦';
+        else if (storageType === '其他') icon = '📌';
 
-                    return `<div class="pay-card" data-type="${escapeHtml(storageType)}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
-                }).join('')}</div>`;
+        return `<div class="pay-card" data-type="${escapeHtml(storageType)}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
+    }).join('')}</div>`;
 
-                const modal = modalManager.create(title, html);
-                if (!modal) return;
-                modal.querySelectorAll('.pay-card').forEach(btn => {
-                    btn.onclick = () => {
-                        const type = btn.dataset.type;
-                        modalManager.close(modal);
-                        callback(type);
-                    };
-                });
-            }
-
-            function showNoteModal(amount, category, payType, paxInfo = null) {
-                const displayCategory = translateCategory(category, currentLanguage);
-                const displayCategoryWithPax = paxInfo ? `${displayCategory} (${paxInfo}${t('servings')})` : displayCategory;
-                const displayAmount = formatSimpleAmount(amount);
-                const payTypeDisplay = payType ? `${escapeHtml(translateCategory(payType, currentLanguage))} · ` : '';
-                const modalHtml = `
-                    <div style="padding: 8px 0;">
-                        <div style="margin-bottom: 16px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(displayCategoryWithPax)}</div>
-                            <div style="font-size: 14px; color: #64748b;">${payTypeDisplay}${displayAmount}</div>
-                        </div>
-                        <label style="display: block; margin-bottom: 8px; font-size: 14px; color: #64748b;">${t('addNoteLabel')}</label>
-                        <input type="text" id="noteInput" placeholder="${t('notePlaceholder')}" style="width: 100%; padding: 14px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.1); outline: none; font-size: 15px;" autofocus>
-                        <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">${t('leaveEmpty')}</div>
-                    </div>
-                `;
-                const modal = modalManager.create(t('addNote'), modalHtml, `
-                    <div style="display: flex; gap: 10px;">
-                        <button id="skipNoteBtn" style="flex: 1; padding: 12px; border: none; border-radius: 28px; background: #f1f5f9; color: #64748b; font-size: 15px; cursor: pointer;">${t('skip')}</button>
-                        <button id="saveNoteBtn" style="flex: 2; padding: 12px; border: none; border-radius: 28px; background: var(--expense-color); color: white; font-size: 15px; font-weight: 600; cursor: pointer;">${t('saveRecord')}</button>
-                    </div>
-                `);
-                if (!modal) {
-    isAdding = false;
-    return;
+    const modal = modalManager.create(title, html);
+    if (!modal) return;
+    modal.querySelectorAll('.pay-card').forEach(btn => {
+        btn.onclick = () => {
+            const type = btn.dataset.type;
+            modalManager.close(modal);
+            callback(type);
+        };
+    });
 }
 
-// 监听模态框关闭事件，确保 isAdding 被重置
-const modalOverlay = modal.querySelector('.modal-overlay') || modal;
-const observer = new MutationObserver(() => {
-    if (!document.body.contains(modal)) {
-        isAdding = false;
-        observer.disconnect();
+            async function addRecord() {
+    if (isAdding) {
+        showToast(t('waitProcessing'));
+        return false;
     }
-});
-observer.observe(document.body, { childList: true });
-
-const noteInput = modal.querySelector('#noteInput');
-                setTimeout(() => noteInput.focus(), 100);
-                const saveWithNote = async (note) => {
-                    modalManager.close(modal);
-                    const entry = createNewEntry(amount, category, payType || getDefaultPayType());
-                    // 存储 note 时保留中文原始分类名
-                    if (note && note.trim()) {
-                        let trimmedNote = note.trim();
-                        if (trimmedNote.length > CONSTANTS.MAX_NOTE_LENGTH) {
-                            trimmedNote = trimmedNote.slice(0, CONSTANTS.MAX_NOTE_LENGTH);
-                            showToast(t('noteTruncated') + ' ' + CONSTANTS.MAX_NOTE_LENGTH + ' ' + t('characters'));
-                        }
-                        entry.note = `${category} · ${trimmedNote}`;
-                    } else if (paxInfo) {
-                        entry.note = `${category} (${paxInfo}${t('servings')})`;
-                    } else {
-                        entry.note = category;
-                    }
-                    const success = await saveEntry(entry);
-                    if (!success) {
-                        isAdding = false;
-                        return;
-                    }
-                    await enforceMaxEntries();
-                    entries.push(entry);
-                    addToCache(entry);
-                    document.getElementById('amountInput').value = '';
-                    document.getElementById('categoryInput').value = '';
-                    updateSingleDay(entry.date);
-                    if (entry.date === selectedDate) renderEntries();
-                    showToast(`${t('saved')} · ${translateNote(entry.note, currentLanguage)}`);
-                    isAdding = false;
-                };
-                modal.querySelector('#saveNoteBtn').onclick = () => saveWithNote(noteInput.value);
-                modal.querySelector('#skipNoteBtn').onclick = () => saveWithNote('');
-                noteInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        saveWithNote(noteInput.value);
-                    }
-                });
-            }
-
-            function showPaxSelectionModal(amount, category) {
-    // 收起键盘
+    const amount = getValidAmount();
+    if (amount === null) return false;
+    const category = getCategory();
+    isAdding = true;
+    
     document.getElementById('amountInput').blur();
     document.getElementById('categoryInput').blur();
+    choosePayType((payType) => {
+        saveRecordDirectly(amount, category, payType);
+    });
+    return true;
+}
 
-    const displayCategory = translateCategory(category, currentLanguage);
-    const modalHtml = `
-        <div class="pax-options">
-            ${[1, 2, 3, 4, 5].map(pax => `<div class="pax-option" data-pax="${pax}"><span class="pax-number">${pax}</span><span class="pax-label">${t('servings')}</span></div>`).join('')}
-        </div>
-        <button class="pax-confirm-btn" id="paxConfirmBtn" disabled>${t('confirmServings')}1 ${t('servings')}</button>
-        <button class="pax-skip-btn" id="paxSkipBtn">${t('skipServings')}</button>
-    `;
-    const modal = modalManager.create(`${t('selectServings')} · ${escapeHtml(displayCategory)}`, modalHtml);
-                if (!modal) {
-                    isAdding = false;
-                    return;
-                }
-                modal.querySelector('.modal-close')?.addEventListener('click', () => { isAdding = false; });
-                modal.addEventListener('click', (e) => { if (e.target === modal) isAdding = false; });
-                modal.querySelector('.modal-content').classList.add('pax-modal-content');
-                let selectedPax = 1;
-                const paxOptions = modal.querySelectorAll('.pax-option');
-                const confirmBtn = modal.querySelector('#paxConfirmBtn');
-                paxOptions[0].classList.add('selected');
-                confirmBtn.disabled = false;
-                paxOptions.forEach(option => {
-                    option.onclick = () => {
-                        paxOptions.forEach(o => o.classList.remove('selected'));
-                        option.classList.add('selected');
-                        selectedPax = parseInt(option.dataset.pax);
-                        confirmBtn.textContent = `${t('confirmServings')}${selectedPax} ${t('servings')}`;
-                        confirmBtn.disabled = false;
-                    };
-                });
-                const proceedToPayType = (paxCount) => {
-                    modalManager.close(modal);
-                    document.getElementById('amountInput').blur();
-                    document.getElementById('categoryInput').blur();
-                    choosePayType((payType) => { showNoteModal(amount, category, payType, paxCount); });
-                };
-                confirmBtn.onclick = () => proceedToPayType(selectedPax);
-                modal.querySelector('#paxSkipBtn').onclick = () => proceedToPayType(null);
-                modal.addEventListener('keydown', (e) => {
-                    if (e.key >= '1' && e.key <= '5') {
-                        const pax = parseInt(e.key);
-                        paxOptions.forEach(o => o.classList.remove('selected'));
-                        paxOptions[pax - 1].classList.add('selected');
-                        selectedPax = pax;
-                        confirmBtn.textContent = `${t('confirmServings')}${selectedPax} ${t('servings')}`;
-                        confirmBtn.disabled = false;
-                    } else if (e.key === 'Enter' && !confirmBtn.disabled) {
-                        confirmBtn.click();
-                    } else if (e.key === 'Escape') {
-                        isAdding = false;
-                        modalManager.close(modal);
-                    }
-                });
-            }
-
-            async function addRecord() {
-                if (isAdding) {
-                    showToast(t('waitProcessing'));
-                    return false;
-                }
-                const amount = getValidAmount();
-                if (amount === null) return false;
-                const category = getCategory();
-                // 餐类判断用存储值（中文）
-                const mealCategories = ['早餐', '午餐', '晚餐'];
-                isAdding = true;
-                if (currentType === 'expense' && mealCategories.includes(category)) {
-                    showPaxSelectionModal(amount, category);
-                    return true;
-                }
-                document.getElementById('amountInput').blur();
-                document.getElementById('categoryInput').blur();
-                choosePayType((payType) => {
-                    showNoteModal(amount, category, payType, null);
-                });
-                return true;
-            }
+async function saveRecordDirectly(amount, category, payType) {
+    const entry = createNewEntry(amount, category, payType || getDefaultPayType());
+    entry.note = category;
+    
+    const success = await saveEntry(entry);
+    if (!success) {
+        isAdding = false;
+        return;
+    }
+    await enforceMaxEntries();
+    entries.push(entry);
+    addToCache(entry);
+    document.getElementById('amountInput').value = '';
+    document.getElementById('categoryInput').value = '';
+    updateSingleDay(entry.date);
+    if (entry.date === selectedDate) renderEntries();
+    showToast(`${t('saved')} · ${translateNote(entry.note, currentLanguage)}`);
+    isAdding = false;
+}
 
             async function editEntry(id) {
     const entry = entries.find(e => String(e.id) === String(id));
     if (!entry) return;
     const oldEntry = { ...entry };
     const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
+
+    // 解析 note：提取分类名（用于编辑）和备注
+    let editCategory = entry.note || '';
+    let editMemo = '';
+    const dotIndex = editCategory.indexOf(' · ');
+    if (dotIndex !== -1) {
+        editMemo = editCategory.substring(dotIndex + 3);
+        editCategory = editCategory.substring(0, dotIndex);
+    }
 
     const typeOptions = entry.type === 'expense' ? paymentTypes : incomePaymentTypes;
     const displayTypeOptions = entry.type === 'expense' ? displayPaymentTypes() : displayIncomePaymentTypes();
@@ -4508,7 +4391,11 @@ const noteInput = modal.querySelector('#noteInput');
         </div>
         <div style="margin-bottom:16px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
-            <input type="text" id="editCategory" value="${escapeHtml(translateNote(entry.note, currentLanguage))}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('category')}">
+            <input type="text" id="editCategory" value="${escapeHtml(editCategory)}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('category')}">
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">📝 ${t('addNoteLabel')}</label>
+            <input type="text" id="editMemo" value="${escapeHtml(editMemo)}" placeholder="${t('notePlaceholder')}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('addNoteLabel')}">
         </div>
         <div style="margin-bottom:8px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${entry.type === 'expense' ? '💳' : '💰'} ${selectLabel}</label>
@@ -4743,55 +4630,42 @@ const noteInput = modal.querySelector('#noteInput');
             showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
             return;
         }
-        let newCat = modal.querySelector('#editCategory').value.trim();
-        if (!newCat) newCat = entry.type === 'expense' ? '未分类支出' : '未分类收入';
+        let newCategory = modal.querySelector('#editCategory').value.trim();
+        if (!newCategory) newCategory = entry.type === 'expense' ? '未分类支出' : '未分类收入';
+        
+        // 获取备注内容
+        let newMemo = modal.querySelector('#editMemo').value.trim();
+        
+        // 组合 note：分类名 + 备注（如果有）
+        let newNote = newCategory;
+        if (newMemo) {
+            // 限制备注长度
+            if (newMemo.length > CONSTANTS.MAX_NOTE_LENGTH - newCategory.length - 3) {
+                newMemo = newMemo.slice(0, CONSTANTS.MAX_NOTE_LENGTH - newCategory.length - 3);
+                showToast(t('noteTruncated') + ' ' + CONSTANTS.MAX_NOTE_LENGTH + ' ' + t('characters'));
+            }
+            newNote = newCategory + ' · ' + newMemo;
+        }
         
         // 如果当前是英文模式，尝试将显示值反向映射为中文存储值
         if (currentLanguage !== 'zh-CN') {
             const translations = CATEGORY_TRANSLATIONS[currentLanguage];
             if (translations) {
-                // 处理 "分类名 · 备注" 格式
-                const dotParts = newCat.split(' · ');
-                if (dotParts.length === 2) {
-                    let cnCat = null;
-                    for (const [cn, trans] of Object.entries(translations)) {
-                        if (trans === dotParts[0]) {
-                            cnCat = cn;
-                            break;
-                        }
-                    }
-                    if (cnCat) newCat = cnCat + ' · ' + dotParts[1];
-                }
-                // 处理 "分类名 (X servings)" 格式
-                else {
-                    const servingsMatch = newCat.match(new RegExp(`^(.+?)\\s*\\(\\d+\\s*${t('servings')}\\)$`));
-                    if (servingsMatch) {
-                        for (const [cn, trans] of Object.entries(translations)) {
-                            if (trans === servingsMatch[1]) {
-                                // 提取数字
-                                const paxMatch = newCat.match(/\((\d+)/);
-                                if (paxMatch) {
-                                    newCat = cn + ' (' + paxMatch[1] + '人份)';
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    // 纯分类名
-                    else {
-                        for (const [cn, trans] of Object.entries(translations)) {
-                            if (trans === newCat) {
-                                newCat = cn;
-                                break;
-                            }
-                        }
+                // 处理分类名
+                for (const [cn, trans] of Object.entries(translations)) {
+                    if (trans === newCategory) {
+                        newCategory = cn;
+                        break;
                     }
                 }
+                // 重新组合 note（使用中文分类）
+                newNote = newCategory;
+                if (newMemo) newNote = newCategory + ' · ' + newMemo;
             }
         }
 
         entry.amount = newAmount;
-        entry.note = newCat;
+        entry.note = newNote;
         entry.payType = selectedPayType;
         entry.timestamp = Date.now();
         entry.time = new Date().toTimeString().slice(0, 5);
@@ -4824,6 +4698,12 @@ const noteInput = modal.querySelector('#noteInput');
         }
     });
     modal.querySelector('#editCategory').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            modal.querySelector('#saveEditBtn').click();
+        }
+    });
+    modal.querySelector('#editMemo').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             modal.querySelector('#saveEditBtn').click();
