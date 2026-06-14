@@ -4195,7 +4195,7 @@ function renderCalendarImmediate() {
         classList.toggle('today', dateStr === todayStr);
         classList.toggle('other-month', !isCurrentMonth);
         dayDiv.setAttribute('data-date', dateStr);
-        dayDiv.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
+        dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
 
         const numDiv = dayDiv.querySelector('.day-number');
         numDiv.textContent = dayNum;
