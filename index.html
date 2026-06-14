@@ -1943,8 +1943,8 @@
                         <div class="menu-item" id="managePaymentTypes" role="menuitem">💳 管理支付方式</div>
                         <div class="menu-item" id="manageIncomePaymentTypes" role="menuitem">💰 管理收款方式</div>
 <!-- 👇 添加这两个新菜单项 -->
-<div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [开启]</div>
-<div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [开启]</div>
+<div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [已开启 🟢]</div>
+<div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [已开启 🟢]</div>
 <!-- 👆 添加结束 -->
 <div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
@@ -3788,6 +3788,33 @@ function translateNote(note, targetLang) {
     
     loadSettings();
     updateUILanguage();
+    // ==================== 在 load() 函数中，加载其他设置的位置添加 ====================
+// 大约在第 1700 行附近，load() 函数内部，加载完语言设置后添加：
+
+// ===== 加载功能开关设置 =====
+const paxSetting = await dbManager.get('settings', 'featurePaxEnabled');
+if (paxSetting !== undefined && paxSetting.value !== undefined) {
+    featurePaxEnabled = paxSetting.value;
+} else {
+    featurePaxEnabled = true;  // 默认开启
+}
+
+const noteSetting = await dbManager.get('settings', 'featureNoteEnabled');
+if (noteSetting !== undefined && noteSetting.value !== undefined) {
+    featureNoteEnabled = noteSetting.value;
+} else {
+    featureNoteEnabled = true;  // 默认开启
+}
+
+// 更新菜单按钮文字
+const togglePaxBtn = document.getElementById('togglePaxFeature');
+if (togglePaxBtn) {
+    togglePaxBtn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+}
+const toggleNoteBtn = document.getElementById('toggleNoteFeature');
+if (toggleNoteBtn) {
+    toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+}
 }
 
             function getDayStats(date) {
@@ -4428,20 +4455,25 @@ const noteInput = modal.querySelector('#noteInput');
                     } else {
                         entry.note = category;
                     }
-                    const success = await saveEntry(entry);
-                    if (!success) {
-                        isAdding = false;
-                        return;
-                    }
-                    await enforceMaxEntries();
-                    entries.push(entry);
-                    addToCache(entry);
-                    document.getElementById('amountInput').value = '';
-                    document.getElementById('categoryInput').value = '';
-                    updateSingleDay(entry.date);
-                    if (entry.date === selectedDate) renderEntries();
-                    showToast(`${t('saved')} · ${translateNote(entry.note, currentLanguage)}`);
-                    isAdding = false;
+                    // 保存成功后
+const success = await saveEntry(entry);
+if (!success) {
+    isAdding = false;
+    return;
+}
+await enforceMaxEntries();
+entries.push(entry);
+addToCache(entry);
+document.getElementById('amountInput').value = '';
+document.getElementById('categoryInput').value = '';
+updateSingleDay(entry.date);
+if (entry.date === selectedDate) renderEntries();
+
+// 👇 三行显示
+const displayAmount = formatSimpleAmount(entry.amount);
+showToast(`✅ ${t('saved')}\n${translateNote(entry.note, currentLanguage)}\n${displayAmount}`);
+
+isAdding = false;
                 };
                 modal.querySelector('#saveNoteBtn').onclick = () => saveWithNote(noteInput.value);
                 modal.querySelector('#skipNoteBtn').onclick = () => saveWithNote('');
@@ -6516,22 +6548,28 @@ result += `═════════════`;
                 document.querySelector('.stat-card.expense').onclick = () => showSearch({ type: 'expense' });
                 document.querySelector('.stat-card.balance').onclick = () => showSearch({ type: 'all' });
             }
-                // 在 bindEvents 函数内，其他 .onclick 附近添加：
-                document.getElementById('togglePaxFeature')?.addEventListener('click', () => {
-                    featurePaxEnabled = !featurePaxEnabled;
-                    const btn = document.getElementById('togglePaxFeature');
-                    if (btn) btn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [开启]' : '🍽️ 人份选择 [关闭]';
-                    showToast(`人份选择已${featurePaxEnabled ? '开启' : '关闭'}`);
-                    closeMenu();
-                });
-                
-                document.getElementById('toggleNoteFeature')?.addEventListener('click', () => {
-                    featureNoteEnabled = !featureNoteEnabled;
-                    const btn = document.getElementById('toggleNoteFeature');
-                    if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [开启]' : '📝 备注填写 [关闭]';
-                    showToast(`备注填写已${featureNoteEnabled ? '开启' : '关闭'}`);
-                    closeMenu();
-                });
+                // ==================== 修改菜单栏的开关事件处理 ====================
+// 找到 bindEvents 函数中约第 3330 行附近的开关事件，替换为：
+
+document.getElementById('togglePaxFeature')?.addEventListener('click', async () => {
+    featurePaxEnabled = !featurePaxEnabled;
+    const btn = document.getElementById('togglePaxFeature');
+    if (btn) btn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+    // 保存到数据库
+    await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
+    showToast(`人份选择${featurePaxEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+    closeMenu();
+});
+
+document.getElementById('toggleNoteFeature')?.addEventListener('click', async () => {
+    featureNoteEnabled = !featureNoteEnabled;
+    const btn = document.getElementById('toggleNoteFeature');
+    if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+    // 保存到数据库
+    await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
+    showToast(`备注填写${featureNoteEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+    closeMenu();
+});
 
                         // ==================== 设置面板（基本不变，只需确认 tempColors 初始化的位置）====================
             function openSettingsPanel() {
