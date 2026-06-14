@@ -1883,6 +1883,39 @@
             background: rgba(255, 255, 255, 0.08);
             color: #94a3b8;
         }
+        /* 农历特殊标识：初一十五 呼吸动画 */
+.day-lunar-special {
+    font-size: calc(var(--font-size-base) * 0.45);
+    color: #f97316;
+    text-align: center;
+    margin-top: 2px;
+    font-weight: 600;
+    line-height: 1.2;
+    animation: lunarBreathing 2.2s ease-in-out infinite;
+}
+
+@keyframes lunarBreathing {
+    0% {
+        opacity: 0.6;
+        transform: scale(0.92);
+        text-shadow: 0 0 0px rgba(249, 115, 22, 0);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.08);
+        text-shadow: 0 0 5px rgba(249, 115, 22, 0.5);
+    }
+    100% {
+        opacity: 0.6;
+        transform: scale(0.92);
+        text-shadow: 0 0 0px rgba(249, 115, 22, 0);
+    }
+}
+
+/* 暗色模式下的农历颜色 */
+body.dark-mode .day-lunar-special {
+    color: #fb923c;
+}
     </style>
 </head>
 
@@ -4083,136 +4116,158 @@ if (toggleNoteBtn) {
                 }
             }
 
-            function renderCalendarImmediate() {
-                const year = currentYear, month = currentMonth;
-                const firstDay = new Date(year, month, 1);
-                const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const prevMonthDays = new Date(year, month, 0).getDate();
-                const grid = document.getElementById('calendarGrid');
-                const todayStr = getLocalDate();
+            // 替换整个 renderCalendarImmediate 函数
+function renderCalendarImmediate() {
+    const year = currentYear, month = currentMonth;
+    const firstDay = new Date(year, month, 1);
+    const startOffset = firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1;
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthDays = new Date(year, month, 0).getDate();
+    const grid = document.getElementById('calendarGrid');
+    const todayStr = getLocalDate();
 
-                if (grid.children.length !== 42) {
-                    grid.innerHTML = '';
-                    for (let i = 0; i < 42; i++) {
-                        const dayDiv = document.createElement('div');
-                        dayDiv.className = 'calendar-day';
-                        dayDiv.setAttribute('role', 'gridcell');
-                        dayDiv.setAttribute('tabindex', '0');
-                        const numDiv = document.createElement('div');
-                        numDiv.className = 'day-number';
-                        dayDiv.appendChild(numDiv);
-                        const expenseSpan = document.createElement('div');
-                        expenseSpan.className = 'day-expense';
-                        expenseSpan.style.display = 'none';
-                        dayDiv.appendChild(expenseSpan);
-                        const incomeSpan = document.createElement('div');
-                        incomeSpan.className = 'day-income';
-                        incomeSpan.style.display = 'none';
-                        dayDiv.appendChild(incomeSpan);
-                        grid.appendChild(dayDiv);
-                    }
-                }
+    // 确保42个格子存在，并包含农历显示元素
+    if (grid.children.length !== 42) {
+        grid.innerHTML = '';
+        for (let i = 0; i < 42; i++) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'calendar-day';
+            dayDiv.setAttribute('role', 'gridcell');
+            dayDiv.setAttribute('tabindex', '0');
+            const numDiv = document.createElement('div');
+            numDiv.className = 'day-number';
+            dayDiv.appendChild(numDiv);
+            const expenseSpan = document.createElement('div');
+            expenseSpan.className = 'day-expense';
+            expenseSpan.style.display = 'none';
+            dayDiv.appendChild(expenseSpan);
+            const incomeSpan = document.createElement('div');
+            incomeSpan.className = 'day-income';
+            incomeSpan.style.display = 'none';
+            dayDiv.appendChild(incomeSpan);
+            // 新增：农历显示元素
+            const lunarSpan = document.createElement('div');
+            lunarSpan.className = 'day-lunar-special';
+            lunarSpan.style.display = 'none';
+            dayDiv.appendChild(lunarSpan);
+            grid.appendChild(dayDiv);
+        }
+    }
 
-                const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
-                const prevMonth = month === 0 ? 11 : month - 1;
-                const prevYear = month === 0 ? year - 1 : year;
-                const nextMonth = month === 11 ? 0 : month + 1;
-                const nextYear = month === 11 ? year + 1 : year;
+    const currentMonthStr = `${year}-${String(month + 1).padStart(2, '0')}`;
+    const prevMonth = month === 0 ? 11 : month - 1;
+    const prevYear = month === 0 ? year - 1 : year;
+    const nextMonth = month === 11 ? 0 : month + 1;
+    const nextYear = month === 11 ? year + 1 : year;
 
-                for (let i = 0; i < 42; i++) {
-                    const dayDiv = grid.children[i];
-                    let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
-                    if (i < startOffset) {
-                        dayNum = prevMonthDays - (startOffset - i) + 1;
-                        isCurrentMonth = false;
-                        displayYear = prevYear;
-                        displayMonth = prevMonth;
-                        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    } else if (i >= startOffset + daysInMonth) {
-                        dayNum = i - (startOffset + daysInMonth) + 1;
-                        isCurrentMonth = false;
-                        displayYear = nextYear;
-                        displayMonth = nextMonth;
-                        dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
-                    } else {
-                        dayNum = i - startOffset + 1;
-                        isCurrentMonth = true;
-                        displayYear = year;
-                        displayMonth = month;
-                        dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
-                    }
+    for (let i = 0; i < 42; i++) {
+        const dayDiv = grid.children[i];
+        let dayNum, isCurrentMonth, displayYear, displayMonth, dateStr;
+        if (i < startOffset) {
+            dayNum = prevMonthDays - (startOffset - i) + 1;
+            isCurrentMonth = false;
+            displayYear = prevYear;
+            displayMonth = prevMonth;
+            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        } else if (i >= startOffset + daysInMonth) {
+            dayNum = i - (startOffset + daysInMonth) + 1;
+            isCurrentMonth = false;
+            displayYear = nextYear;
+            displayMonth = nextMonth;
+            dateStr = `${displayYear}-${String(displayMonth + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+        } else {
+            dayNum = i - startOffset + 1;
+            isCurrentMonth = true;
+            displayYear = year;
+            displayMonth = month;
+            dateStr = `${currentMonthStr}-${String(dayNum).padStart(2, '0')}`;
+        }
 
-                    const dayEntries = dateMap[dateStr] || [];
-                    let expense = 0, income = 0;
-                    for (const e of dayEntries) {
-                        if (e.type === 'expense') expense += e.amount;
-                        else income += e.amount;
-                    }
+        const dayEntries = dateMap[dateStr] || [];
+        let expense = 0, income = 0;
+        for (const e of dayEntries) {
+            if (e.type === 'expense') expense += e.amount;
+            else income += e.amount;
+        }
 
-                    const classList = dayDiv.classList;
-                    classList.toggle('selected', dateStr === selectedDate);
-                    classList.toggle('today', dateStr === todayStr);
-                    classList.toggle('other-month', !isCurrentMonth);
-                    dayDiv.setAttribute('data-date', dateStr);
-                    dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
+        const classList = dayDiv.classList;
+        classList.toggle('selected', dateStr === selectedDate);
+        classList.toggle('today', dateStr === todayStr);
+        classList.toggle('other-month', !isCurrentMonth);
+        dayDiv.setAttribute('data-date', dateStr);
+        dayDiv.setAttribute('aria-label', `${dateStr}，支出${expense.toFixed(0)}，收入${income.toFixed(0)}`);
 
-                    const numDiv = dayDiv.querySelector('.day-number');
-                    numDiv.textContent = dayNum;
+        const numDiv = dayDiv.querySelector('.day-number');
+        numDiv.textContent = dayNum;
 
-                    const expenseSpan = dayDiv.querySelector('.day-expense');
-                    const incomeSpan = dayDiv.querySelector('.day-income');
-                    if (isCurrentMonth) {
-                        if (expense > 0) {
-                            expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
-                            expenseSpan.style.display = 'block';
-                        } else expenseSpan.style.display = 'none';
-                        if (income > 0) {
-                            incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
-                            incomeSpan.style.display = 'block';
-                        } else incomeSpan.style.display = 'none';
-                    } else {
-                        expenseSpan.style.display = 'none';
-                        incomeSpan.style.display = 'none';
-                    }
-                }
+        const expenseSpan = dayDiv.querySelector('.day-expense');
+        const incomeSpan = dayDiv.querySelector('.day-income');
+        if (isCurrentMonth) {
+            if (expense > 0) {
+                expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
+                expenseSpan.style.display = 'block';
+            } else expenseSpan.style.display = 'none';
+            if (income > 0) {
+                incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
+                incomeSpan.style.display = 'block';
+            } else incomeSpan.style.display = 'none';
+        } else {
+            expenseSpan.style.display = 'none';
+            incomeSpan.style.display = 'none';
+        }
 
-                const [y, m, d] = selectedDate.split('-');
-                const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
-                const weekdays = t('weekdays');
-                let label = weekdays[dateObj.getDay()];
-                const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
-                if (dateObj.toDateString() === todayForCompare.toDateString()) {
-                    label = `${t('today')} · ${label}`;
-                }
-                document.getElementById('selectedDateLabel').innerHTML = label;
-
-                if (currentLanguage === 'zh-CN') {
-                    const yearNum = y;
-                    const monthNum = parseInt(m);
-                    const dayNum = parseInt(d);
-
-                    let html = `<span style="font-weight:700;">${yearNum}</span><span style="font-weight:500;">年</span>` +
-                               `<span style="font-weight:700;">${monthNum}</span><span style="font-weight:500;">月</span>` +
-                               `<span style="font-weight:700;">${dayNum}</span><span style="font-weight:500;">日</span>`;
-
-                    try {
-                        const lunar = Lunar.solarToLunarFromYMD(parseInt(y), parseInt(m), parseInt(d));
-                        html += ` · ${lunar.monthName}月${lunar.dayName}`;
-                    } catch (e) {
-                        console.warn('获取农历失败:', e);
-                    }
-
-                    document.getElementById('currentYearMonthDay').innerHTML = html;
+        // ========== 新增：农历初一十五显示 ==========
+        const lunarSpan = dayDiv.querySelector('.day-lunar-special');
+        if (isCurrentMonth) {
+            try {
+                // 公历转农历：注意月份需要 +1（因为 Lunar 期望 1-12）
+                const lunar = Lunar.solarToLunarFromYMD(displayYear, displayMonth + 1, dayNum);
+                // 判断是否为初一或十五
+                if (lunar.dayName === "初一" || lunar.dayName === "十五") {
+                    lunarSpan.textContent = lunar.dayName;
+                    lunarSpan.style.display = 'block';
                 } else {
-                    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                    const dateDisplayText = `${monthNames[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
-                    document.getElementById('currentYearMonthDay').innerText = dateDisplayText;
+                    lunarSpan.style.display = 'none';
                 }
-
-                renderTopCards();
-                renderSelectedDayTotal();
+            } catch (e) {
+                lunarSpan.style.display = 'none';
             }
+        } else {
+            lunarSpan.style.display = 'none';
+        }
+        // ========================================
+    }
+
+    const [y, m, d] = selectedDate.split('-');
+    const dateObj = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T12:00:00`);
+    const weekdays = t('weekdays');
+    let label = weekdays[dateObj.getDay()];
+    const todayForCompare = new Date(getLocalDate() + 'T12:00:00');
+    if (dateObj.toDateString() === todayForCompare.toDateString()) {
+        label = `${t('today')} · ${label}`;
+    }
+    document.getElementById('selectedDateLabel').innerHTML = label;
+
+    if (currentLanguage === 'zh-CN') {
+        const yearNum = y;
+        const monthNum = parseInt(m);
+        const dayNum = parseInt(d);
+        let html = `<span style="font-weight:700;">${yearNum}</span><span style="font-weight:500;">年</span>` +
+                   `<span style="font-weight:700;">${monthNum}</span><span style="font-weight:500;">月</span>` +
+                   `<span style="font-weight:700;">${dayNum}</span><span style="font-weight:500;">日</span>`;
+        try {
+            const lunar = Lunar.solarToLunarFromYMD(parseInt(y), parseInt(m), parseInt(d));
+            html += ` · ${lunar.monthName}月${lunar.dayName}`;
+        } catch (e) {}
+        document.getElementById('currentYearMonthDay').innerHTML = html;
+    } else {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        document.getElementById('currentYearMonthDay').innerText = `${monthNames[parseInt(m) - 1]} ${parseInt(d)}, ${y}`;
+    }
+
+    renderTopCards();
+    renderSelectedDayTotal();
+}
 
             function renderCalendar() {
                 if (renderCalendarTimer) return;
