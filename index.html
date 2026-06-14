@@ -1916,6 +1916,46 @@
 body.dark-mode .day-lunar-special {
     color: #fb923c;
 }
+/* ========= 优雅毛玻璃弹窗（精简版，无特大图标） ========= */
+.elegant-toast-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+.elegant-toast-card {
+    background: rgba(30, 41, 59, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 32px;
+    padding: 18px 26px;
+    min-width: 220px;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 20px 35px -10px rgba(0,0,0,0.3);
+    animation: toastFloatIn 0.25s ease-out;
+    pointer-events: auto;
+}
+body.dark-mode .elegant-toast-card {
+    background: rgba(15, 23, 42, 0.94);
+}
+.toast-line { margin: 5px 0; line-height: 1.4; font-size: 16px; font-weight: 500; }
+.toast-line.status { color: white; }
+.toast-line.detail { color: rgba(255,255,255,0.85); }
+.toast-line.amount { font-weight: 600; margin-top: 6px; }
+.toast-line.amount.expense { color: #fda4af; }
+.toast-line.amount.income { color: #6ee7b7; }
+
+@keyframes toastFloatIn {
+    0% { opacity: 0; transform: translateY(16px) scale(0.96); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
     </style>
 </head>
 
@@ -3311,6 +3351,26 @@ function translateNote(note, targetLang) {
                 container.appendChild(toast);
                 setTimeout(() => toast.remove(), duration);
             }
+            // 优雅弹窗（中间浮动，三行完整信息，无特大emoji）
+function showElegantToast(icon, statusText, detailText, amountText, amountType) {
+    const existing = document.querySelector('.elegant-toast-overlay');
+    if (existing) existing.remove();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'elegant-toast-overlay';
+    overlay.innerHTML = `
+        <div class="elegant-toast-card">
+            <div class="toast-line status">${icon} ${statusText}</div>
+            <div class="toast-line detail">${escapeHtml(detailText)}</div>
+            <div class="toast-line amount ${amountType}">${amountText}</div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => {
+        if (overlay && overlay.parentNode) overlay.remove();
+    }, 2200);
+}
 
             function generateUniqueId() {
                 try {
@@ -4435,26 +4495,31 @@ function renderCalendarImmediate() {
 
             function showNoteModal(amount, category, payType, paxInfo = null) {
             if (!featureNoteEnabled) {
-                    const entry = createNewEntry(amount, category, payType || getDefaultPayType());
-                    if (paxInfo) {
-                        entry.note = `${category} (${paxInfo}${t('servings')})`;
-                    } else {
-                        entry.note = category;
-                    }
-                    saveEntry(entry).then(async (success) => {
-                        if (!success) { isAdding = false; return; }
-                        await enforceMaxEntries();
-                        entries.push(entry);
-                        addToCache(entry);
-                        document.getElementById('amountInput').value = '';
-                        document.getElementById('categoryInput').value = '';
-                        updateSingleDay(entry.date);
-                        if (entry.date === selectedDate) renderEntries();
-                        showToast(`${t('saved')} · ${translateNote(entry.note, currentLanguage)}`);
-                        isAdding = false;
-                    });
-                    return;
-                }
+    const entry = createNewEntry(amount, category, payType || getDefaultPayType());
+    if (paxInfo) {
+        entry.note = `${category} (${paxInfo}${t('servings')})`;
+    } else {
+        entry.note = category;
+    }
+    saveEntry(entry).then(async (success) => {
+        if (!success) { isAdding = false; return; }
+        await enforceMaxEntries();
+        entries.push(entry);
+        addToCache(entry);
+        document.getElementById('amountInput').value = '';
+        document.getElementById('categoryInput').value = '';
+        updateSingleDay(entry.date);
+        if (entry.date === selectedDate) renderEntries();
+        // ✅ 改用优雅弹窗
+        const statusText = ' 已记账';
+        const detailText = translateNote(entry.note, currentLanguage);
+        const amountText = (entry.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entry.amount);
+        const amountType = entry.type;
+        showElegantToast('✅', statusText, detailText, amountText, amountType);
+        isAdding = false;
+    });
+    return;
+}
                 const displayCategory = translateCategory(category, currentLanguage);
                 const displayCategoryWithPax = paxInfo ? `${displayCategory} (${paxInfo}${t('servings')})` : displayCategory;
                 const displayAmount = formatSimpleAmount(amount);
@@ -4524,9 +4589,12 @@ document.getElementById('categoryInput').value = '';
 updateSingleDay(entry.date);
 if (entry.date === selectedDate) renderEntries();
 
-// 👇 三行显示
-const displayAmount = formatSimpleAmount(entry.amount);
-showToast(`✅ ${t('saved')}\n${translateNote(entry.note, currentLanguage)}\n${displayAmount}`);
+// 使用优雅弹窗
+const statusText = ' 已记账';
+const detailText = translateNote(entry.note, currentLanguage);
+const amountText = (entry.type === 'expense' ? '- ' : '+ ') + displayAmount;
+const amountType = entry.type;
+showElegantToast('✅', statusText, detailText, amountText, amountType);
 
 isAdding = false;
                 };
@@ -4958,7 +5026,12 @@ async function editEntry(id) {
             updateInputColor();
         }
         modalManager.close(modal);
-        showToast(t('modified'));
+        // 使用优雅弹窗
+const statusText = ' 修改成功';
+const detailText = translateNote(entry.note, currentLanguage);
+const amountText = (entry.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entry.amount);
+const amountType = entry.type;
+showElegantToast('✏️', statusText, detailText, amountText, amountType);
     };
 
     modal.querySelector('#editAmount').addEventListener('keypress', (e) => {
@@ -4978,7 +5051,14 @@ async function editEntry(id) {
                 updateSingleDay(entryToDelete.date);
                 if (entryToDelete.date === selectedDate) renderEntries();
                 renderCategoryDropdown();
-                if (showToastMessage) showToast(t('deleted'));
+                if (showToastMessage) {
+    // 使用优雅弹窗
+    const statusText = ' 已删除';
+    const detailText = translateNote(entryToDelete.note, currentLanguage);
+    const amountText = (entryToDelete.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entryToDelete.amount);
+    const amountType = entryToDelete.type;
+    showElegantToast('🗑', statusText, detailText, amountText, amountType);
+}
                 return true;
             }
 
