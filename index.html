@@ -6392,7 +6392,7 @@ result += `═════════════`;
                     if (!filtered.length) { showToast(t('noDataMatch')); return; }
                     const exportData = {
                         source: 'main', version: '1.0', exportDate: new Date().toISOString(),
-                        entries: filtered, expenseCats, incomeCats, paymentTypes, incomePaymentTypes
+                        entries: filtered, expenseCats, incomeCats, paymentTypes, incomePaymentTypes,featurePaxEnabled: featurePaxEnabled,featureNoteEnabled: featureNoteEnabled
                     };
                     let fileName;
                     if (currentLanguage === 'zh-CN') {
@@ -6527,6 +6527,24 @@ result += `═════════════`;
                     if (newExpenseCats > 0 || newIncomeCats > 0) { await saveCategories(); showToast(`${t('autoAddedCats')} ${newExpenseCats} ${t('expenseCatsCount')}${newIncomeCats} ${t('incomeCatsCount')}`); }
                     if (newPays > 0) { await savePaymentTypes(); showToast(`${t('autoAddedPayments')} ${newPays} ${t('paymentTypesCount')}`); }
                     if (newIncomePays > 0) { await saveIncomePaymentTypes(); showToast(`${t('autoAddedPayments')} ${newIncomePays} ${t('incomePaymentTypesCount')}`); }
+                    // 恢复功能开关状态
+if (data.featurePaxEnabled !== undefined) {
+    featurePaxEnabled = data.featurePaxEnabled;
+    await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
+    const togglePaxBtn = document.getElementById('togglePaxFeature');
+    if (togglePaxBtn) {
+        togglePaxBtn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+    }
+}
+
+if (data.featureNoteEnabled !== undefined) {
+    featureNoteEnabled = data.featureNoteEnabled;
+    await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
+    const toggleNoteBtn = document.getElementById('toggleNoteFeature');
+    if (toggleNoteBtn) {
+        toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+    }
+}
                     rebuildStatsCache();
                     renderCalendar();
                     renderEntries();
