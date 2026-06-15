@@ -2734,8 +2734,8 @@ noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
                     leaveEmpty: 'Leave empty to record only category name',
                     skip: 'Skip',
                     saveRecord: 'Save Entry',
-                    saved: 'Entry saved',
-                    modified: 'Modified successfully',
+                    saved: 'Entry Saved',
+                    modified: 'Modified Successfully',
                     deleted: 'Deleted',
                     switchedTo: 'Switched to',
                     darkModeOn: 'Dark mode enabled',
@@ -4276,26 +4276,25 @@ function renderCalendarImmediate() {
             incomeSpan.style.display = 'none';
         }
 
-        // ========== 新增：农历初一十五显示 ==========
-        const lunarSpan = dayDiv.querySelector('.day-lunar-special');
-        if (isCurrentMonth) {
-            try {
-                // 公历转农历：注意月份需要 +1（因为 Lunar 期望 1-12）
-                const lunar = Lunar.solarToLunarFromYMD(displayYear, displayMonth + 1, dayNum);
-                // 判断是否为初一或十五
-                if (lunar.dayName === "初一" || lunar.dayName === "十五") {
-                    lunarSpan.textContent = lunar.dayName;
-                    lunarSpan.style.display = 'block';
-                } else {
-                    lunarSpan.style.display = 'none';
-                }
-            } catch (e) {
-                lunarSpan.style.display = 'none';
-            }
+// ========== 新增：农历初一十五显示（仅中文模式）==========
+const lunarSpan = dayDiv.querySelector('.day-lunar-special');
+if (isCurrentMonth && currentLanguage === 'zh-CN') {
+    try {
+        // 公历转农历：注意月份需要 +1（因为 Lunar 期望 1-12）
+        const lunar = Lunar.solarToLunarFromYMD(displayYear, displayMonth + 1, dayNum);
+        // 判断是否为初一或十五
+        if (lunar.dayName === "初一" || lunar.dayName === "十五") {
+            lunarSpan.textContent = lunar.dayName;
+            lunarSpan.style.display = 'block';
         } else {
             lunarSpan.style.display = 'none';
         }
-        // ========================================
+    } catch (e) {
+        lunarSpan.style.display = 'none';
+    }
+} else {
+    lunarSpan.style.display = 'none';
+}
     }
 
     const [y, m, d] = selectedDate.split('-');
@@ -4511,7 +4510,7 @@ function renderCalendarImmediate() {
         updateSingleDay(entry.date);
         if (entry.date === selectedDate) renderEntries();
         // ✅ 改用优雅弹窗
-        const statusText = ' 已记账';
+        const statusText = ' ' + t('saved');
         const detailText = translateNote(entry.note, currentLanguage);
         const amountText = (entry.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entry.amount);
         const amountType = entry.type;
@@ -4590,7 +4589,7 @@ updateSingleDay(entry.date);
 if (entry.date === selectedDate) renderEntries();
 
 // 使用优雅弹窗
-const statusText = ' 已记账';
+const statusText = ' ' + t('saved');
 const detailText = translateNote(entry.note, currentLanguage);
 const amountText = (entry.type === 'expense' ? '- ' : '+ ') + displayAmount;
 const amountType = entry.type;
@@ -5027,7 +5026,7 @@ async function editEntry(id) {
         }
         modalManager.close(modal);
         // 使用优雅弹窗
-const statusText = ' 修改成功';
+const statusText = ' ' + t('modified');
 const detailText = translateNote(entry.note, currentLanguage);
 const amountText = (entry.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entry.amount);
 const amountType = entry.type;
@@ -5053,7 +5052,7 @@ showElegantToast('✏️', statusText, detailText, amountText, amountType);
                 renderCategoryDropdown();
                 if (showToastMessage) {
     // 使用优雅弹窗
-    const statusText = ' 已删除';
+const statusText = ' ' + t('deleted');
     const detailText = translateNote(entryToDelete.note, currentLanguage);
     const amountText = (entryToDelete.type === 'expense' ? '- ' : '+ ') + formatSimpleAmount(entryToDelete.amount);
     const amountType = entryToDelete.type;
