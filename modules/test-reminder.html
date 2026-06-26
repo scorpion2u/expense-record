@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 提醒记事本 - 独立测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+            background: #f1f5f9;
+            transition: background 0.2s;
+        }
+        .test-header {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .test-header h1 { font-size: 20px; color: #1e293b; }
+        .test-header .badge {
+            display: inline-block;
+            background: #22c55e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 6px;
+        }
+        .test-header .status {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .test-tools {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+        .test-tools button {
+            flex: 1;
+            min-width: 70px;
+            padding: 12px 12px;
+            border: none;
+            border-radius: 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        .test-tools button:active { transform: scale(0.96); }
+        .btn-primary { background: #c2413a; color: white; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-outline { background: transparent; border: 2px solid #94a3b8; color: #64748b; }
+        .btn-outline:hover { background: #f1f5f9; }
+
+        .test-log {
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transition: background 0.2s;
+        }
+        .test-log h3 { font-size: 14px; color: #64748b; margin-bottom: 10px; }
+        #logContainer {
+            max-height: 280px;
+            overflow-y: auto;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.8;
+        }
+        .log-entry { padding: 2px 0; border-bottom: 1px solid rgba(0,0,0,0.04); }
+        .log-entry .time { color: #94a3b8; margin-right: 8px; }
+        .log-entry.success { color: #22c55e; }
+        .log-entry.error { color: #ef4444; }
+        .log-entry.info { color: #3b82f6; }
+        .log-entry.warning { color: #f59e0b; }
+
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 99999;
+            pointer-events: none;
+        }
+        .toast {
+            background: #1e293b;
+            color: white;
+            padding: 8px 18px;
+            border-radius: 32px;
+            font-size: 14px;
+            animation: fadeInOut 2s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(10px); }
+            15% { opacity: 1; transform: translateY(0); }
+            85% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-10px); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        body.dark-mode {
+            background: #0f172a;
+        }
+        body.dark-mode .test-header,
+        body.dark-mode .test-log {
+            background: #1e293b;
+        }
+        body.dark-mode .test-header h1 {
+            color: #f1f5f9;
+        }
+        body.dark-mode .log-entry {
+            color: #e2e8f0;
+            border-bottom-color: rgba(255,255,255,0.05);
+        }
+        .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b; }
+        .close-btn { width: 100%; background: #f1f5f9; border: none; padding: 10px; border-radius: 28px; cursor: pointer; font-size: 14px; }
+        body.dark-mode .close-btn { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+    </style>
+</head>
+<body>
+
+    <div class="test-header">
+        <h1>🧪 提醒记事本 - 独立测试</h1>
+        <div class="badge" id="moduleStatus">⏳ 加载中...</div>
+        <div class="status" id="moduleInfo">等待模块加载...</div>
+    </div>
+
+    <div class="test-tools">
+        <button class="btn-primary" id="openNotebookBtn">📝 记事本</button>
+        <button class="btn-success" id="checkRemindersBtn">🔔 检查</button>
+        <button class="btn-warning" id="clearDataBtn">🗑 清空</button>
+        <button class="btn-outline" id="toggleDarkBtn">🌙 暗色</button>
+    </div>
+
+    <div class="test-log">
+        <h3>📋 控制台日志</h3>
+        <div id="logContainer">
+            <div class="log-entry info"><span class="time">[系统]</span> 初始化测试环境...</div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    // ============================================================
+    // 1. 定义所有依赖
+    // ============================================================
+
+    // ----- Lunar 农历模块 -----
+    const Lunar = (function() {
+        const lunarInfo = [
+            0x04bd8,0x04ae0,0x0a570,0x054d5,0x0d260,0x0d950,0x16554,0x056a0,0x09ad0,0x055d2,
+            0x04ae0,0x0a5b6,0x0a4d0,0x0d250,0x1d255,0x0b540,0x0d6a0,0x0ada2,0x095b0,0x14977,
+            0x04970,0x0a4b0,0x0b4b5,0x06a50,0x06d40,0x1ab54,0x02b60,0x09570,0x052f2,0x04970,
+            0x06566,0x0d4a0,0x0ea50,0x06e95,0x05ad0,0x02b60,0x186e3,0x092e0,0x1c8d7,0x0c950,
+            0x0d4a0,0x1d8a6,0x0b550,0x056a0,0x1a5b4,0x025d0,0x092d0,0x0d2b2,0x0a950,0x0b557,
+            0x06ca0,0x0b550,0x15355,0x04da0,0x0a5b0,0x14573,0x052b0,0x0a9a8,0x0e950,0x06aa0,
+            0x0aea6,0x0ab50,0x04b60,0x0aae4,0x0a570,0x05260,0x0f263,0x0d950,0x05b57,0x056a0,
+            0x096d0,0x04dd5,0x04ad0,0x0a4d0,0x0d4d4,0x0d250,0x0d558,0x0b540,0x0b6a0,0x195a6,
+            0x095b0,0x049b0,0x0a974,0x0a4b0,0x0b27a,0x06a50,0x06d40,0x0af46,0x0ab60,0x09570,
+            0x04af5,0x04970,0x064b0,0x074a3,0x0ea50,0x06b58,0x055c0,0x0ab60,0x096d5,0x092e0,
+            0x0c960,0x0d954,0x0d4a0,0x0da50,0x07552,0x056a0,0x0abb7,0x025d0,0x092d0,0x0cab5,
+            0x0a950,0x0b4a0,0x0baa4,0x0ad50,0x055d9,0x04ba0,0x0a5b0,0x15176,0x052b0,0x0a930,
+            0x07954,0x06aa0,0x0ad50,0x05b52,0x04b60,0x0a6e6,0x0a4e0,0x0d260,0x0ea65,0x0d530,
+            0x05aa0,0x076a3,0x096d0,0x04afb,0x04ad0,0x0a4d0,0x1d0b6,0x0d250,0x0d520,0x0dd45,
+            0x0b5a0,0x056d0,0x055b2,0x049b0,0x0a577,0x0a4b0,0x0aa50,0x1b255,0x06d20,0x0ada0,
+            0x14b63,0x09370,0x049f8,0x04970,0x064b0,0x168a6,0x0ea50,0x06b20,0x1a6c4,0x0aae0,
+            0x092e0,0x0d2e3,0x0c960,0x0d557,0x0d4a0,0x0da50,0x05d55,0x056a0,0x0a6d0,0x055d4,
+            0x052d0,0x0a9b8,0x0a950,0x0b4a0,0x0b6a6,0x0ad50,0x055a0,0x0aba4,0x0a5b0,0x052b0,
+            0x0b273,0x06930,0x07337,0x06aa0,0x0ad50,0x14b55,0x04b60,0x0a570,0x054e4,0x0d160,
+            0x0e968,0x0d520,0x0daa0,0x16aa6,0x056d0,0x04ae0,0x0a9d4,0x0a2d0,0x0d150,0x0f252,
+            0x0d520
+        ];
+        const monthNames = ['正','二','三','四','五','六','七','八','九','十','冬','腊'];
+        const dayNames = ['初一','初二','初三','初四','初五','初六','初七','初八','初九','初十',
+                         '十一','十二','十三','十四','十五','十六','十七','十八','十九','二十',
+                         '廿一','廿二','廿三','廿四','廿五','廿六','廿七','廿八','廿九','三十'];
+
+        function getLeapMonth(y) { return lunarInfo[y-1900] & 0xf; }
+        function getLeapDays(y) { return getLeapMonth(y) ? ((lunarInfo[y-1900] & 0x10000) ? 30 : 29) : 0; }
+        function getMonthDays(y,m) { return (lunarInfo[y-1900] & (0x10000 >> m)) ? 30 : 29; }
+        function getYearDays(y) { let s=348; for(let i=0x8000; i>0x8; i>>=1) s += (lunarInfo[y-1900] & i) ? 1 : 0; return s + getLeapDays(y); }
+
+        function solarToLunarFromYMD(year, month, day) {
+            let offset = 0;
+            for (let y = 1900; y < year; y++) { offset += 365 + (((y%4===0&&y%100!==0)||(y%400===0)) ? 1 : 0); }
+            const md = [31,28,31,30,31,30,31,31,30,31,30,31];
+            if ((year%4===0&&year%100!==0)||(year%400===0)) md[1] = 29;
+            for (let m = 1; m < month; m++) offset += md[m-1];
+            offset += day - 31;
+            
+            let lunarYear = 1900, days = getYearDays(lunarYear);
+            while (offset >= days) { offset -= days; lunarYear++; days = getYearDays(lunarYear); }
+            
+            let lunarMonth = 1, isLeap = false, leapMonth = getLeapMonth(lunarYear);
+            for (let m = 1; m <= 12; m++) {
+                let d;
+                if (leapMonth > 0 && m === leapMonth + 1 && !isLeap) {
+                    isLeap = true; m--; d = getLeapDays(lunarYear);
+                } else { d = getMonthDays(lunarYear, m); }
+                if (offset < d) { lunarMonth = m; break; }
+                offset -= d;
+                if (leapMonth === m && isLeap) isLeap = false;
+            }
+            return {
+                year: lunarYear, month: lunarMonth, day: offset + 1,
+                isLeap: isLeap,
+                monthName: (isLeap ? '闰' : '') + monthNames[lunarMonth - 1],
+                dayName: dayNames[offset]
+            };
+        }
+        return { solarToLunarFromYMD };
+    })();
+
+    // ----- dbManager (localStorage 模拟) -----
+    const dbManager = {
+        async get(store, key) {
+            const data = localStorage.getItem(`test_${key}`);
+            return data ? { value: JSON.parse(data) } : null;
+        },
+        async put(store, item) {
+            localStorage.setItem(`test_${item.key}`, JSON.stringify(item.value));
+        },
+        async delete(store, key) {
+            localStorage.removeItem(`test_${key}`);
+        },
+        async clear(store) {
+            Object.keys(localStorage).filter(k => k.startsWith('test_')).forEach(k => localStorage.removeItem(k));
+        }
+    };
+
+    // ----- modalManager (简单弹窗) -----
+    function createModal(title, bodyHtml, footerHtml) {
+        const overlay = document.createElement('div');
+        const isDark = document.body.classList.contains('dark-mode');
+        const cardBg = isDark ? '#1e293b' : '#ffffff';
+        const textColor = isDark ? '#f1f5f9' : '#1e293b';
+        const borderColor = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+
+        overlay.style.cssText = `
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.5); display:flex; align-items:center;
+            justify-content:center; z-index:9999; animation:fadeIn 0.2s ease;
+        `;
+        overlay.innerHTML = `
+            <div style="background:${cardBg}; border-radius:28px; width:92%; max-width:400px;
+                        max-height:85vh; overflow:hidden; display:flex; flex-direction:column;
+                        box-shadow:0 20px 35px rgba(0,0,0,0.2); animation:slideUp 0.2s ease;">
+                <div style="display:flex; justify-content:space-between; align-items:center;
+                            padding:16px 20px; border-bottom:1px solid ${borderColor};">
+                    <h3 style="font-size:18px; font-weight:600; margin:0; color:${textColor};">${title}</h3>
+                    <button class="modal-close" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+                </div>
+                <div style="flex:1; overflow-y:auto; padding:16px 20px; -webkit-overflow-scrolling:touch;">
+                    ${bodyHtml}
+                </div>
+                <div style="padding:12px 20px; border-top:1px solid ${borderColor};">
+                    ${footerHtml || '<button class="close-btn" style="width:100%;background:#f1f5f9;border:none;padding:10px;border-radius:28px;cursor:pointer;font-size:14px;">关闭</button>'}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('.modal-close').onclick = () => overlay.remove();
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        return overlay;
+    }
+
+    const modalManager = {
+        create: createModal,
+        closeCurrent() { document.querySelectorAll('.modal-overlay, [style*="z-index: 9999"]').forEach(el => el.remove()); },
+        close(modal) { if (modal && modal.parentNode) modal.remove(); }
+    };
+
+    // ----- 其他工具函数 -----
+    function showToast(msg) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 2000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    function t(key) { return { 'close': '关闭' }[key] || key; }
+
+    const uiSettings = { expenseColor: '#c2413a', incomeColor: '#2dd4bf', darkMode: false };
+
+    // ============================================================
+    // 2. 暴露到全局
+    // ============================================================
+    window.Lunar = Lunar;
+    window.dbManager = dbManager;
+    window.modalManager = modalManager;
+    window.showToast = showToast;
+    window.escapeHtml = escapeHtml;
+    window.t = t;
+    window.uiSettings = uiSettings;
+
+    // ============================================================
+    // 3. 加载提醒模块
+    // ============================================================
+    const logContainer = document.getElementById('logContainer');
+    let moduleLoaded = false;
+
+    function log(msg, type = 'info') {
+        const time = new Date().toLocaleTimeString();
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        entry.innerHTML = `<span class="time">[${time}]</span> ${msg}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+        console.log(`[${type.toUpperCase()}]`, msg);
+    }
+
+    function loadReminderModule() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = './reminder.js?' + Date.now();
+            script.onload = function() {
+                log('✅ 提醒模块加载成功！', 'success');
+                if (typeof ReminderModule !== 'undefined') {
+                    window.ReminderModule = ReminderModule;
+                    moduleLoaded = true;
+                    document.getElementById('moduleStatus').textContent = '🟢 已加载';
+                    document.getElementById('moduleStatus').style.background = '#22c55e';
+                    document.getElementById('moduleInfo').textContent = `📦 版本: 1.0 · 方法: ${Object.keys(ReminderModule).join(', ')}`;
+                    resolve();
+                } else if (window.ReminderModule) {
+                    moduleLoaded = true;
+                    document.getElementById('moduleStatus').textContent = '🟢 已加载';
+                    document.getElementById('moduleStatus').style.background = '#22c55e';
+                    resolve();
+                } else {
+                    log('⚠️ ReminderModule 未暴露到全局', 'error');
+                    reject(new Error('模块未暴露'));
+                }
+            };
+            script.onerror = function() {
+                log('❌ 提醒模块加载失败！请检查 reminder.js 是否存在', 'error');
+                document.getElementById('moduleStatus').textContent = '🔴 加载失败';
+                document.getElementById('moduleStatus').style.background = '#ef4444';
+                reject(new Error('加载失败'));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    // ============================================================
+    // 4. 初始化
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async function() {
+        log('🧪 测试环境初始化...', 'info');
+        try {
+            await loadReminderModule();
+            const today = new Date();
+            const lunar = Lunar.solarToLunarFromYMD(today.getFullYear(), today.getMonth() + 1, today.getDate());
+            log(`📅 今天: ${today.toLocaleDateString()} 农历 ${lunar.monthName}月${lunar.dayName}`, 'info');
+            log('💡 点击「记事本」→ 模板 → 选择「初一+十五拜拜」添加提醒', 'info');
+            log('💡 添加后点击「检查」测试弹窗', 'info');
+        } catch (e) {
+            log('❌ 初始化失败: ' + e.message, 'error');
+        }
+    });
+
+    // ============================================================
+    // 5. 测试按钮
+    // ============================================================
+    document.getElementById('openNotebookBtn').onclick = function() {
+        if (moduleLoaded && window.ReminderModule) {
+            log('📝 打开提醒记事本...', 'info');
+            window.ReminderModule.openReminderNotebook();
+        } else {
+            log('❌ 模块未加载，请刷新页面', 'error');
+            showToast('⚠️ 请等待模块加载完成');
+        }
+    };
+
+    document.getElementById('checkRemindersBtn').onclick = function() {
+        if (moduleLoaded && window.ReminderModule) {
+            log('🔔 手动检查提醒...', 'info');
+            window.ReminderModule.checkReminders();
+        } else {
+            log('❌ 模块未加载，请刷新页面', 'error');
+            showToast('⚠️ 请等待模块加载完成');
+        }
+    };
+
+    document.getElementById('clearDataBtn').onclick = function() {
+        if (confirm('确定要清空所有测试数据吗？')) {
+            localStorage.clear();
+            log('🗑 已清空所有测试数据', 'warning');
+            showToast('✅ 已清空');
+            logContainer.innerHTML = `<div class="log-entry info"><span class="time">[系统]</span> 数据已清空</div>`;
+            // 重新加载模块
+            moduleLoaded = false;
+            document.getElementById('moduleStatus').textContent = '⏳ 重新加载...';
+            document.getElementById('moduleStatus').style.background = '#f59e0b';
+            loadReminderModule().then(() => {
+                log('✅ 模块重新加载成功', 'success');
+            }).catch(() => {
+                log('❌ 重新加载失败', 'error');
+            });
+        }
+    };
+
+    let darkMode = false;
+    document.getElementById('toggleDarkBtn').onclick = function() {
+        darkMode = !darkMode;
+        document.body.classList.toggle('dark-mode', darkMode);
+        this.textContent = darkMode ? '☀️ 亮色' : '🌙 暗色';
+        uiSettings.darkMode = darkMode;
+        log(darkMode ? '🌙 切换到暗色模式' : '☀️ 切换到亮色模式', 'info');
+    };
+    </script>
+
+</body>
+</html>
