@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📝 带通知的记事本</title>
+    <!-- 简洁、干净、移动友好的样式 -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body {
+            background: #f5f7fb;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .notebook {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 8px 20px rgba(0,0,0,0.06);
+            padding: 28px 24px 32px;
+            transition: box-shadow 0.2s;
+        }
+        .notebook:hover {
+            box-shadow: 0 24px 48px rgba(0,0,0,0.12);
+        }
+        h1 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 26px;
+            font-weight: 600;
+            color: #1e293b;
+            letter-spacing: -0.3px;
+            margin-bottom: 8px;
+        }
+        .subhead {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #64748b;
+            font-size: 14px;
+            border-bottom: 1px solid #e9edf2;
+            padding-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+        .subhead .badge {
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 4px 14px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .subhead .badge i {
+            font-style: normal;
+            font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 18px 20px;
+            font-size: 16px;
+            line-height: 1.6;
+            resize: vertical;
+            min-height: 200px;
+            background: #fafcff;
+            transition: 0.2s;
+            color: #0f172a;
+            letter-spacing: 0.2px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        textarea:focus {
+            outline: 2px solid #818cf8;
+            outline-offset: 2px;
+            border-color: transparent;
+            background: white;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 16px;
+            margin-top: 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .left-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn {
+            background: white;
+            border: 1px solid #d1d9e6;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #1e293b;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+            background: #f8fafc;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .btn-primary {
+            background: #4f46e5;
+            border: 1px solid #4f46e5;
+            color: white;
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.15);
+        }
+        .btn-primary:hover {
+            background: #4338ca;
+            border-color: #4338ca;
+            transform: scale(0.97);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid #d1d9e6;
+        }
+        .btn-outline:hover {
+            background: #f1f5f9;
+            border-color: #b0c0d4;
+        }
+        .btn-success {
+            background: #0b7e4b;
+            border: 1px solid #0b7e4b;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #0a6a3e;
+            border-color: #0a6a3e;
+        }
+        .btn:active {
+            transform: scale(0.96);
+        }
+        .reminder-area {
+            background: #f8fafc;
+            border-radius: 60px;
+            padding: 4px 4px 4px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #e2e8f0;
+            margin-top: 18px;
+        }
+        .reminder-area label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .reminder-area input[type="datetime-local"] {
+            border: none;
+            padding: 8px 12px;
+            border-radius: 40px;
+            background: white;
+            font-size: 14px;
+            border: 1px solid #d1d9e6;
+            flex: 1 1 160px;
+            min-width: 140px;
+            color: #0f172a;
+        }
+        .reminder-area input[type="datetime-local"]:focus {
+            outline: 2px solid #818cf8;
+            border-color: transparent;
+        }
+        .status-message {
+            margin-top: 18px;
+            padding: 12px 18px;
+            border-radius: 60px;
+            background: #f1f5f9;
+            color: #1e293b;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-left: 4px solid #94a3b8;
+            transition: 0.2s;
+        }
+        .status-message .emoji {
+            font-size: 20px;
+        }
+        .status-message .time {
+            font-weight: 500;
+            color: #0f172a;
+        }
+        .notification-badge {
+            background: #fef9c3;
+            color: #854d0e;
+            padding: 2px 12px;
+            border-radius: 40px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .footer-credit {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #94a3b8;
+            text-align: center;
+            border-top: 1px solid #ecf1f7;
+            padding-top: 18px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .footer-credit span {
+            opacity: 0.7;
+        }
+        /* 适配小屏 */
+        @media (max-width: 480px) {
+            .notebook { padding: 20px 16px; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .left-actions { justify-content: center; }
+            .reminder-area { flex-direction: column; align-items: stretch; padding: 16px; border-radius: 28px; }
+            .reminder-area label { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="notebook" id="notebookApp">
+        <h1>
+            <span>📓</span> 记事本 · 提醒
+        </h1>
+        <div class="subhead">
+            <span>✏️ 写下想法，设置提醒</span>
+            <span class="badge"><i>🔔</i> 通知已就绪</span>
+        </div>
+
+        <!-- 主要文本区域 -->
+        <textarea id="noteContent" placeholder="写点什么…… 比如：下午4点开会，记得带文件。"></textarea>
+
+        <!-- 工具栏 -->
+        <div class="toolbar">
+            <div class="left-actions">
+                <button class="btn btn-outline" id="saveNoteBtn">💾 保存</button>
+                <button class="btn btn-outline" id="clearNoteBtn">🗑️ 清空</button>
+            </div>
+            <div>
+                <button class="btn btn-primary" id="remindNowBtn">⏰ 立即提醒</button>
+            </div>
+        </div>
+
+        <!-- 提醒设置区域 -->
+        <div class="reminder-area">
+            <label for="reminderTime">📅 提醒时间</label>
+            <input type="datetime-local" id="reminderTime" value="">
+            <button class="btn btn-success" id="setReminderBtn">设置提醒</button>
+        </div>
+
+        <!-- 状态 / 通知预览 -->
+        <div class="status-message" id="statusMessage">
+            <span class="emoji">💬</span>
+            <span>状态: 就绪 · 可设置提醒</span>
+        </div>
+
+        <div class="footer-credit">
+            <span>🔔 通知需要浏览器授权</span>
+            <span>⚡ 支持调用 & 独立使用</span>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            "use strict";
+
+            // ---------- DOM 引用 ----------
+            const noteTextarea = document.getElementById('noteContent');
+            const saveBtn = document.getElementById('saveNoteBtn');
+            const clearBtn = document.getElementById('clearNoteBtn');
+            const remindNowBtn = document.getElementById('remindNowBtn');
+            const setReminderBtn = document.getElementById('setReminderBtn');
+            const reminderInput = document.getElementById('reminderTime');
+            const statusDiv = document.getElementById('statusMessage');
+
+            // ---------- 存储键名 ----------
+            const STORAGE_KEY = 'notebook_content';
+
+            // ---------- 工具函数: 显示状态 ----------
+            function setStatus(emoji, text, isImportant = false) {
+                statusDiv.innerHTML = `<span class="emoji">${emoji}</span><span>${text}</span>`;
+                if (isImportant) {
+                    statusDiv.style.borderLeftColor = '#f97316';
+                    statusDiv.style.background = '#fffbeb';
+                } else {
+                    statusDiv.style.borderLeftColor = '#94a3b8';
+                    statusDiv.style.background = '#f1f5f9';
+                }
+            }
+
+            // ---------- 加载保存的笔记 ----------
+            function loadNote() {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        noteTextarea.value = saved;
+                        setStatus('📂', '已加载保存的笔记');
+                    } else {
+                        setStatus('📝', '空笔记 · 可以开始写了');
+                    }
+                } catch (e) {
+                    // 忽略
+                }
+            }
+
+            // ---------- 保存笔记 ----------
+            function saveNote() {
+                const content = noteTextarea.value;
+                try {
+                    localStorage.setItem(STORAGE_KEY, content);
+                    setStatus('💾', '笔记已保存到本地');
+                } catch (e) {
+                    setStatus('❌', '保存失败，存储空间可能已满');
+                }
+            }
+
+            // ---------- 清空笔记 (同时清除存储) ----------
+            function clearNote() {
+                if (noteTextarea.value.trim() === '' && !localStorage.getItem(STORAGE_KEY)) {
+                    setStatus('🧹', '已经是空笔记了');
+                    return;
+                }
+                if (confirm('确定要清空笔记内容吗？')) {
+                    noteTextarea.value = '';
+                    try {
+                        localStorage.removeItem(STORAGE_KEY);
+                        setStatus('🗑️', '笔记已清空');
+                    } catch (e) {
+                        setStatus('⚠️', '清空失败');
+                    }
+                }
+            }
+
+            // ---------- 发送浏览器通知 (核心) ----------
+            function sendNotification(title, body, tag = 'notebook-reminder') {
+                // 如果浏览器不支持 Notification API
+                if (!("Notification" in window)) {
+                    setStatus('⚠️', '此浏览器不支持桌面通知', true);
+                    return false;
+                }
+
+                // 检查权限状态
+                if (Notification.permission === 'granted') {
+                    // 权限已授权 —— 直接发送
+                    try {
+                        const notification = new Notification(title, {
+                            body: body,
+                            tag: tag,          // 防止重复通知
+                            icon: '📓',        // 某些浏览器会显示
+                            silent: false,
+                        });
+                        // 点击通知聚焦窗口 (可选)
+                        notification.onclick = function() {
+                            window.focus();
+                            this.close();
+                        };
+                        setStatus('🔔', `通知已发送: “${title}”`, false);
+                        return true;
+                    } catch (e) {
+                        setStatus('❌', '通知发送失败: ' + e.message, true);
+                        return false;
+                    }
+                } else if (Notification.permission === 'denied') {
+                    // 用户已拒绝权限
+                    setStatus('🚫', '通知权限被拒绝，请在浏览器设置中开启', true);
+                    return false;
+                } else {
+                    // 未授权 (默认) —— 请求权限
+                    setStatus('⏳', '请求通知权限...', false);
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            // 权限授予后重新发送
+                            sendNotification(title, body, tag);
+                        } else {
+                            setStatus('🚫', '通知权限被拒绝', true);
+                        }
+                    }).catch(() => {
+                        setStatus('⚠️', '无法请求通知权限', true);
+                    });
+                    return false; // 异步处理
+                }
+            }
+
+            // ---------- 获取当前笔记内容 (若空则给默认文本) ----------
+            function getNoteContentOrFallback() {
+                const content = noteTextarea.value.trim();
+                return content || '（当前笔记为空，请添加内容）';
+            }
+
+            // ---------- 提醒: 立即提醒 (使用当前笔记内容) ----------
+            function remindNow() {
+                const content = getNoteContentOrFallback();
+                const title = '📌 记事本提醒';
+                const body = content.length > 60 ? content.slice(0, 60) + '…' : content;
+                sendNotification(title, body, 'immediate-reminder');
+                // 额外状态提示
+                setStatus('⏰', '已触发立即提醒 (检查通知)', false);
+            }
+
+            // ---------- 设置定时提醒 (基于 datetime-local) ----------
+            function setReminder() {
+                const rawValue = reminderInput.value;
+                if (!rawValue) {
+                    setStatus('⚠️', '请先选择日期和时间', true);
+                    return;
+                }
+
+                const targetDate = new Date(rawValue);
+                if (isNaN(targetDate.getTime())) {
+                    setStatus('⚠️', '无效的日期时间', true);
+                    return;
+                }
+
+                const now = new Date();
+                const diffMs = targetDate.getTime() - now.getTime();
+
+                if (diffMs <= 0) {
+                    setStatus('⏳', '提醒时间必须是将来的时间', true);
+                    return;
+                }
+
+                // 获取笔记内容
+                const content = getNoteContentOrFallback();
+                const title = `⏰ 记事本提醒 (${targetDate.toLocaleTimeString()})`;
+                const body = content.length > 60 ? content.slice(0, 60) + '…' : content;
+
+                // 显示“定时器已设”状态
+                const timeStr = targetDate.toLocaleString();
+                setStatus('⏲️', `提醒已设定在 ${timeStr}`, false);
+
+                // 设置定时器 (setTimeout)
+                const timerId = setTimeout(() => {
+                    // 到达提醒时间，发送通知
+                    const nowAgain = new Date();
+                    const titleAtTime = `🔔 提醒时间到 (${nowAgain.toLocaleTimeString()})`;
+                    sendNotification(titleAtTime, body, 'scheduled-reminder');
+                    setStatus('✅', `提醒已触发 (${nowAgain.toLocaleTimeString()})`, false);
+                }, diffMs);
+
+                // 保存timerId到全局以便调试 (但不用取消)
+                window._lastReminderTimer = timerId;
+
+                // 额外: 如果超时较长，给个提示（但无需额外操作）
+                if (diffMs > 60000) {
+                    // 大于1分钟显示更友好的提示
+                    const minutes = Math.floor(diffMs / 60000);
+                    const seconds = Math.floor((diffMs % 60000) / 1000);
+                    setStatus('⏲️', `提醒已设定 (${minutes}分${seconds}秒后)`, false);
+                }
+            }
+
+            // ---------- 自动请求通知权限 (页面加载时温和请求) ----------
+            function requestNotificationPermissionOnLoad() {
+                if (!("Notification" in window)) {
+                    // 不支持通知
+                    setStatus('ℹ️', '浏览器不支持桌面通知', false);
+                    return;
+                }
+                if (Notification.permission === 'default') {
+                    // 仅当未决定时，静默请求 (不强制弹窗)
+                    Notification.requestPermission().then(perm => {
+                        if (perm === 'granted') {
+                            setStatus('✅', '通知权限已获得', false);
+                        } else if (perm === 'denied') {
+                            setStatus('🚫', '通知权限被拒绝', true);
+                        }
+                    }).catch(() => {});
+                } else if (Notification.permission === 'granted') {
+                    setStatus('🔔', '通知权限已就绪', false);
+                } else if (Notification.permission === 'denied') {
+                    setStatus('🚫', '通知已被拒绝', true);
+                }
+            }
+
+            // ---------- 额外: 对外暴露接口 (方便主HTML调用) ----------
+            // 将整个组件的方法挂载到全局，方便外部调用。
+            // 主HTML可以通过 window.NoteBook 访问。
+            window.NoteBook = {
+                // 保存笔记
+                save: saveNote,
+                // 清空笔记
+                clear: clearNote,
+                // 立即提醒 (会读取当前笔记内容)
+                remind: remindNow,
+                // 设定提醒 (需要传入日期时间字符串? 但为了简单，暴露setReminder)
+                setReminder: setReminder,
+                // 获取笔记内容
+                getContent: () => noteTextarea.value,
+                // 设置笔记内容 (方便外部注入)
+                setContent: (text) => {
+                    noteTextarea.value = text;
+                    setStatus('📥', '内容已更新 (外部调用)');
+                },
+                // 获取当前状态 (调试)
+                getStatus: () => statusDiv.innerText,
+                // 请求通知权限
+                requestPermission: () => {
+                    if ("Notification" in window) {
+                        Notification.requestPermission().then(p => {
+                            if (p === 'granted') setStatus('✅', '权限已授予', false);
+                        });
+                    }
+                }
+            };
+
+            // ---------- 事件绑定 ----------
+            saveBtn.addEventListener('click', saveNote);
+            clearBtn.addEventListener('click', clearNote);
+            remindNowBtn.addEventListener('click', remindNow);
+            setReminderBtn.addEventListener('click', setReminder);
+
+            // 额外: 保存快捷键 (Ctrl+S)
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    saveNote();
+                }
+            });
+
+            // 设置默认日期时间为当前时间+10分钟 (方便演示)
+            function setDefaultReminderTime() {
+                const now = new Date();
+                now.setMinutes(now.getMinutes() + 10);
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                const hours = String(now.getHours()).padStart(2, '0');
+                const minutes = String(now.getMinutes()).padStart(2, '0');
+                const defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+                reminderInput.value = defaultDateTime;
+            }
+
+            // ---------- 初始化 ----------
+            loadNote();
+            setDefaultReminderTime();
+            // 请求通知权限 (温和)
+            requestNotificationPermissionOnLoad();
+
+            // 附加: 若页面可见性变化，可忽略，但保持干净
+            console.log('📓 记事本已启动，可通过 window.NoteBook 调用');
+            console.log('示例: window.NoteBook.remind() 或 window.NoteBook.setContent("新内容")');
+
+        })();
+    </script>
+</body>
+</html>
