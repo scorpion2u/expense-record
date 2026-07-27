@@ -3014,41 +3014,50 @@ noteHint: ' Tip: Toggle "Note" in menu',
                 return types.map(t => translateCategory(t, targetLang));
             }
 
-// 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
-// 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
-// 翻译记录中的 note（处理 "分类名 · 备注" 这种格式）
+// 统一解析 note 中的"分类 / 份数 / 备注"三部分，支持以下所有历史格式：
+// "分类"、"分类 (N人份)"、"分类 · 备注"、"分类 (N人份) · 备注"
+function parseEntryNote(note) {
+    if (typeof note !== 'string') return { category: '', pax: null, extra: '' };
+    let rest = note;
+    let extra = '';
+    const dotIndex = rest.indexOf(' · ');
+    if (dotIndex !== -1) {
+        extra = rest.substring(dotIndex + 3);
+        rest = rest.substring(0, dotIndex);
+    }
+    let pax = null;
+    const paxMatch = rest.match(/^(.+?)\s*\((\d+)\s*(?:人份|servings)\)$/i);
+    let category = rest;
+    if (paxMatch) {
+        category = paxMatch[1];
+        pax = paxMatch[2];
+    }
+    return { category, pax, extra };
+}
+
+// 与 parseEntryNote 对应的构建函数，保证份数 + 备注可以同时保留
+function buildEntryNote(category, pax, extra) {
+    let result = category;
+    if (pax) result += ` (${pax}${t('servings')})`;
+    if (extra && extra.trim()) result += ` · ${extra.trim()}`;
+    return result;
+}
+
+// 翻译记录中的 note（基于 parseEntryNote 统一解析，支持份数+备注同时存在）
 function translateNote(note, targetLang) {
     if (!note) return note;
     const target = targetLang || currentLanguage;
-    
+
     // 已经是目标语言，无需翻译
     if (target === 'zh-CN') return note;
-    
-    // 匹配 "分类名 · 备注" 格式
-    const dotParts = note.split(' · ');
-    if (dotParts.length === 2) {
-        const translatedCat = translateCategory(dotParts[0], target);
-        return translatedCat + ' · ' + dotParts[1];
-    }
-    
-    // 匹配中文 "分类名 (X人份)" 格式
-    const chinesePaxMatch = note.match(/^(.+?)\s*\((\d+)人份\)$/);
-    if (chinesePaxMatch) {
-        const translatedCat = translateCategory(chinesePaxMatch[1], target);
-        const servingsText = target === 'zh-CN' ? '人份' : 'servings';
-        return `${translatedCat} (${chinesePaxMatch[2]} ${servingsText})`;
-    }
-    
-    // 匹配英文 "分类名 (X servings)" 格式
-    const englishPaxMatch = note.match(/^(.+?)\s*\((\d+)\s*servings\)$/i);
-    if (englishPaxMatch) {
-        const translatedCat = translateCategory(englishPaxMatch[1], target);
-        const servingsText = target === 'zh-CN' ? '人份' : 'servings';
-        return `${translatedCat} (${englishPaxMatch[2]} ${servingsText})`;
-    }
-    
-    // 纯分类名
-    return translateCategory(note, target);
+
+    const { category, pax, extra } = parseEntryNote(note);
+    const translatedCat = translateCategory(category, target);
+    const servingsText = target === 'zh-CN' ? '人份' : 'servings';
+    let result = translatedCat;
+    if (pax) result += ` (${pax} ${servingsText})`;
+    if (extra) result += ` · ${extra}`;
+    return result;
 }
 
             // ==================== 多货币配置 ====================
@@ -3884,56 +3893,40 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
             entries = loadedEntries.filter(validateEntry);
         }
 
-        // 检查版本号
+        // 检查版本号（仅用于记录/未来迁移用途，不再用它来清空用户数据）
         const versionData = await dbManager.get('settings', 'appVersion');
         const storedVersion = versionData ? versionData.value : '0.0';
         const isNewVersion = storedVersion !== CONSTANTS.APP_VERSION;
 
-        // ===== 如果版本更新，强制覆盖四类数据 =====
-        if (isNewVersion) {
-            console.log('🔄 检测到新版本 ' + CONSTANTS.APP_VERSION + '，正在更新配置...');
-            
-            // 1. 支出分类 - 完全替换
-            expenseCats = [...CONSTANTS.DEFAULT_CATS.EXPENSE];
-            await dbManager.put('categories', { key: 'expenseCats', value: expenseCats });
-            console.log('✅ 支出分类已更新:', expenseCats);
-            
-            // 2. 收入分类 - 完全替换
-            incomeCats = [...CONSTANTS.DEFAULT_CATS.INCOME];
-            await dbManager.put('categories', { key: 'incomeCats', value: incomeCats });
-            console.log('✅ 收入分类已更新:', incomeCats);
-            
-            // 3. 支出方式 - 完全替换
-            paymentTypes = [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
-            await dbManager.put('categories', { key: 'paymentTypes', value: paymentTypes });
-            console.log('✅ 支出方式已更新:', paymentTypes);
-            
-            // 4. 收款方式 - 完全替换
-            incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
-            await dbManager.put('categories', { key: 'incomePaymentTypes', value: incomePaymentTypes });
-            console.log('✅ 收款方式已更新:', incomePaymentTypes);
-            
-            // 更新版本号
-            await dbManager.put('settings', { key: 'appVersion', value: CONSTANTS.APP_VERSION });
-            console.log('✅ 版本已更新至', CONSTANTS.APP_VERSION);
-            
+        // ===== 分类/支付方式：始终优先读取数据库中已保存的值，只有从未保存过时才用默认值 =====
+        // 之前的实现会在版本号变化时（即每次发新版本）强制用默认值覆盖，
+        // 导致用户自定义的分类、改名、排序全部被清空——这里改为“数据库有就用数据库的”。
+        const expenseCatsData = await dbManager.get('categories', 'expenseCats');
+        expenseCats = expenseCatsData ? expenseCatsData.value : [...CONSTANTS.DEFAULT_CATS.EXPENSE];
+
+        const incomeCatsData = await dbManager.get('categories', 'incomeCats');
+        incomeCats = incomeCatsData ? incomeCatsData.value : [...CONSTANTS.DEFAULT_CATS.INCOME];
+
+        const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
+        paymentTypes = paymentTypesData ? paymentTypesData.value : [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
+
+        const incomePaymentTypesData = await dbManager.get('categories', 'incomePaymentTypes');
+        if (incomePaymentTypesData) {
+            incomePaymentTypes = incomePaymentTypesData.value;
         } else {
-            // 版本相同，从数据库加载（保留用户可能的手动修改）
-            const expenseCatsData = await dbManager.get('categories', 'expenseCats');
-            expenseCats = expenseCatsData ? expenseCatsData.value : [...CONSTANTS.DEFAULT_CATS.EXPENSE];
-            
-            const incomeCatsData = await dbManager.get('categories', 'incomeCats');
-            incomeCats = incomeCatsData ? incomeCatsData.value : [...CONSTANTS.DEFAULT_CATS.INCOME];
-            
-            const paymentTypesData = await dbManager.get('categories', 'paymentTypes');
-            paymentTypes = paymentTypesData ? paymentTypesData.value : [...CONSTANTS.DEFAULT_PAYMENT_TYPES];
-            
-            const incomePaymentTypesData = await dbManager.get('categories', 'incomePaymentTypes');
-            if (incomePaymentTypesData) {
-                incomePaymentTypes = incomePaymentTypesData.value;
-            } else {
-                incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
-            }
+            incomePaymentTypes = [...CONSTANTS.DEFAULT_INCOME_PAYMENT_TYPES];
+        }
+
+        // 首次安装（数据库中完全没有分类数据）时，把默认值写入数据库
+        if (!expenseCatsData) await dbManager.put('categories', { key: 'expenseCats', value: expenseCats });
+        if (!incomeCatsData) await dbManager.put('categories', { key: 'incomeCats', value: incomeCats });
+        if (!paymentTypesData) await dbManager.put('categories', { key: 'paymentTypes', value: paymentTypes });
+        if (!incomePaymentTypesData) await dbManager.put('categories', { key: 'incomePaymentTypes', value: incomePaymentTypes });
+
+        // 仅更新版本号记录，不再触碰用户数据
+        if (isNewVersion) {
+            await dbManager.put('settings', { key: 'appVersion', value: CONSTANTS.APP_VERSION });
+            console.log('✅ 版本已更新至', CONSTANTS.APP_VERSION, '（分类等数据保持不变）');
         }
 
         // ===== 加载 UI 设置（不受版本影响，始终保持）=====
@@ -4579,11 +4572,7 @@ if (isCurrentMonth && currentLanguage === 'zh-CN') {
             function showNoteModal(amount, category, payType, paxInfo = null) {
             if (!featureNoteEnabled) {
     const entry = createNewEntry(amount, category, payType || getDefaultPayType());
-    if (paxInfo) {
-        entry.note = `${category} (${paxInfo}${t('servings')})`;
-    } else {
-        entry.note = category;
-    }
+    entry.note = buildEntryNote(category, paxInfo, '');
     saveEntry(entry).then(async (success) => {
         if (!success) { isAdding = false; return; }
         await enforceMaxEntries();
@@ -4645,19 +4634,16 @@ const noteInput = modal.querySelector('#noteInput');
                 const saveWithNote = async (note) => {
                     modalManager.close(modal);
                     const entry = createNewEntry(amount, category, payType || getDefaultPayType());
-                    // 存储 note 时保留中文原始分类名
+                    // 存储 note 时保留中文原始分类名；份数信息与备注可以同时保留
+                    let trimmedNote = '';
                     if (note && note.trim()) {
-                        let trimmedNote = note.trim();
+                        trimmedNote = note.trim();
                         if (trimmedNote.length > CONSTANTS.MAX_NOTE_LENGTH) {
                             trimmedNote = trimmedNote.slice(0, CONSTANTS.MAX_NOTE_LENGTH);
                             showToast(t('noteTruncated') + ' ' + CONSTANTS.MAX_NOTE_LENGTH + ' ' + t('characters'));
                         }
-                        entry.note = `${category} · ${trimmedNote}`;
-                    } else if (paxInfo) {
-                        entry.note = `${category} (${paxInfo}${t('servings')})`;
-                    } else {
-                        entry.note = category;
                     }
+                    entry.note = buildEntryNote(category, paxInfo, trimmedNote);
                     // 保存成功后
 const success = await saveEntry(entry);
 if (!success) {
@@ -4787,20 +4773,11 @@ async function editEntry(id) {
     const oldEntry = { ...entry };
     const displayAmount = convertToDisplayAmount(entry.amount).toFixed(getDecimalPlaces());
 
-    // 解析原始 note 中的分类和备注
-    let originalCategory = entry.note;
-    let originalNote = '';
-    const dotIndex = entry.note.indexOf(' · ');
-    if (dotIndex !== -1) {
-        originalCategory = entry.note.substring(0, dotIndex);
-        originalNote = entry.note.substring(dotIndex + 3);
-    }
-    // 处理份数格式 (分类名 (X人份))
-    const paxMatch = entry.note.match(/^(.+?)\s*\((\d+)人份\)$/);
-    if (paxMatch) {
-        originalCategory = paxMatch[1];
-        originalNote = `${paxMatch[2]}人份`;
-    }
+    // 解析原始 note 中的分类、份数和备注（份数与备注可能同时存在）
+    const parsedOriginal = parseEntryNote(entry.note);
+    let originalCategory = parsedOriginal.category;
+    let originalPax = parsedOriginal.pax;
+    let originalNote = parsedOriginal.extra;
 
     const displayCategory = translateCategory(originalCategory, currentLanguage);
     const displayNote = originalNote;
@@ -5073,17 +5050,9 @@ async function editEntry(id) {
 
         // 获取备注内容
         let noteContent = modal.querySelector('#editNote').value.trim();
-        
-        // 构建最终的 note
-        let finalNote = newCat;
-        if (noteContent) {
-            finalNote = `${newCat} · ${noteContent}`;
-        }
-        
-        // 检查是否是份数格式的备注（保持原格式）
-        if (!noteContent && originalNote && originalNote.includes('人份')) {
-            finalNote = `${newCat} (${originalNote})`;
-        }
+
+        // 构建最终的 note，份数信息（originalPax）与备注可以同时保留
+        const finalNote = buildEntryNote(newCat, originalPax, noteContent);
 
         entry.amount = newAmount;
         entry.note = finalNote;
@@ -5461,12 +5430,7 @@ result += `═════════════`;
         incomeCats.forEach(cat => { catIncStats[cat] = 0; });
 
         entriesToExport.forEach(e => {
-            const cat = e.note || '';
-            let pureCat = cat;
-            const dotIdx = pureCat.indexOf(' · ');
-            if (dotIdx > 0) pureCat = pureCat.substring(0, dotIdx);
-            const paxMatch = pureCat.match(/^(.+?)\s*\(\d+人份\)$/);
-            if (paxMatch) pureCat = paxMatch[1];
+            const pureCat = parseEntryNote(e.note || '').category;
 
             if (e.type === 'expense') {
                 catExpStats[pureCat] = (catExpStats[pureCat] || 0) + e.amount;
@@ -5586,12 +5550,7 @@ result += `═════════════`;
     incomeCats.forEach(cat => { categoryIncomeStats[cat] = 0; });
 
     monthEntries.forEach(e => {
-        const cat = e.note || '';
-        let pureCat = cat;
-        const dotIdx = pureCat.indexOf(' · ');
-        if (dotIdx > 0) pureCat = pureCat.substring(0, dotIdx);
-        const paxMatch = pureCat.match(/^(.+?)\s*\(\d+人份\)$/);
-        if (paxMatch) pureCat = paxMatch[1];
+        const pureCat = parseEntryNote(e.note || '').category;
 
         if (e.type === 'expense') {
             if (categoryExpenseStats.hasOwnProperty(pureCat)) {
@@ -5907,10 +5866,9 @@ result += `═════════════`;
                                     if (index !== -1) currentCats[index] = newName;
                                     const updatedEntries = [];
                                     entries.forEach(e => {
-                                        const noteWithoutPax = e.note.replace(new RegExp(`\\s*\\(\\d+${t('servings')}\\)$`), '');
-                                        if (e.note === oldName || noteWithoutPax === oldName) {
-                                            const paxMatch = e.note.match(new RegExp(`\\((\\d+)${t('servings')}\\)$`));
-                                            e.note = paxMatch ? `${newName} (${paxMatch[1]}${t('servings')})` : newName;
+                                        const parsed = parseEntryNote(e.note);
+                                        if (parsed.category === oldName) {
+                                            e.note = buildEntryNote(newName, parsed.pax, parsed.extra);
                                             updatedEntries.push(e);
                                         }
                                     });
