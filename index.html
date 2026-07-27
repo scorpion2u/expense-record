@@ -2396,6 +2396,7 @@ const Lunar = (function() {
                     selectDateAdd: '选择日期并添加收支记录',
                     notBackedUp: '💾 尚未备份',
                     justBackedUp: '💾 刚刚备份',
+                    minutesAgo: '分钟前备份',
                     hoursAgo: '小时前备份',
                     daysAgo: '天前备份',
                     totalExpense: '💸 总支出',
@@ -2697,6 +2698,7 @@ noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
                     selectDateAdd: 'Select a date and add entries',
                     notBackedUp: '💾 Not backed up',
                     justBackedUp: '💾 Just backed up',
+                    minutesAgo: 'minutes ago',
                     hoursAgo: 'hours ago',
                     daysAgo: 'days ago',
                     totalExpense: '💸 Total Expense',
@@ -6475,13 +6477,26 @@ result += `═════════════`;
 
             function updateBackupStatus(lastBackupTime) {
                 const now = new Date(), last = new Date(lastBackupTime);
-                const diffMs = now - last, diffDays = Math.floor(diffMs / 86400000), diffHours = Math.floor(diffMs / 3600000);
+                const diffMs = now - last;
+                const diffDays = Math.floor(diffMs / 86400000);
+                const diffHours = Math.floor(diffMs / 3600000);
+                const diffMinutes = Math.floor(diffMs / 60000);
                 const el = document.getElementById("backupStatus");
                 if (!el) return;
-                if (diffDays === 0) el.innerText = diffHours === 0 ? t('justBackedUp') : `💾 ${diffHours} ${t('hoursAgo')}`;
-                else if (diffDays === 1) el.innerText = `💾 1 ${t('daysAgo')}`;
+                if (diffDays === 0) {
+                    if (diffMinutes < 5) el.innerText = t('justBackedUp');
+                    else if (diffHours === 0) el.innerText = `💾 ${diffMinutes} ${t('minutesAgo')}`;
+                    else el.innerText = `💾 ${diffHours} ${t('hoursAgo')}`;
+                } else if (diffDays === 1) el.innerText = `💾 1 ${t('daysAgo')}`;
                 else el.innerText = `💾 ${diffDays} ${t('daysAgo')}`;
             }
+
+            // 每分钟刷新一次备份状态文案，避免应用一直开着时文字停留在"刚刚备份"不更新
+            function refreshBackupStatusDisplay() {
+                const savedBackupTime = localStorage.getItem('lastBackupTime');
+                if (savedBackupTime) updateBackupStatus(savedBackupTime);
+            }
+            setInterval(refreshBackupStatusDisplay, 60000);
 
             // ==================== 导入备份（补全 incomePaymentTypes）====================
             function showImportDialog() {
