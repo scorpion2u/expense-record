@@ -79,6 +79,34 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
             border: 1px solid var(--border-light);
             cursor: pointer;
+            transform: scale(1);
+        }
+
+        .stat-card:active {
+            transform: scale(0.96);
+        }
+
+        .stat-number {
+            display: inline-block;
+        }
+
+        .stat-number.amount-pop,
+        .selected-amount.amount-pop {
+            animation: amountPop 0.3s ease;
+        }
+
+        @keyframes amountPop {
+            0% {
+                transform: scale(0.85);
+                opacity: 0.4;
+            }
+            60% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         .stat-label {
@@ -463,7 +491,19 @@
             border: 2px solid #3b82f6;
             background: rgba(59, 130, 246, 0.1);
             box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2);
-            animation: none;
+            animation: daySelectPop 0.25s ease;
+        }
+
+        @keyframes daySelectPop {
+            0% {
+                transform: scale(0.85);
+            }
+            60% {
+                transform: scale(1.06);
+            }
+            100% {
+                transform: scale(1);
+            }
         }
 
         @keyframes breath {
@@ -560,10 +600,48 @@
             align-items: center;
             border: 1px solid var(--border-light);
             transition: all 0.1s;
+            animation: entryFadeIn 0.32s ease backwards;
         }
 
         .entries-list li:active {
             transform: scale(0.98);
+        }
+
+        .entries-list li:nth-child(1) { animation-delay: 0.02s; }
+        .entries-list li:nth-child(2) { animation-delay: 0.06s; }
+        .entries-list li:nth-child(3) { animation-delay: 0.10s; }
+        .entries-list li:nth-child(4) { animation-delay: 0.14s; }
+        .entries-list li:nth-child(5) { animation-delay: 0.18s; }
+
+        @keyframes entryFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .entries-list li.entry-removing {
+            animation: entryFadeOut 0.22s ease forwards;
+        }
+
+        @keyframes entryFadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+                max-height: 100px;
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.9);
+                max-height: 0;
+                margin-bottom: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+            }
         }
 
         .entry-info {
@@ -756,6 +834,30 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+
+        .modal-overlay.closing {
+            animation: fadeOut 0.18s ease forwards;
+        }
+
+        .modal-content.closing {
+            animation: slideDown 0.18s ease forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(16px);
             }
         }
 
@@ -3504,13 +3606,19 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
 
                 close(modal) {
                     if (modal && document.body.contains(modal)) {
-                        modal.remove();
-                        if (this.currentModal === modal) {
-                            this.currentModal = null;
-                            document.body.classList.remove('modal-open');
-                            document.body.style.top = '';
-                            window.scrollTo(0, this.scrollPosition);
-                        }
+                        const content = modal.querySelector('.modal-content');
+                        modal.classList.add('closing');
+                        if (content) content.classList.add('closing');
+                        const finish = () => {
+                            if (document.body.contains(modal)) modal.remove();
+                            if (this.currentModal === modal) {
+                                this.currentModal = null;
+                                document.body.classList.remove('modal-open');
+                                document.body.style.top = '';
+                                window.scrollTo(0, this.scrollPosition);
+                            }
+                        };
+                        setTimeout(finish, 180);
                     }
                 }
 
@@ -4221,14 +4329,28 @@ if (toggleNoteBtn) {
             }
 
                         // ==================== 渲染函数 ====================
+            function pulseNumber(el) {
+                if (!el) return;
+                el.classList.remove('amount-pop');
+                // 强制重排以便动画能重新触发
+                void el.offsetWidth;
+                el.classList.add('amount-pop');
+            }
+
             function renderTopCards() {
                 const stats = getMonthStats(currentYear, currentMonth);
                 const symbol = getCurrencySymbol();
                 const decimals = getDecimalPlaces();
-                document.getElementById('monthIncomeAmount').innerHTML = stats.income > 0 ? `+${symbol}${convertToDisplayAmount(stats.income).toFixed(decimals)}` : `${symbol}0.${'0'.repeat(decimals)}`;
-                document.getElementById('monthExpenseAmount').innerHTML = stats.expense > 0 ? `-${symbol}${convertToDisplayAmount(stats.expense).toFixed(decimals)}` : `${symbol}0.${'0'.repeat(decimals)}`;
+                const incomeEl = document.getElementById('monthIncomeAmount');
+                const expenseEl = document.getElementById('monthExpenseAmount');
+                const prevIncomeText = incomeEl.innerHTML, prevExpenseText = expenseEl.innerHTML;
+                incomeEl.innerHTML = stats.income > 0 ? `+${symbol}${convertToDisplayAmount(stats.income).toFixed(decimals)}` : `${symbol}0.${'0'.repeat(decimals)}`;
+                expenseEl.innerHTML = stats.expense > 0 ? `-${symbol}${convertToDisplayAmount(stats.expense).toFixed(decimals)}` : `${symbol}0.${'0'.repeat(decimals)}`;
+                if (incomeEl.innerHTML !== prevIncomeText) pulseNumber(incomeEl);
+                if (expenseEl.innerHTML !== prevExpenseText) pulseNumber(expenseEl);
                 const balVal = stats.balance;
                 const balanceEl = document.getElementById('monthBalanceAmount');
+                const prevBalanceText = balanceEl.innerHTML;
                 const convertedBalance = convertToDisplayAmount(balVal);
                 if (balVal > 0) {
                     balanceEl.innerHTML = `+${symbol}${convertedBalance.toFixed(decimals)}`;
@@ -4240,6 +4362,7 @@ if (toggleNoteBtn) {
                     balanceEl.innerHTML = `${symbol}0.${'0'.repeat(decimals)}`;
                     balanceEl.className = 'stat-number';
                 }
+                if (balanceEl.innerHTML !== prevBalanceText) pulseNumber(balanceEl);
             }
 
             function renderSelectedDayTotal() {
@@ -4247,6 +4370,7 @@ if (toggleNoteBtn) {
                 const totalEl = document.getElementById('selectedDateTotal');
                 const symbol = getCurrencySymbol();
                 const decimals = getDecimalPlaces();
+                const prevText = totalEl.innerHTML;
                 const convertedNet = convertToDisplayAmount(net);
                 if (net > 0) {
                     totalEl.innerHTML = `+${symbol}${convertedNet.toFixed(decimals)}`;
@@ -4258,6 +4382,7 @@ if (toggleNoteBtn) {
                     totalEl.innerHTML = `${symbol}0.${'0'.repeat(decimals)}`;
                     totalEl.className = 'selected-amount';
                 }
+                if (totalEl.innerHTML !== prevText) pulseNumber(totalEl);
             }
 
             // 替换整个 renderCalendarImmediate 函数
