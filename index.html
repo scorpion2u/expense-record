@@ -4337,7 +4337,7 @@ function renderCalendarImmediate() {
         classList.toggle('today', dateStr === todayStr);
         classList.toggle('other-month', !isCurrentMonth);
         dayDiv.setAttribute('data-date', dateStr);
-        dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
+        dayDiv.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(getDecimalPlaces())}，${t('incomeLabel')}${income.toFixed(getDecimalPlaces())}`);
 
         const numDiv = dayDiv.querySelector('.day-number');
         numDiv.textContent = dayNum;
@@ -4346,11 +4346,11 @@ function renderCalendarImmediate() {
         const incomeSpan = dayDiv.querySelector('.day-income');
         if (isCurrentMonth) {
             if (expense > 0) {
-                expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
+                expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(getDecimalPlaces())}`;
                 expenseSpan.style.display = 'block';
             } else expenseSpan.style.display = 'none';
             if (income > 0) {
-                incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
+                incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(getDecimalPlaces())}`;
                 incomeSpan.style.display = 'block';
             } else incomeSpan.style.display = 'none';
         } else {
@@ -4431,17 +4431,17 @@ if (isCurrentMonth && currentLanguage === 'zh-CN') {
                 const incomeSpan = dayEl.querySelector('.day-income');
                 if (expenseSpan) {
                     if (expense > 0) {
-                        expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(0)}`;
+                        expenseSpan.textContent = `-${convertToDisplayAmount(expense).toFixed(getDecimalPlaces())}`;
                         expenseSpan.style.display = 'block';
                     } else expenseSpan.style.display = 'none';
                 }
                 if (incomeSpan) {
                     if (income > 0) {
-                        incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(0)}`;
+                        incomeSpan.textContent = `+${convertToDisplayAmount(income).toFixed(getDecimalPlaces())}`;
                         incomeSpan.style.display = 'block';
                     } else incomeSpan.style.display = 'none';
                 }
-                dayEl.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(0)}，${t('incomeLabel')}${income.toFixed(0)}`);
+                dayEl.setAttribute('aria-label', `${dateStr}，${t('expenseLabel')}${expense.toFixed(getDecimalPlaces())}，${t('incomeLabel')}${income.toFixed(getDecimalPlaces())}`);
                 renderSelectedDayTotal();
                 renderTopCards();
             }
