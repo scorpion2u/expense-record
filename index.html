@@ -3,7 +3,7 @@
 
 <head>
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#f1f5f9" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -1966,6 +1966,20 @@ body.dark-mode .elegant-toast-card {
             <div style="margin-top:16px;color:#64748b;font-size:14px;">加载中...</div>
         </div>
     </div>
+    <script>
+        // 兜底保护：独立于主脚本运行。若8秒后主流程仍未完成初始化（多为浏览器
+        // 不支持/禁用了 IndexedDB，如无痕模式或以 file:// 方式直接打开本文件），
+        // 主动提示原因，而不是让用户误以为在正常加载。
+        setTimeout(function() {
+            var overlay = document.getElementById('loadingOverlay');
+            if (overlay && overlay.style.display !== 'none' && overlay.style.opacity !== '0') {
+                overlay.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+                    '<div style="font-size:15px;color:#334155;font-weight:600;margin-bottom:8px;">加载时间过长</div>' +
+                    '<div style="font-size:13px;color:#64748b;line-height:1.6;">当前浏览器可能不支持或禁用了本地存储（IndexedDB），常见于无痕/隐私模式，或直接双击打开本地文件而非通过网址访问。<br><br>请尝试：更换为 Chrome 浏览器、退出无痕模式，或将文件部署到网页服务器后再访问。</div>' +
+                    '</div>';
+            }
+        }, 8000);
+    </script>
 
     <div class="container">
         <div class="stats-row">
@@ -2015,10 +2029,8 @@ body.dark-mode .elegant-toast-card {
                         <div class="menu-item" id="manageIncomeCategories" role="menuitem">💰 管理收入分类</div>
                         <div class="menu-item" id="managePaymentTypes" role="menuitem">💳 管理支付方式</div>
                         <div class="menu-item" id="manageIncomePaymentTypes" role="menuitem">💰 管理收款方式</div>
-<!-- 👇 添加这两个新菜单项 -->
-<div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [已开启 🟢]</div>
-<div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [已开启 🟢]</div>
-<!-- 👆 添加结束 -->
+                        <div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [已关闭 🔴]</div>
+                        <div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [已关闭 🔴]</div>
 <div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
                         <div class="menu-item" id="importMenuItem" role="menuitem">📥 导入备份（可选月份）</div>
@@ -2029,7 +2041,7 @@ body.dark-mode .elegant-toast-card {
             <div class="input-row">
                 <div class="amount-box">
                     <span id="currencySymbol">RM</span>
-                    <input type="text" id="amountInput" placeholder="0.00" inputmode="decimal" aria-label="金额">
+                    <input type="text" id="amountInput" placeholder="0.00" inputmode="numeric" aria-label="金额">
                 </div>
                 <div class="category-wrapper">
                     <input type="text" id="categoryInput" placeholder="输入或选择分类" aria-label="分类" autocomplete="off">
@@ -2329,7 +2341,7 @@ const Lunar = (function() {
     },
     
     // ===== 默认支出方式 =====
-    DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '借记卡', '信用卡'],
+    DEFAULT_PAYMENT_TYPES: ['现金', 'TNG', '银行扫码', '借记卡', '信用卡'],
     
     // ===== 默认收款方式 =====
     DEFAULT_INCOME_PAYMENT_TYPES: ['现金', 'TNG', '银行转账', '其他'],
@@ -2341,8 +2353,8 @@ const Lunar = (function() {
     MAX_NOTE_LENGTH: 100
 };
             // ==================== 功能开关 ====================
-            let featurePaxEnabled = true;   // 人份选择开关
-            let featureNoteEnabled = true;  // 备注填写开关
+            let featurePaxEnabled = false;   // 人份选择开关（默认关闭）
+            let featureNoteEnabled = false;  // 备注填写开关（默认关闭）
 
                         // ==================== 多语言配置 ====================
             const LANGUAGES = {
@@ -2409,6 +2421,7 @@ const Lunar = (function() {
                     reimbursement: '报销',
                     cash: '现金',
                     ewallet: 'TNG',
+                    bankQR: '银行扫码',
                     creditCard: '信用卡',
                     debitCard: '借记卡',
                     bankTransfer: '银行转账',
@@ -2709,6 +2722,7 @@ noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
                     reimbursement: 'Reimbursement',
                     cash: 'Cash',
                     ewallet: 'E-Wallet',
+                    bankQR: 'BankQR',
                     creditCard: 'Credit Card',
                     debitCard: 'Debit Card',
                     bankTransfer: 'Bank Transfer',
@@ -2955,7 +2969,7 @@ noteHint: ' Tip: Toggle "Note" in menu',
                     '薪水': '薪水', '奖金': '奖金', '红包': '红包', '投资': '投资', '报销': '报销',
                     '未分类支出': '未分类支出', '未分类收入': '未分类收入',
                     // 支付方式
-                    '现金': '现金', 'TNG': 'TNG', '借记卡': '借记卡', '信用卡': '信用卡', '银行转账': '银行转账',
+                    '现金': '现金', 'TNG': 'TNG', '银行扫码': '银行扫码', '借记卡': '借记卡', '信用卡': '信用卡', '银行转账': '银行转账',
                 },
                 'en-US': {
                     // 中文存储值 → 英文显示值
@@ -2963,7 +2977,7 @@ noteHint: ' Tip: Toggle "Note" in menu',
                     '薪水': 'Salary', '奖金': 'Bonus', '红包': 'Red Packet', '投资': 'Investment', '报销': 'Reimbursement',
                     '未分类支出': 'Uncategorized Expense', '未分类收入': 'Uncategorized Income',
                     // 支付方式
-                    '现金': 'Cash', 'TNG': 'E-Wallet', '借记卡': 'Debit Card', '信用卡': 'Credit Card', '银行转账': 'Bank Transfer',
+                    '现金': 'Cash', 'TNG': 'E-Wallet', '银行扫码': 'BankQR', '借记卡': 'Debit Card', '信用卡': 'Credit Card', '银行转账': 'Bank Transfer',
                 }
             };
 
@@ -3063,7 +3077,7 @@ function translateNote(note, targetLang) {
     return myrAmount;
 }
             function convertToStorageAmount(displayAmount) {
-    return displayAmount;
+    return Math.round(displayAmount * 100) / 100;
 }
             function getCurrencySymbol() {
                 return CURRENCIES[displayCurrency]?.symbol || 'RM';
@@ -3230,22 +3244,6 @@ function translateNote(note, targetLang) {
                         const dbManager = new IndexedDBManager();
             const amountInput = document.getElementById("amountInput");
 
-            amountInput.addEventListener("input", (e) => {
-                let value = e.target.value;
-                value = value.replace(/[^\d.]/g, "");
-                const parts = value.split(".");
-                if (parts.length > 2) value = parts[0] + "." + parts.slice(1).join("");
-                if (parts[1]) value = parts[0] + "." + parts[1].slice(0, 2);
-                value = value.replace(/^0+(\d)/, "$1");
-                e.target.value = value;
-            });
-
-            amountInput.addEventListener("blur", () => {
-                let value = parseFloat(amountInput.value);
-                if (!isNaN(value)) amountInput.value = value.toFixed(2);
-                else amountInput.value = "";
-            });
-
             // ==================== 全局变量 ====================
             // ⚠️ 重要：expenseCats / incomeCats 始终存储中文原始值
             //           paymentTypes / incomePaymentTypes 始终存储中文原始值
@@ -3292,6 +3290,58 @@ function translateNote(note, targetLang) {
             // 获取存储用的默认支付方式（始终中文）
             function getDefaultPayType() {
                 return currentType === 'expense' ? paymentTypes[0] || '现金' : incomePaymentTypes[0] || '现金';
+            }
+
+            // ==================== 支付方式图标资源 ====================
+            const PAY_ICON_TNG = 'data:image/png;base64,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';
+            const PAY_ICON_QR = 'data:image/png;base64,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';
+
+            function getPayDebitSvg(s) {
+                return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="display:block;">
+                    <defs><linearGradient id="dbg${s}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#0891b2"/></linearGradient></defs>
+                    <rect x="1.5" y="4.5" width="21" height="15" rx="2.8" fill="url(#dbg${s})"/>
+                    <rect x="1.5" y="4.5" width="21" height="15" rx="2.8" fill="none" stroke="#ffffff" stroke-opacity="0.15"/>
+                    <rect x="4" y="8" width="4.2" height="3.2" rx="0.7" fill="#fde68a" stroke="#b45309" stroke-width="0.25"/>
+                    <line x1="4" y1="9.6" x2="8.2" y2="9.6" stroke="#b45309" stroke-width="0.25"/>
+                    <line x1="6.1" y1="8" x2="6.1" y2="11.2" stroke="#b45309" stroke-width="0.25"/>
+                    <path d="M16.5 9c1 1 1 3 0 4" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.9"/>
+                    <path d="M18.2 7.7c1.9 1.9 1.9 4.9 0 6.8" stroke="#ffffff" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="0.6"/>
+                    <circle cx="4.6" cy="14.8" r="0.5" fill="#ffffff" opacity="0.85"/>
+                    <circle cx="6.1" cy="14.8" r="0.5" fill="#ffffff" opacity="0.85"/>
+                    <circle cx="7.6" cy="14.8" r="0.5" fill="#ffffff" opacity="0.85"/>
+                    <circle cx="9.1" cy="14.8" r="0.5" fill="#ffffff" opacity="0.85"/>
+                </svg>`;
+            }
+
+            function getPayCreditSvg(s) {
+                return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" style="display:block;">
+                    <defs><linearGradient id="cbg${s}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1f2937"/><stop offset="100%" stop-color="#111827"/></linearGradient></defs>
+                    <rect x="1.5" y="4.5" width="21" height="15" rx="2.8" fill="url(#cbg${s})"/>
+                    <rect x="1.5" y="4.5" width="21" height="15" rx="2.8" fill="none" stroke="#d4af37" stroke-opacity="0.4"/>
+                    <rect x="4" y="8" width="4.2" height="3.2" rx="0.7" fill="#d4af37" stroke="#92702a" stroke-width="0.25"/>
+                    <line x1="4" y1="9.6" x2="8.2" y2="9.6" stroke="#92702a" stroke-width="0.25"/>
+                    <line x1="6.1" y1="8" x2="6.1" y2="11.2" stroke="#92702a" stroke-width="0.25"/>
+                    <circle cx="4.6" cy="14.8" r="0.5" fill="#d4af37" opacity="0.9"/>
+                    <circle cx="6.1" cy="14.8" r="0.5" fill="#d4af37" opacity="0.9"/>
+                    <circle cx="7.6" cy="14.8" r="0.5" fill="#d4af37" opacity="0.9"/>
+                    <circle cx="9.1" cy="14.8" r="0.5" fill="#d4af37" opacity="0.9"/>
+                    <circle cx="16.8" cy="15.2" r="2.5" fill="#eab308" opacity="0.9"/>
+                    <circle cx="19" cy="15.2" r="2.5" fill="#f59e0b" opacity="0.7"/>
+                </svg>`;
+            }
+
+            // 统一获取支付方式图标（storageType 必须是中文原始存储值）
+            // size: 图标像素尺寸
+            function getPayIconHTML(storageType, size) {
+                const s = size || 20;
+                if (storageType === '现金') return `<span style="font-size:${s}px;line-height:1;">💵</span>`;
+                if (storageType === 'TNG') return `<img src="${PAY_ICON_TNG}" style="width:${s}px;height:${s}px;object-fit:contain;display:block;" alt="TNG">`;
+                if (storageType === '银行扫码') return `<img src="${PAY_ICON_QR}" style="width:${s}px;height:${s}px;object-fit:contain;display:block;" alt="QR">`;
+                if (storageType === '借记卡') return getPayDebitSvg(s);
+                if (storageType === '信用卡') return getPayCreditSvg(s);
+                if (storageType === '银行转账') return `<span style="font-size:${s}px;line-height:1;">🏦</span>`;
+                if (storageType === '其他') return `<span style="font-size:${s}px;line-height:1;">📌</span>`;
+                return `<span style="font-size:${s}px;line-height:1;">💳</span>`;
             }
 
             function cleanupTimers() {
@@ -3609,6 +3659,41 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
                 document.documentElement.style.setProperty('--focus-color', color);
             }
 
+            // ==================== 银行App式金额输入（自动补小数点）====================
+            // 只允许输入数字，始终按“分”从右往左录入，自动格式化为 X.XX，
+            // 光标始终保持在末尾，无需用户手动输入小数点，也不会出现多个小数点等异常输入。
+            function applyMoneyMask(input) {
+                if (!input || input._moneyMaskBound) return;
+                input._moneyMaskBound = true;
+                const maxDigits = String(Math.round(CONSTANTS.MAX_AMOUNT * 100)).length + 1;
+                input.addEventListener('input', function() {
+                    let digits = this.value.replace(/\D/g, '');
+                    digits = digits.replace(/^0+/, '');
+                    if (digits === '') {
+                        this.value = '';
+                        this._lastValid = '';
+                        updateInputColor();
+                        return;
+                    }
+                    if (digits.length > maxDigits) digits = digits.slice(0, maxDigits);
+                    digits = digits.padStart(3, '0');
+                    const intPart = digits.slice(0, -2).replace(/^0+(?=\d)/, '');
+                    const decPart = digits.slice(-2);
+                    const formatted = intPart + '.' + decPart;
+                    this.value = formatted;
+                    this._lastValid = formatted;
+                    this.setSelectionRange(this.value.length, this.value.length);
+                    updateInputColor();
+                });
+                // 防止用户通过光标拖动到中间插入数字，始终强制点击后光标停在末尾
+                input.addEventListener('click', function() {
+                    this.setSelectionRange(this.value.length, this.value.length);
+                });
+                input.addEventListener('focus', function() {
+                    this.setSelectionRange(this.value.length, this.value.length);
+                });
+            }
+
             async function saveSettings() {
                 try {
                     await dbManager.put('settings', { key: 'uiSettings', value: uiSettings });
@@ -3881,23 +3966,27 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
     
     loadSettings();
     updateUILanguage();
-    // ==================== 在 load() 函数中，加载其他设置的位置添加 ====================
-// 大约在第 1700 行附近，load() 函数内部，加载完语言设置后添加：
 
-// ===== 加载功能开关设置 =====
-const paxSetting = await dbManager.get('settings', 'featurePaxEnabled');
-if (paxSetting !== undefined && paxSetting.value !== undefined) {
-    featurePaxEnabled = paxSetting.value;
-} else {
-    featurePaxEnabled = true;  // 默认开启
-}
+    // ===== 加载功能开关设置（独立try/catch，避免此处异常导致整个load()中断）=====
+    try {
+        const paxSetting = await dbManager.get('settings', 'featurePaxEnabled');
+        if (paxSetting !== undefined && paxSetting.value !== undefined) {
+            featurePaxEnabled = paxSetting.value;
+        } else {
+            featurePaxEnabled = false;  // 默认关闭
+        }
 
-const noteSetting = await dbManager.get('settings', 'featureNoteEnabled');
-if (noteSetting !== undefined && noteSetting.value !== undefined) {
-    featureNoteEnabled = noteSetting.value;
-} else {
-    featureNoteEnabled = true;  // 默认开启
-}
+        const noteSetting = await dbManager.get('settings', 'featureNoteEnabled');
+        if (noteSetting !== undefined && noteSetting.value !== undefined) {
+            featureNoteEnabled = noteSetting.value;
+        } else {
+            featureNoteEnabled = false;  // 默认关闭
+        }
+    } catch (e) {
+        console.warn('加载功能开关设置失败，使用默认值', e);
+        featurePaxEnabled = false;
+        featureNoteEnabled = false;
+    }
 
 // 更新菜单按钮文字
 const togglePaxBtn = document.getElementById('togglePaxFeature');
@@ -4414,7 +4503,7 @@ if (isCurrentMonth && currentLanguage === 'zh-CN') {
 
             function getValidAmount() {
                 const amountInput = document.getElementById('amountInput').value.trim();
-                const amount = parseFloat(amountInput);
+                let amount = parseFloat(amountInput);
                 if (isNaN(amount) || amount <= 0) {
                     showToast(t('enterValidAmount'));
                     return null;
@@ -4423,6 +4512,8 @@ if (isCurrentMonth && currentLanguage === 'zh-CN') {
                     showToast(t('amountTooLarge') + ' ' + formatSimpleAmount(CONSTANTS.MAX_AMOUNT));
                     return null;
                 }
+                // 统一在源头四舍五入到分，避免浮点误差累积到统计汇总中
+                amount = Math.round(amount * 100) / 100;
                 return amount;
             }
 
@@ -4464,21 +4555,14 @@ if (isCurrentMonth && currentLanguage === 'zh-CN') {
                 const title = currentType === 'expense' ? t('selectPayment') : t('selectIncomePayment');
 
                 const html = `<div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">${types.map(type => {
-                    let icon = '💳';
                     // 用存储值（中文）来判断图标，而不是翻译后的值
                     const storageTypes = currentType === 'expense' ? paymentTypes : incomePaymentTypes;
                     const displayTypes = getCurrentPaymentTypes();
                     const idx = displayTypes.indexOf(type);
                     const storageType = idx >= 0 ? storageTypes[idx] : type;
+                    const icon = getPayIconHTML(storageType, 20);
 
-                    if (storageType === '现金') icon = '💵';
-                    else if (storageType === 'TNG') icon = '🪙';
-                    else if (storageType === '借记卡') icon = '🏧';
-                    else if (storageType === '信用卡') icon = '💳';
-                    else if (storageType === '银行转账') icon = '🏦';
-                    else if (storageType === '其他') icon = '📌';
-
-                    return `<div class="pay-card" data-type="${escapeHtml(storageType)}"><div style="font-size:18px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
+                    return `<div class="pay-card" data-type="${escapeHtml(storageType)}"><div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:rgba(0,0,0,0.06);">${icon}</div><div style="font-size:15px;font-weight:500;">${escapeHtml(type)}</div></div>`;
                 }).join('')}</div>`;
 
                 const modal = modalManager.create(title, html);
@@ -4697,8 +4781,6 @@ isAdding = false;
                 return true;
             }
 
-            // 找到 editEntry 函数，替换为以下代码：
-
 async function editEntry(id) {
     const entry = entries.find(e => String(e.id) === String(id));
     if (!entry) return;
@@ -4731,7 +4813,7 @@ async function editEntry(id) {
     const modal = modalManager.create(t('editRecord'),
         `<div style="margin-bottom:16px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('amount')}</label>
-            <input type="number" id="editAmount" value="${displayAmount}" step="0.01" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
+            <input type="text" inputmode="numeric" id="editAmount" value="${displayAmount}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
         </div>
         <div style="margin-bottom:16px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
@@ -4749,6 +4831,8 @@ async function editEntry(id) {
     );
 
     if (!modal) return;
+
+    applyMoneyMask(modal.querySelector('#editAmount'));
 
     // 创建支付方式选择器
     const options = typeOptions.map((storageType, idx) => ({
@@ -5576,18 +5660,18 @@ result += `═════════════`;
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);margin-bottom:12px;">
             ${paymentTypes.map(type => {
                 const displayType = translateCategory(type, currentLanguage);
-                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '借记卡' ? '🏧' : type === '信用卡' ? '💳' : type === '银行转账' ? '🏦' : '💳';
+                const icon = getPayIconHTML(type, 16);
                 const displayPayStat = convertToDisplayAmount(payStats[type] || 0).toFixed(decimals);
-                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;display:flex;align-items:center;justify-content:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
         </div>
         <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px;">${t('incomePaymentStats')}</div>
         <div style="background:var(--card-bg);padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,0.08);">
             ${incomePaymentTypes.map(type => {
                 const displayType = translateCategory(type, currentLanguage);
-                const icon = type === '现金' ? '💵' : type === 'TNG' ? '🪙' : type === '银行转账' ? '🏦' : type === '其他' ? '📌' : '💰';
+                const icon = getPayIconHTML(type, 16);
                 const displayPayStat = convertToDisplayAmount(incomePayStats[type] || 0).toFixed(decimals);
-                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;text-align:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
+                return `<div style="display:grid;grid-template-columns:120px 1fr;align-items:center;margin-bottom:6px;"><div style="display:flex;align-items:center;gap:6px;font-size:0.85rem;"><span style="width:20px;display:flex;align-items:center;justify-content:center;">${icon}</span><span>${escapeHtml(displayType)}</span></div><div style="text-align:right;font-variant-numeric:tabular-nums;font-size:0.85rem;">${symbol}${displayPayStat}</div></div>`;
             }).join('')}
         </div>
     `;
@@ -6570,24 +6654,10 @@ if (data.featureNoteEnabled !== undefined) {
                         // ==================== 事件绑定 ====================
             function bindEvents() {
                 const amountInput = document.getElementById('amountInput'), categoryInput = document.getElementById('categoryInput');
-                amountInput.addEventListener('input', function() {
-                    let val = this.value;
-                    if (val === '') { this._lastValid = ''; updateInputColor(); return; }
-                    if (val === '.') { this.value = '0.'; this._lastValid = '0.'; updateInputColor(); return; }
-                    val = val.replace(/[^\d.]/g, '');
-                    const dotCount = (val.match(/\./g) || []).length;
-                    if (dotCount > 1) { const idx = val.indexOf('.'); val = val.substring(0, idx + 1) + val.substring(idx + 1).replace(/\./g, ''); }
-                    const dotIdx = val.indexOf('.');
-                    if (dotIdx !== -1 && val.length - dotIdx - 1 > 2) val = val.substring(0, dotIdx + 3);
-                    if (val.length > 1 && val[0] === '0' && val[1] !== '.') { val = val.replace(/^0+/, ''); if (val === '' || val === '.') val = '0' + val; }
-                    if (val[0] === '.') val = '0' + val;
-                    this.value = val;
-                    this._lastValid = val;
-                    updateInputColor();
-                });
+                applyMoneyMask(amountInput);
                 amountInput.addEventListener('blur', function() {
                     const val = this.value.trim();
-                    if (val && val !== '0.' && val !== '.') { const num = parseFloat(val); if (!isNaN(num) && num > 0) this.value = num.toFixed(2); }
+                    if (val) { const num = parseFloat(val); if (!isNaN(num) && num > 0) this.value = num.toFixed(2); }
                 });
                 amountInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') {
@@ -6699,29 +6769,25 @@ if (data.featureNoteEnabled !== undefined) {
                 document.querySelector('.stat-card.income').onclick = () => showSearch({ type: 'income' });
                 document.querySelector('.stat-card.expense').onclick = () => showSearch({ type: 'expense' });
                 document.querySelector('.stat-card.balance').onclick = () => showSearch({ type: 'all' });
+
+                document.getElementById('togglePaxFeature')?.addEventListener('click', async () => {
+                    featurePaxEnabled = !featurePaxEnabled;
+                    const btn = document.getElementById('togglePaxFeature');
+                    if (btn) btn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+                    await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
+                    showToast(`人份选择${featurePaxEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    closeMenu();
+                });
+
+                document.getElementById('toggleNoteFeature')?.addEventListener('click', async () => {
+                    featureNoteEnabled = !featureNoteEnabled;
+                    const btn = document.getElementById('toggleNoteFeature');
+                    if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+                    await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
+                    showToast(`备注填写${featureNoteEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    closeMenu();
+                });
             }
-                // ==================== 修改菜单栏的开关事件处理 ====================
-// 找到 bindEvents 函数中约第 3330 行附近的开关事件，替换为：
-
-document.getElementById('togglePaxFeature')?.addEventListener('click', async () => {
-    featurePaxEnabled = !featurePaxEnabled;
-    const btn = document.getElementById('togglePaxFeature');
-    if (btn) btn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
-    // 保存到数据库
-    await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
-    showToast(`人份选择${featurePaxEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
-    closeMenu();
-});
-
-document.getElementById('toggleNoteFeature')?.addEventListener('click', async () => {
-    featureNoteEnabled = !featureNoteEnabled;
-    const btn = document.getElementById('toggleNoteFeature');
-    if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
-    // 保存到数据库
-    await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
-    showToast(`备注填写${featureNoteEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
-    closeMenu();
-});
 
                         // ==================== 设置面板（基本不变，只需确认 tempColors 初始化的位置）====================
             function openSettingsPanel() {
@@ -6797,22 +6863,31 @@ document.getElementById('toggleNoteFeature')?.addEventListener('click', async ()
 
             // ==================== 初始化 ====================
             window.onload = async function() {
-                await load();
-                rebuildStatsCache();
-                bindEvents();
-                renderCalendar();
-                renderEntries();
-                renderCategoryDropdown();
-                updateInputColor();
-                initBackToTop();
-                initServiceWorker();
-                updateInstallMenuText();
-                const savedBackupTime = localStorage.getItem('lastBackupTime');
-                savedBackupTime ? updateBackupStatus(savedBackupTime) : document.getElementById("backupStatus").innerText = t('notBackedUp');
-                document.getElementById('loadingOverlay').style.opacity = '0';
-                setTimeout(() => document.getElementById('loadingOverlay').style.display = 'none', 300);
-                window.addEventListener('beforeunload', cleanupTimers);
-                document.addEventListener('visibilitychange', () => { if (document.hidden) cleanupTimers(); });
+                try {
+                    await load();
+                    rebuildStatsCache();
+                    bindEvents();
+                    renderCalendar();
+                    renderEntries();
+                    renderCategoryDropdown();
+                    updateInputColor();
+                    initBackToTop();
+                    initServiceWorker();
+                    updateInstallMenuText();
+                    const savedBackupTime = localStorage.getItem('lastBackupTime');
+                    savedBackupTime ? updateBackupStatus(savedBackupTime) : document.getElementById("backupStatus").innerText = t('notBackedUp');
+                    window.addEventListener('beforeunload', cleanupTimers);
+                    document.addEventListener('visibilitychange', () => { if (document.hidden) cleanupTimers(); });
+                } catch (err) {
+                    console.error('初始化失败', err);
+                } finally {
+                    // 无论初始化是否成功，都必须隐藏加载动画，避免页面卡死在加载中
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        setTimeout(() => overlay.style.display = 'none', 300);
+                    }
+                }
             };
 
             // ⭐ 弹窗内滚动处理
