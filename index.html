@@ -318,6 +318,15 @@
             align-items: center;
         }
 
+        @keyframes breathingGlow {
+            0%, 100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
         .amount-box {
             flex: 1;
             background: rgba(0, 0, 0, 0.03);
@@ -348,6 +357,7 @@
 
         .amount-box input::placeholder {
             color: #9ca3af;
+            animation: breathingGlow 2.6s ease-in-out infinite;
         }
 
         .amount-box:focus-within {
@@ -384,8 +394,21 @@
             cursor: pointer;
         }
 
-        #categoryInput::placeholder {
+        .category-placeholder {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            font-size: calc(var(--font-size-base) * 0.85);
             color: #9ca3af;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .category-placeholder .breathe {
+            animation: breathingGlow 2.6s ease-in-out infinite;
         }
 
         .dropdown-btn {
@@ -395,6 +418,7 @@
             color: #7e8b9e;
             cursor: pointer;
             padding: 0 2px;
+            animation: breathingGlow 2.6s ease-in-out infinite;
         }
 
         .category-dropdown {
@@ -1458,6 +1482,10 @@
             color: #64748b;
         }
 
+        body.dark-mode .category-placeholder {
+            color: #64748b;
+        }
+
         body.dark-mode input:focus,
         body.dark-mode .custom-select-trigger:focus {
             border-color: var(--focus-color);
@@ -2147,7 +2175,10 @@ body.dark-mode .elegant-toast-card {
                     <input type="text" id="amountInput" placeholder="0.00" inputmode="decimal" aria-label="金额">
                 </div>
                 <div class="category-wrapper">
-                    <input type="text" id="categoryInput" placeholder="输入或选择分类" aria-label="分类" autocomplete="off">
+                    <input type="text" id="categoryInput" placeholder="" aria-label="分类" autocomplete="off">
+                    <div class="category-placeholder" id="categoryPlaceholder" aria-hidden="true">
+                        <span class="breathe" id="categoryBreatheLabel">输入</span><span id="categoryPlaceholderRest">或选择分类</span>
+                    </div>
                     <button class="dropdown-btn" id="dropdownBtn" aria-label="选择分类">▼</button>
                     <div class="category-dropdown" id="categoryDropdown" role="listbox"></div>
                 </div>
@@ -2475,6 +2506,8 @@ const Lunar = (function() {
                     income: '💰 收入',
                     amountPlaceholder: '0.00',
                     categoryPlaceholder: '输入或选择分类',
+                    categoryPlaceholderPrefix: '输入',
+                    categoryPlaceholderSuffix: '或选择分类',
                     installApp: '📱 安装应用',
                     installedApp: '✅ 已安装应用',
                     addToHome: '📱 添加到主屏幕',
@@ -2782,6 +2815,8 @@ noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
                     amountPlaceholder: '0.00',
                     categoryStats: 'Category Stats',
                     categoryPlaceholder: 'Enter or select category',
+                    categoryPlaceholderPrefix: 'Enter',
+                    categoryPlaceholderSuffix: ' or select category',
                     installApp: '📱 Install App',
                     installedApp: '✅ Installed',
                     addToHome: '📱 Add to Home',
@@ -3777,6 +3812,7 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
                     root.style.setProperty('--bg-color', uiSettings.bgColor);
                     root.style.setProperty('--card-bg', uiSettings.cardBg);
                     updateInputColor();
+                    if (typeof updateCategoryBreatheLabel === 'function') updateCategoryBreatheLabel();
                     applyTimeout = null;
                 }, 16);
             }
@@ -4289,6 +4325,25 @@ updateFeatureToggleButtons();
                 };
             }
 
+            // ==================== 分类"输入"呼吸灯标签同步 ====================
+            function updateCategoryBreatheLabel() {
+                const label = document.getElementById('categoryBreatheLabel');
+                const rest = document.getElementById('categoryPlaceholderRest');
+                if (!label || !rest) return;
+                label.textContent = t('categoryPlaceholderPrefix');
+                rest.textContent = t('categoryPlaceholderSuffix');
+            }
+
+            // 根据输入框是否为空,自动显示/隐藏自定义占位符浮层
+            function syncCategoryPlaceholderVisibility() {
+                const input = document.getElementById('categoryInput');
+                const ph = document.getElementById('categoryPlaceholder');
+                if (input && ph) {
+                    ph.style.display = input.value.trim() === '' ? 'flex' : 'none';
+                }
+                requestAnimationFrame(syncCategoryPlaceholderVisibility);
+            }
+
             // ==================== UI 语言更新（完全重写）====================
             function updateUILanguage() {
                 // 1. 更新顶部统计卡片标签
@@ -4302,7 +4357,7 @@ updateFeatureToggleButtons();
 
                 // 3. 更新 placeholder
                 document.getElementById('amountInput').placeholder = t('amountPlaceholder');
-                document.getElementById('categoryInput').placeholder = t('categoryPlaceholder');
+                updateCategoryBreatheLabel();
 
                 // 4. ⚠️ 不再原地翻译分类和支付方式数组！
                 // expenseCats / incomeCats / paymentTypes / incomePaymentTypes 始终存储中文
@@ -7027,6 +7082,8 @@ updateFeatureToggleButtons();
                     renderEntries();
                     renderCategoryDropdown();
                     updateInputColor();
+                    updateCategoryBreatheLabel();
+                    syncCategoryPlaceholderVisibility();
                     initBackToTop();
                     initServiceWorker();
                     updateInstallMenuText();
