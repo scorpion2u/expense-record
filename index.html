@@ -2134,7 +2134,7 @@ body.dark-mode .elegant-toast-card {
                         <div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [已关闭 🔴]</div>
                         <div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [已关闭 🔴]</div>
                         <div class="menu-item" id="toggleAutoDecimalFeature" role="menuitem">🔢 自动小数点 [已关闭 🔴]</div>
-<div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
+<div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（可复制）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
                         <div class="menu-item" id="importMenuItem" role="menuitem">📥 导入备份（可选月份）</div>
                         <div class="menu-item" id="clearDataMenuItem" role="menuitem">🗑 清空所有数据</div>
@@ -2489,7 +2489,7 @@ const Lunar = (function() {
                     manageIncomeCats: '💰 管理收入分类',
                     managePaymentTypes: '💳 管理支付方式',
                     manageIncomePaymentTypes: '💰 管理收款方式',
-                    exportNote: '📄 导出笔记（以文字分享）',
+                    exportNote: '📄 导出笔记（可复制）',
                     exportBackup: '📤 导出备份（可选月份）',
                     importBackup: '📥 导入备份（可选月份）',
                     clearData: '🗑 清空所有数据',
@@ -2762,6 +2762,11 @@ const Lunar = (function() {
                     currentLanguage: '当前语言',
                     paxHint: ' 提示：可在菜单栏「人份选择」开关此功能',
 noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
+                    onLabel: '已开启 🟢',
+                    offLabel: '已关闭 🔴',
+                    paxFeatureName: '🍽️ 人份选择',
+                    noteFeatureName: '📝 备注填写',
+                    autoDecimalFeatureName: '🔢 自动小数点',
                 },
                 'en-US': {
                     name: 'English',
@@ -3063,6 +3068,11 @@ noteHint: ' 提示：可在菜单栏「备注填写」开关此功能',
                     currentLanguage: 'Current Language',
                     paxHint: ' Tip: Toggle "Servings" in menu',
 noteHint: ' Tip: Toggle "Note" in menu',
+                    onLabel: 'On 🟢',
+                    offLabel: 'Off 🔴',
+                    paxFeatureName: '🍽️ Servings Selection',
+                    noteFeatureName: '📝 Note Field',
+                    autoDecimalFeatureName: '🔢 Auto Decimal Point',
                 }
             };
 
@@ -4125,20 +4135,10 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
         featureAutoDecimalEnabled = false;
     }
 
-// 更新菜单按钮文字
-const togglePaxBtn = document.getElementById('togglePaxFeature');
-if (togglePaxBtn) {
-    togglePaxBtn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+// 更新菜单按钮文字（多语言）
+updateFeatureToggleButtons();
 }
-const toggleNoteBtn = document.getElementById('toggleNoteFeature');
-if (toggleNoteBtn) {
-    toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
-}
-const toggleAutoDecimalBtn = document.getElementById('toggleAutoDecimalFeature');
-if (toggleAutoDecimalBtn) {
-    toggleAutoDecimalBtn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
-}
-}
+
 
             function getDayStats(date) {
                 const dayEntries = dateMap[date] || [];
@@ -4354,6 +4354,22 @@ if (toggleAutoDecimalBtn) {
                     const el = document.getElementById(id);
                     if (el) el.innerHTML = t(key);
                 });
+
+                updateFeatureToggleButtons();
+            }
+
+            // 功能开关菜单项的多语言文案：名称 + [已开启/已关闭]
+            function featureToggleLabel(nameKey, enabled) {
+                return `${t(nameKey)} [${enabled ? t('onLabel') : t('offLabel')}]`;
+            }
+
+            function updateFeatureToggleButtons() {
+                const togglePaxBtn = document.getElementById('togglePaxFeature');
+                if (togglePaxBtn) togglePaxBtn.innerHTML = featureToggleLabel('paxFeatureName', featurePaxEnabled);
+                const toggleNoteBtn = document.getElementById('toggleNoteFeature');
+                if (toggleNoteBtn) toggleNoteBtn.innerHTML = featureToggleLabel('noteFeatureName', featureNoteEnabled);
+                const toggleAutoDecimalBtn = document.getElementById('toggleAutoDecimalFeature');
+                if (toggleAutoDecimalBtn) toggleAutoDecimalBtn.innerHTML = featureToggleLabel('autoDecimalFeatureName', featureAutoDecimalEnabled);
             }
 
             function updateWeekdaysLanguage() {
@@ -6750,29 +6766,18 @@ result += `═════════════`;
 if (data.featurePaxEnabled !== undefined) {
     featurePaxEnabled = data.featurePaxEnabled;
     await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
-    const togglePaxBtn = document.getElementById('togglePaxFeature');
-    if (togglePaxBtn) {
-        togglePaxBtn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
-    }
 }
 
 if (data.featureNoteEnabled !== undefined) {
     featureNoteEnabled = data.featureNoteEnabled;
     await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
-    const toggleNoteBtn = document.getElementById('toggleNoteFeature');
-    if (toggleNoteBtn) {
-        toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
-    }
 }
 
 if (data.featureAutoDecimalEnabled !== undefined) {
     featureAutoDecimalEnabled = data.featureAutoDecimalEnabled;
     await dbManager.put('settings', { key: 'featureAutoDecimalEnabled', value: featureAutoDecimalEnabled });
-    const toggleAutoDecimalBtn = document.getElementById('toggleAutoDecimalFeature');
-    if (toggleAutoDecimalBtn) {
-        toggleAutoDecimalBtn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
-    }
 }
+updateFeatureToggleButtons();
                     rebuildStatsCache();
                     renderCalendar();
                     renderEntries();
@@ -6917,28 +6922,25 @@ if (data.featureAutoDecimalEnabled !== undefined) {
 
                 document.getElementById('togglePaxFeature')?.addEventListener('click', async () => {
                     featurePaxEnabled = !featurePaxEnabled;
-                    const btn = document.getElementById('togglePaxFeature');
-                    if (btn) btn.innerHTML = featurePaxEnabled ? '🍽️ 人份选择 [已开启 🟢]' : '🍽️ 人份选择 [已关闭 🔴]';
+                    updateFeatureToggleButtons();
                     await dbManager.put('settings', { key: 'featurePaxEnabled', value: featurePaxEnabled });
-                    showToast(`人份选择${featurePaxEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    showToast(`${t('paxFeatureName')} ${featurePaxEnabled ? t('onLabel') : t('offLabel')}`);
                     closeMenu();
                 });
 
                 document.getElementById('toggleNoteFeature')?.addEventListener('click', async () => {
                     featureNoteEnabled = !featureNoteEnabled;
-                    const btn = document.getElementById('toggleNoteFeature');
-                    if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+                    updateFeatureToggleButtons();
                     await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
-                    showToast(`备注填写${featureNoteEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    showToast(`${t('noteFeatureName')} ${featureNoteEnabled ? t('onLabel') : t('offLabel')}`);
                     closeMenu();
                 });
 
                 document.getElementById('toggleAutoDecimalFeature')?.addEventListener('click', async () => {
                     featureAutoDecimalEnabled = !featureAutoDecimalEnabled;
-                    const btn = document.getElementById('toggleAutoDecimalFeature');
-                    if (btn) btn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
+                    updateFeatureToggleButtons();
                     await dbManager.put('settings', { key: 'featureAutoDecimalEnabled', value: featureAutoDecimalEnabled });
-                    showToast(`自动小数点${featureAutoDecimalEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    showToast(`${t('autoDecimalFeatureName')} ${featureAutoDecimalEnabled ? t('onLabel') : t('offLabel')}`);
                     closeMenu();
                 });
             }
