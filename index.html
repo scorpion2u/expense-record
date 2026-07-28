@@ -2133,6 +2133,7 @@ body.dark-mode .elegant-toast-card {
                         <div class="menu-item" id="manageIncomePaymentTypes" role="menuitem">💰 管理收款方式</div>
                         <div class="menu-item" id="togglePaxFeature" role="menuitem">🍽️ 人份选择 [已关闭 🔴]</div>
                         <div class="menu-item" id="toggleNoteFeature" role="menuitem">📝 备注填写 [已关闭 🔴]</div>
+                        <div class="menu-item" id="toggleAutoDecimalFeature" role="menuitem">🔢 自动小数点 [已关闭 🔴]</div>
 <div class="menu-item" id="exportNoteBtn" role="menuitem"> 导出笔记（以文字分享）</div>
                         <div class="menu-item" id="exportMenuItem" role="menuitem">📤 导出备份（可选月份）</div>
                         <div class="menu-item" id="importMenuItem" role="menuitem">📥 导入备份（可选月份）</div>
@@ -2143,7 +2144,7 @@ body.dark-mode .elegant-toast-card {
             <div class="input-row">
                 <div class="amount-box">
                     <span id="currencySymbol">RM</span>
-                    <input type="text" id="amountInput" placeholder="0.00" inputmode="numeric" aria-label="金额">
+                    <input type="text" id="amountInput" placeholder="0.00" inputmode="decimal" aria-label="金额">
                 </div>
                 <div class="category-wrapper">
                     <input type="text" id="categoryInput" placeholder="输入或选择分类" aria-label="分类" autocomplete="off">
@@ -2457,6 +2458,7 @@ const Lunar = (function() {
             // ==================== 功能开关 ====================
             let featurePaxEnabled = false;   // 人份选择开关（默认关闭）
             let featureNoteEnabled = false;  // 备注填写开关（默认关闭）
+            let featureAutoDecimalEnabled = false;  // 自动小数点开关（默认关闭）
 
                         // ==================== 多语言配置 ====================
             const LANGUAGES = {
@@ -3779,13 +3781,37 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
             }
 
             // ==================== 银行App式金额输入（自动补小数点）====================
-            // 只允许输入数字，始终按“分”从右往左录入，自动格式化为 X.XX，
+            // 若“自动小数点”开关已开启：只允许输入数字，始终按“分”从右往左录入，自动格式化为 X.XX，
             // 光标始终保持在末尾，无需用户手动输入小数点，也不会出现多个小数点等异常输入。
+            // 若开关关闭（默认）：退化为普通金额输入，用户自行输入小数点，仅做基本校验（只允许数字和一个小数点，最多两位小数）。
             function applyMoneyMask(input) {
                 if (!input || input._moneyMaskBound) return;
                 input._moneyMaskBound = true;
                 const maxDigits = String(Math.round(CONSTANTS.MAX_AMOUNT * 100)).length + 1;
                 input.addEventListener('input', function() {
+                    if (!featureAutoDecimalEnabled) {
+                        // 普通模式：只保留数字和一个小数点，小数点后最多两位
+                        const cursorPos = this.selectionStart;
+                        const originalLength = this.value.length;
+                        let val = this.value.replace(/[^\d.]/g, '');
+                        const firstDot = val.indexOf('.');
+                        if (firstDot !== -1) {
+                            val = val.slice(0, firstDot + 1) + val.slice(firstDot + 1).replace(/\./g, '');
+                        }
+                        const dotIndex = val.indexOf('.');
+                        if (dotIndex !== -1 && val.length - dotIndex - 1 > 2) {
+                            val = val.slice(0, dotIndex + 3);
+                        }
+                        if (val !== this.value) {
+                            this.value = val;
+                            const diff = originalLength - val.length;
+                            const newPos = Math.max(0, (cursorPos || val.length) - diff);
+                            this.setSelectionRange(newPos, newPos);
+                        }
+                        this._lastValid = val;
+                        updateInputColor();
+                        return;
+                    }
                     let digits = this.value.replace(/\D/g, '');
                     digits = digits.replace(/^0+/, '');
                     if (digits === '') {
@@ -3804,12 +3830,12 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
                     this.setSelectionRange(this.value.length, this.value.length);
                     updateInputColor();
                 });
-                // 防止用户通过光标拖动到中间插入数字，始终强制点击后光标停在末尾
+                // 防止用户通过光标拖动到中间插入数字，始终强制点击后光标停在末尾（仅在自动小数点模式下生效）
                 input.addEventListener('click', function() {
-                    this.setSelectionRange(this.value.length, this.value.length);
+                    if (featureAutoDecimalEnabled) this.setSelectionRange(this.value.length, this.value.length);
                 });
                 input.addEventListener('focus', function() {
-                    this.setSelectionRange(this.value.length, this.value.length);
+                    if (featureAutoDecimalEnabled) this.setSelectionRange(this.value.length, this.value.length);
                 });
             }
 
@@ -4085,10 +4111,18 @@ function showElegantToast(icon, statusText, detailText, amountText, amountType) 
         } else {
             featureNoteEnabled = false;  // 默认关闭
         }
+
+        const autoDecimalSetting = await dbManager.get('settings', 'featureAutoDecimalEnabled');
+        if (autoDecimalSetting !== undefined && autoDecimalSetting.value !== undefined) {
+            featureAutoDecimalEnabled = autoDecimalSetting.value;
+        } else {
+            featureAutoDecimalEnabled = false;  // 默认关闭
+        }
     } catch (e) {
         console.warn('加载功能开关设置失败，使用默认值', e);
         featurePaxEnabled = false;
         featureNoteEnabled = false;
+        featureAutoDecimalEnabled = false;
     }
 
 // 更新菜单按钮文字
@@ -4099,6 +4133,10 @@ if (togglePaxBtn) {
 const toggleNoteBtn = document.getElementById('toggleNoteFeature');
 if (toggleNoteBtn) {
     toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
+}
+const toggleAutoDecimalBtn = document.getElementById('toggleAutoDecimalFeature');
+if (toggleAutoDecimalBtn) {
+    toggleAutoDecimalBtn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
 }
 }
 
@@ -4917,7 +4955,7 @@ async function editEntry(id) {
     const modal = modalManager.create(t('editRecord'),
         `<div style="margin-bottom:16px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('amount')}</label>
-            <input type="text" inputmode="numeric" id="editAmount" value="${displayAmount}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
+            <input type="text" inputmode="decimal" id="editAmount" value="${displayAmount}" style="width:100%;padding:14px;border-radius:16px;border:1px solid rgba(0,0,0,0.1);outline:none;font-size:16px;" aria-label="${t('amount')}">
         </div>
         <div style="margin-bottom:16px;">
             <label style="display:block;margin-bottom:8px;font-size:0.8rem;color:#64748b;">${t('category')}</label>
@@ -6560,7 +6598,7 @@ result += `═════════════`;
                     if (!filtered.length) { showToast(t('noDataMatch')); return; }
                     const exportData = {
                         source: 'main', version: '1.0', exportDate: new Date().toISOString(),
-                        entries: filtered, expenseCats, incomeCats, paymentTypes, incomePaymentTypes,featurePaxEnabled: featurePaxEnabled,featureNoteEnabled: featureNoteEnabled
+                        entries: filtered, expenseCats, incomeCats, paymentTypes, incomePaymentTypes,featurePaxEnabled: featurePaxEnabled,featureNoteEnabled: featureNoteEnabled,featureAutoDecimalEnabled: featureAutoDecimalEnabled
                     };
                     let fileName;
                     if (currentLanguage === 'zh-CN') {
@@ -6726,6 +6764,15 @@ if (data.featureNoteEnabled !== undefined) {
         toggleNoteBtn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
     }
 }
+
+if (data.featureAutoDecimalEnabled !== undefined) {
+    featureAutoDecimalEnabled = data.featureAutoDecimalEnabled;
+    await dbManager.put('settings', { key: 'featureAutoDecimalEnabled', value: featureAutoDecimalEnabled });
+    const toggleAutoDecimalBtn = document.getElementById('toggleAutoDecimalFeature');
+    if (toggleAutoDecimalBtn) {
+        toggleAutoDecimalBtn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
+    }
+}
                     rebuildStatsCache();
                     renderCalendar();
                     renderEntries();
@@ -6883,6 +6930,15 @@ if (data.featureNoteEnabled !== undefined) {
                     if (btn) btn.innerHTML = featureNoteEnabled ? '📝 备注填写 [已开启 🟢]' : '📝 备注填写 [已关闭 🔴]';
                     await dbManager.put('settings', { key: 'featureNoteEnabled', value: featureNoteEnabled });
                     showToast(`备注填写${featureNoteEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
+                    closeMenu();
+                });
+
+                document.getElementById('toggleAutoDecimalFeature')?.addEventListener('click', async () => {
+                    featureAutoDecimalEnabled = !featureAutoDecimalEnabled;
+                    const btn = document.getElementById('toggleAutoDecimalFeature');
+                    if (btn) btn.innerHTML = featureAutoDecimalEnabled ? '🔢 自动小数点 [已开启 🟢]' : '🔢 自动小数点 [已关闭 🔴]';
+                    await dbManager.put('settings', { key: 'featureAutoDecimalEnabled', value: featureAutoDecimalEnabled });
+                    showToast(`自动小数点${featureAutoDecimalEnabled ? '已开启 🟢' : '已关闭 🔴'}`);
                     closeMenu();
                 });
             }
